@@ -1,0 +1,100 @@
+#!/usr/bin/env python
+# -*- mode: py -*-
+
+# https://github.com/ihnorton/mojo-ffi/blob/ffi-demo/scripts/mojoc
+
+import argparse
+import base64
+import os
+import json
+import sys
+import subprocess
+
+from typing import List
+
+def make_parser():
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "-shared", default=False, action='store_true'
+    )
+    parser.add_argument(
+        "-l", action="append", dest="link_libs"
+    )
+    parser.add_argument(
+        "-S", action="append", dest="link_static"
+    )
+    parser.add_argument(
+        "-L", action="append", dest="link_paths"
+    )
+    parser.add_argument(
+        "-o", dest="output_file", type=str
+    )
+    parser.add_argument(
+       "input_file", type=str
+    )
+
+    return parser
+
+def test_parser():
+    parser = make_parser()
+
+    a0, _ = parser.parse_known_args(["test.mojo"])
+    assert a0.shared is False
+    assert a0.input_file == "test.mojo"
+    assert a0.link_libs == None
+    assert a0.link_paths == None
+
+    a1, _ = parser.parse_known_args("-shared -lCallable -lfoo test.mojo -o test".split())
+    assert a1.link_libs == ["Callable", "foo"]
+    assert a1.link_paths == None
+    assert a1.input_file == "test.mojo"
+    print(a1.output_file)
+    assert a1.output_file == "test"
+
+#test_parser()
+
+def run_mojo(args, mojo_args):
+    link_args = [f"-l{arg}" for arg in args.link_libs] if args.link_libs else []
+    lib_args = [f"-L{arg}" for arg in args.link_paths] if args.link_paths else []
+    # Use `-S` arguments to pass through individual objects to link
+    if args.link_static:
+        lib_args += args.link_static
+
+    ld_fwd = {
+        "shared": args.shared,
+        "link_args": link_args,
+        "lib_args": lib_args,
+        "output_file": args.output_file
+    }
+    # Should be safe enough for now, use base64 later if needed
+    ld_fwd_json = json.dumps(ld_fwd)
+
+    env = os.environ.copy()
+    env["MOJOC_LD_FWD"] = ld_fwd_json
+    # We want mojo to use the `ld` sitting next to this file
+    #env["PATH"] = os.path.join(os.path.dirname(__file__)) + ":" + env["PATH"]
+    mojoc_real_dir = os.path.dirname(os.path.realpath(__file__))
+    env["PATH"] = mojoc_real_dir + ":" + env["PATH"]
+
+    #print("MOJOC_LD_FWD", ld_fwd_json)
+
+    exec_args = (
+        "mojo", "build", *mojo_args
+    )
+    exec_kwargs = {
+        "env": env,
+    }
+
+    # print(exec_args)
+    # print(exec_kwargs)
+
+    return subprocess.run(exec_args, **exec_kwargs, check=False)
+
+def cli(input_args):
+    parser = make_parser()
+    args, mojo_args = parser.parse_known_args(input_args)
+
+    run_mojo(args, mojo_args)
+
+if __name__ == '__main__':
+    cli(sys.argv)

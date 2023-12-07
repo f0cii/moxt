@@ -1,0 +1,75 @@
+from .list_iterator import ListIterator
+from memory import memcpy
+
+
+@value
+@register_passable("trivial")
+struct Str:
+    """
+    A string that is dodgy because it is not null-terminated.
+    Ref: https://github.com/igorgue/firedis/blob/617038bdd83b7b41c671c634397b2e4187f2fe62/dodgy.mojo
+    """
+
+    var data: Pointer[Int8]
+    var size: Int
+
+    fn __init__(value: StringLiteral) -> Str:
+        let l = len(value)
+        let s = String(value)
+        let p = Pointer[Int8].alloc(l)
+
+        for i in range(l):
+            p.store(i, s._buffer[i])
+
+        return Str(p, l)
+
+    fn __init__(value: String) -> Str:
+        let l = len(value)
+        let p = Pointer[Int8].alloc(l)
+
+        for i in range(l):
+            p.store(i, value._buffer[i])
+
+        return Str(p, l)
+
+    fn __init__(value: StringRef) -> Str:
+        let l = len(value)
+        let s = String(value)
+        let p = Pointer[Int8].alloc(l)
+
+        for i in range(l):
+            p.store(i, s._buffer[i])
+
+        return Str(p, l)
+
+    fn __eq__(self, other: Str) -> Bool:
+        if self.size != other.size:
+            return False
+
+        for i in range(self.size):
+            if self.data.load(i) != other.data.load(i):
+                return False
+
+        return True
+
+    fn __ne__(self, other: Str) -> Bool:
+        return not self.__eq__(other)
+
+    fn __iter__(self) -> ListIterator[Int8]:
+        return ListIterator[Int8](self.data, self.size)
+
+    fn to_string(self) -> String:
+        let ptr = Pointer[Int8]().alloc(self.size)
+
+        memcpy(ptr, self.data, self.size)
+
+        return String(ptr, self.size)
+
+    fn to_string_ref(self) -> StringRef:
+        let ptr = Pointer[Int8]().alloc(self.size)
+
+        memcpy(ptr, self.data, self.size)
+
+        return StringRef(
+            ptr.bitcast[__mlir_type.`!pop.scalar<si8>`]().address, self.size
+        )

@@ -1,0 +1,81 @@
+#!/usr/bin/env python
+"""
+Simple ld wrapper to do fun things
+"""
+
+# https://github.com/ihnorton/mojo-ffi/blob/ffi-demo/scripts/ld
+
+import json
+import subprocess
+import sys, os, shutil
+
+def lprefix(the_list, prefix):
+    for idx,item in enumerate(reversed(the_list)):
+        if item.startswith(prefix):
+            return -1 - idx
+
+def main():
+    fwd_json = os.environ["MOJOC_LD_FWD"]
+    fwd_args = json.loads(fwd_json)
+
+    #print("fwd_args", fwd_args)
+
+    argv = sys.argv
+
+    argv[0] = "/usr/bin/ld" # put back original ld
+
+    shared = fwd_args["shared"]
+    if shared:
+        argv.insert(1, "-shared")
+        def remove_arg(the_arg):
+            if the_arg in argv:
+                del argv[argv.index(the_arg)]
+        remove_arg("-pie")
+        remove_arg("--gc-sections")
+
+        # can't use with shared linkage
+        remove_arg("/usr/lib/gcc/x86_64-linux-gnu/9/../../../x86_64-linux-gnu/Scrt1.o")
+
+        # force the linker to keep all symbols. this is ugly but simple for now.
+        # TODO: extract @export annotations and make linker script
+        for idx,arg in enumerate(argv):
+            if "/tmp" in arg and arg.endswith(".a"):
+                argv[idx:idx+1] = ["--whole-archive", argv[idx], "--no-whole-archive"]
+                break
+
+    # insert forwarded -L arguments
+    lib_args = fwd_args["lib_args"]
+    #print("lib_args: ", lib_args)
+    if lib_args is not None:
+        L_index = lprefix(argv, "-L")
+        argv[L_index:L_index] = lib_args
+
+    link_args = fwd_args["link_args"]
+    #print("link_args: ", link_args)
+    if link_args:
+        l_index = lprefix(argv, "-l")
+        argv[l_index:l_index] = link_args
+
+    if fwd_args["output_file"] is not None:
+        ofile_idx = argv.index("-o")
+        del argv[ofile_idx:ofile_idx+2]
+        argv[ofile_idx:ofile_idx] = ["-o", fwd_args["output_file"]]
+
+    # copy the tmp archive
+    if False:
+        for arg in argv:
+            if "/tmp" in arg and arg.endswith(".a"):
+                shutil.copyfile(arg, arg+".1")
+            elif "/tmp" in arg and arg.endswith(".res"):
+                p = arg.split("=")[-1]
+                shutil.copyfile(p, p+".1")
+
+
+    #print("ld argv: ", argv)
+    #with open("/tmp/last-ld-args.txt", "w") as f:
+    #    f.write(argv)
+
+    subprocess.run(argv)
+
+if __name__ == "__main__":
+    main()

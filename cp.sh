@@ -1,0 +1,1 @@
+cp ~/cpp/moxt-cpp/build/linux/x86_64/release/libmoxt.so ./

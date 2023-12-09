@@ -640,7 +640,7 @@ struct BybitClient:
         let query_str = query_values.to_string()
         let ret = self.do_get("/v5/order/realtime", query_str, True)
         if ret.status != 200:
-            raise Error("error status=" + str(ret.status))
+            raise Error("error status=" + str(ret.status) + " body=" + str(ret.body))
 
         print(str(ret.body))
 

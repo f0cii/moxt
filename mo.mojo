@@ -53,7 +53,7 @@ let LOG_LEVEL_OFF: UInt8 = 4
 
 # 初始化日志
 # mode: 日志模式 0-fmtlog 1-printf
-fn seq_init_log(level: UInt8, mode: Int=0) -> None:
+fn seq_init_log(level: UInt8, mode: Int = 0) -> None:
     external_call["seq_init_log", NoneType, UInt8, Int](level, mode)
 
 
@@ -1000,7 +1000,9 @@ alias tlsv13_client = 19
 
 
 # SEQ_FUNC Client* seq_client_new(const char* baseUrl, size_t baseUrl_len, int64_t method);
-fn seq_client_new(base_url: c_char_pointer, base_url_len: Int, method: Int=tlsv12_client) -> c_void_pointer:
+fn seq_client_new(
+    base_url: c_char_pointer, base_url_len: Int, method: Int = tlsv12_client
+) -> c_void_pointer:
     return external_call["seq_client_new", c_void_pointer, c_char_pointer, Int, Int](
         base_url, base_url_len, method
     )
@@ -1024,7 +1026,7 @@ fn seq_client_free(client: c_void_pointer) -> None:
 @register_passable
 struct HttpRequest:
     var path: c_char_pointer
-    #size_t path_len;
+    # size_t path_len;
     var path_len: c_size_t
     var verb: Int64
     var headers: c_void_pointer
@@ -1223,3 +1225,15 @@ fn test_identity_pool() -> None:
 
 fn test_ondemand_parser_pool() -> None:
     return external_call["test_ondemand_parser_pool", NoneType]()
+
+
+fn seq_add(a: Int, b: Int) -> Int:
+    return external_call["seq_add", Int, Int, Int](a, b)
+
+
+fn seq_add_with_exception0(a: Int, b: Int) -> Int:
+    return external_call["seq_add_with_exception0", Int, Int, Int](a, b)
+
+
+fn seq_add_with_exception1(a: Int, b: Int) -> Int:
+    return external_call["seq_add_with_exception1", Int, Int, Int](a, b)

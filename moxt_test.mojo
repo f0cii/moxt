@@ -72,18 +72,6 @@ fn test_raw():
     seq_simdjson_ondemand_parser_free(parser)
 
 
-fn test_ct():
-    # _ = seq_ct_init()
-    # print("1")
-    # _ = seq_photon_init()
-    # print("2")
-    # seq_log_test()
-    # print("3")
-    # seq_photon_fini()
-    # print("4")
-    pass
-
-
 fn test_far():
     let f = Far()
     f.set_int("a", 100)
@@ -101,10 +89,6 @@ fn test_far():
     f.release()
 
 
-# def my_add(borrowed a: Int32, borrowed b: Int32) -> Int32:
-#     return a + b + 1
-
-
 struct A:
     var a: Int
 
@@ -118,9 +102,6 @@ struct A:
 
     fn incr(inout self):
         self.a += 1
-
-
-# var a = A()
 
 
 fn req(arg: c_void_pointer) raises -> c_void_pointer:
@@ -171,36 +152,6 @@ fn test_ssmap():
     sm1["a"] = "1"
     print(sm1["a"])
     sm1.release()
-
-
-# fn test_hashmap():
-#     var m = HashMapDict[Int, fnv1a64]()
-#     m.put("a", 123)
-#     m.debug()
-#     print(m.get("a", 0))
-
-#     m.put("b", 12)
-#     m.put("c", 345)
-#     m.put("a", 111)
-#     m.debug()
-#     print(m.get("a", 0))
-#     print(m.get("b", 0))
-#     m.delete("b")
-#     print(m.get("b", 0))
-#     m.debug()
-
-#     m._rehash()
-#     m.debug()
-#     print(m.get("a", 0))
-#     print(m.get("b", 0))
-#     print(m.get("c", 0))
-
-#     m.put("b", 45)
-#     m.debug()
-
-#     print(m.get("a", 0))
-#     print(m.get("b", 0))
-#     print(m.get("c", 0))
 
 
 @value
@@ -477,6 +428,16 @@ fn test_res_perf():
     logi("tm=" + str(tm))
 
 
+fn test_add():
+    let a = 100
+    let b = 200
+    let c = seq_add(a, b)
+    logi("c=" + str(c))
+
+    # let d = seq_add_with_exception0(a, b)
+    # let e = seq_add_with_exception1(a, b)
+
+
 fn run_forever():
     seq_photon_join_current_vcpu_into_workpool(seq_photon_work_pool())
 
@@ -496,8 +457,6 @@ fn main() raises:
     logi("init")
 
     # test_ssmap()
-    # test_hashmap()
-    # test_hashmap2()
     # test_simplelist()
     # test_far()
     # test_parser(s)
@@ -511,30 +470,16 @@ fn main() raises:
     test_bybitclient()
     # test_yyjson()
 
+    # test_add()
+
     # test_identity_pool()
     # test_ondemand_parser_pool()
     # test_res_perf()
-
     # test_parse_fetch_kline_body()
-
-    # let a = "1000325"
-    # let ai = seq_strtoi(a.data()._as_scalar_pointer(), len(a))
-    # logi("ai=" + String(ai))
-
-    # let s: String = a
-    # let ai1 = strtoi(s)
-    # logi("ai1=" + String(ai1))
-
-    # let ii: Int = 10000
-    # let iis = to_string_ref(ii)
-    # logi("iis=" + String(iis))
-
     # test_json_parse()
 
     # 协程运行
     # seq_photon_thread_create_and_migrate_to_work_pool(func1, c_void_pointer.get_null())
-
-    # test_raw(s)
 
     logi("started")
     run_forever()

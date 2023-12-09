@@ -1,4 +1,5 @@
 from .c import *
+from .mo import *
 from simpletools.simplelist import SimpleList
 
 
@@ -6,7 +7,7 @@ alias List = SimpleList
 
 
 fn seq_simdjson_dom_parser_new(max_capacity: Int) -> c_void_pointer:
-    return external_call["seq_simdjson_dom_parser_new", c_void_pointer, Int](
+    return external_call["seq_simdjson_dom_parser_new", c_void_pointer, c_size_t](
         max_capacity
     )
 
@@ -779,10 +780,13 @@ struct DomParser:
 
     @always_inline
     fn __init__(inout self, max_capacity: Int):
+        logd("DomParser.__init__ max_capacity=" + str(max_capacity))
         self.p = seq_simdjson_dom_parser_new(max_capacity)
+        logd("DomParser.__init__ OK max_capacity=" + str(max_capacity))
 
     @always_inline
     fn __del__(owned self):
+        logd("DomParser.__del__")
         seq_simdjson_dom_parser_free(self.p)
 
     @always_inline
@@ -796,6 +800,11 @@ struct DomParser:
         return DomElement(
             seq_simdjson_dom_parser_parse(self.p, s.data._as_scalar_pointer(), len(s))
         )
+
+    @always_inline
+    fn parse(self, s: String) -> DomElement:
+        let p = seq_simdjson_dom_parser_parse(self.p, s._buffer.data.value, len(s))
+        return DomElement(p)
 
     fn __repr__(self) -> String:
         return "<DomParser: p={self.p}>"

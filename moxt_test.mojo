@@ -453,6 +453,7 @@ fn main() raises:
     seq_init_photon_work_pool(2)
 
     seq_init_log(LOG_LEVEL_DBG, 1)
+    # seq_init_log(LOG_LEVEL_ERR, 1)
 
     seq_init_net(0)
     # seq_init_net(1)
@@ -461,19 +462,21 @@ fn main() raises:
 
     logi("init")
 
+    # seq_test_spdlog()
     # test_ssmap()
     # test_simplelist()
     # test_far()
     # test_parser(s)
     # test_ondemand_parser()
+    # test_fetch_orders_body_parse()
     # test_httpclient()
     # test_websocket()
     # test_h()
     # test_global_value()
     # test_query_params()
+    # test_yyjson()
     # test_okx()
     test_bybitclient()
-    # test_yyjson()
 
     # test_add()
 

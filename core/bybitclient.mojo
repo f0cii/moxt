@@ -636,20 +636,28 @@ struct BybitClient:
         if cursor != "":
             query_values["cursor"] = cursor
         let query_str = query_values.to_string()
+        logd("query_str: " + query_str)
         let ret = self.do_get("/v5/order/realtime", query_str, True)
         if ret.status != 200:
             raise Error("error status=" + str(ret.status) + " body=" + str(ret.body))
 
-        print(str(ret.body))
+        # print(str(ret.body))
+
+        let body = String(ret.body)
+        # logd(body)
 
         # {"retCode":0,"retMsg":"OK","result":{"list":[],"nextPageCursor":"","category":"linear"},"retExtInfo":{},"time":1696392159183}
         # {"retCode":10002,"retMsg":"invalid request, please check your server timestamp or recv_window param. req_timestamp[1696396708819],server_timestamp[1696396707813],recv_window[15000]","result":{},"retExtInfo":{},"time":1696396707814}
         var res = List[OrderInfo]()
         logd("300000")
-        let parser = OndemandParser(1024 * 10)
+
+        let parser = DomParser(1024)
+        logd("body0=" + body)
+        let doc = parser.parse(body)
+        logd("body1=" + body)
+
         logd("300001")
-        let doc = parser.parse(ret.body)
-        logd("300002")
+
         let ret_code = doc.get_int("retCode")
         let ret_msg = doc.get_str("retMsg")
         if ret_code != 0:
@@ -660,7 +668,7 @@ struct BybitClient:
 
         let list_iter = result_list.iter()
 
-        while list_iter.has_value():
+        while list_iter.has_element():
             let i = list_iter.get()
             let position_idx = i.get_int("positionIdx")
             let order_id = i.get_str("orderId")
@@ -702,9 +710,73 @@ struct BybitClient:
 
             list_iter.step()
 
+        _ = result
         _ = result_list
         _ = doc
         _ = parser
+
+        logi("fetch_orders parse ok")
+
+        # let parser = OndemandParser(1024 * 10)
+        # logd("300001")
+        # let doc = parser.parse(body)
+        # logd("300002")
+        # let ret_code = doc.get_int("retCode")
+        # let ret_msg = doc.get_str("retMsg")
+        # if ret_code != 0:
+        #     raise Error("error retCode=" + str(ret_code) + ", retMsg=" + ret_msg)
+
+        # let result = doc.get_object("result")
+        # let result_list = result.get_array("list")
+
+        # let list_iter = result_list.iter()
+
+        # while list_iter.has_value():
+        #     let i = list_iter.get()
+        #     let position_idx = i.get_int("positionIdx")
+        #     let order_id = i.get_str("orderId")
+        #     let _symbol = i.get_str("symbol")
+        #     let side = i.get_str("side")
+        #     let order_type = i.get_str("orderType")
+        #     let price = strtod(i.get_str("price"))
+        #     let qty = strtod(i.get_str("qty"))
+        #     let cum_exec_qty = strtod(i.get_str("cumExecQty"))
+        #     let order_status = i.get_str("orderStatus")
+        #     let created_time = i.get_str("createdTime")
+        #     let updated_time = i.get_str("updatedTime")
+        #     let avg_price = strtod(i.get_str("avgPrice"))
+        #     let cum_exec_fee = strtod(i.get_str("cumExecFee"))
+        #     let time_in_force = i.get_str("timeInForce")
+        #     let reduce_only = i.get_bool("reduceOnly")
+        #     let order_link_id = i.get_str("orderLinkId")
+
+        #     res.append(
+        #         OrderInfo(
+        #             position_idx=position_idx,
+        #             order_id=order_id,
+        #             symbol=_symbol,
+        #             side=side,
+        #             type_=order_type,
+        #             price=price,
+        #             qty=qty,
+        #             cum_exec_qty=cum_exec_qty,
+        #             status=order_status,
+        #             created_time=created_time,
+        #             updated_time=updated_time,
+        #             avg_price=avg_price,
+        #             cum_exec_fee=cum_exec_fee,
+        #             time_in_force=time_in_force,
+        #             reduce_only=reduce_only,
+        #             order_link_id=order_link_id,
+        #         )
+        #     )
+
+        #     list_iter.step()
+
+        # _ = result_list
+        # _ = result
+        # _ = doc
+        # _ = parser
 
         return res
 
@@ -745,6 +817,7 @@ struct BybitClient:
         if cursor != "":
             query_values["cursor"] = cursor
         var query_str = query_values.to_string()
+        loge("query_str=" + query_str)
         let ret = self.do_get("/v5/order/history", query_str, True)
         if ret.status != 200:
             raise Error("error status=[" + str(ret.status) + "]")
@@ -930,24 +1003,54 @@ struct BybitClient:
         _ = doc
 
         return res
+    
+    fn do_sign(self, owned headers: Headers, borrowed data: String, sign: Bool) raises -> None:
+        if not sign:
+            return
+        let time_ms_str = str(time_ns() / 1e6)
+        let recv_window_str = "15000"
+        logd("do_sign: " + data)
+        let payload = data
+        logd("do_sign: " + data)
+        let param_str = time_ms_str + self.access_key + recv_window_str + payload
+        let sign_str = hmac_sha256_hex(param_str, self.secret_key)
+        headers["X-BAPI-API-KEY"] = self.access_key
+        headers["X-BAPI-TIMESTAMP"] = time_ms_str
+        headers["X-BAPI-SIGN"] = sign_str
+        headers["X-BAPI-RECV-WINDOW"] = recv_window_str
 
     fn do_get(
         self, path: StringLiteral, param: String, sign: Bool
     ) raises -> HttpResponse:
-        var headers = Headers()
-        if sign:
-            # let timestamp = get_timestamp()
-            let time_ms_str = str(time_ns() / 1e6)
-            let recv_window_str = "15000"
-            let payload = param
-            let param_str = time_ms_str + self.access_key + recv_window_str + payload
-            let sign_str = hmac_sha256_hex(param_str, self.secret_key)
-            headers["X-BAPI-API-KEY"] = self.access_key
-            headers["X-BAPI-TIMESTAMP"] = time_ms_str
-            headers["X-BAPI-SIGN"] = sign_str
-            headers["X-BAPI-RECV-WINDOW"] = recv_window_str
-        let request_path = str(path) + "?" + param if param != "" else path
-        logi("request_path: " + request_path)
+        let headers = Headers()
+        logd("param: " + param)
+        let param_ = param
+        logd("param_: " + param_)
+        logd("param: " + param)
+        self.do_sign(headers, param, sign)
+        # if sign:
+        #     # let timestamp = get_timestamp()
+        #     let time_ms_str = str(time_ns() / 1e6)
+        #     let recv_window_str = "15000"
+        #     logd("param_: " + param_)
+        #     let payload = param_
+        #     logd("param_: " + param_)
+        #     let param_str = time_ms_str + self.access_key + recv_window_str + payload
+        #     let sign_str = hmac_sha256_hex(param_str, self.secret_key)
+        #     headers["X-BAPI-API-KEY"] = self.access_key
+        #     headers["X-BAPI-TIMESTAMP"] = time_ms_str
+        #     headers["X-BAPI-SIGN"] = sign_str
+        #     headers["X-BAPI-RECV-WINDOW"] = recv_window_str
+        
+        logd("100 param_: " + param_)
+
+        let request_path: String
+        if param != "":
+            request_path = str(path) + "?" + param_
+        else:
+            request_path = path
+        logd("request_path: " + request_path)
+        logd("param: " + param_)
         return self.client.get(request_path, headers=headers)
 
     fn do_post(
@@ -955,16 +1058,17 @@ struct BybitClient:
     ) raises -> HttpResponse:
         var headers = Headers()
         # headers["Content-Type"] = "application/json"
-        if sign:
-            let time_ms_str = str(time_ns() / 1e6)
-            let recv_window_str = "15000"
-            let payload = body
-            let param_str = time_ms_str + self.access_key + recv_window_str + payload
-            let sign_str = hmac_sha256_hex(param_str, self.secret_key)
-            headers["X-BAPI-API-KEY"] = self.access_key
-            headers["X-BAPI-TIMESTAMP"] = time_ms_str
-            headers["X-BAPI-SIGN"] = sign_str
-            headers["X-BAPI-RECV-WINDOW"] = recv_window_str
+        self.do_sign(headers, body, sign)
+        # if sign:
+        #     let time_ms_str = str(time_ns() / 1e6)
+        #     let recv_window_str = "15000"
+        #     let payload = body
+        #     let param_str = time_ms_str + self.access_key + recv_window_str + payload
+        #     let sign_str = hmac_sha256_hex(param_str, self.secret_key)
+        #     headers["X-BAPI-API-KEY"] = self.access_key
+        #     headers["X-BAPI-TIMESTAMP"] = time_ms_str
+        #     headers["X-BAPI-SIGN"] = sign_str
+        #     headers["X-BAPI-RECV-WINDOW"] = recv_window_str
         return self.client.post(path, data=body, headers=headers)
 
 

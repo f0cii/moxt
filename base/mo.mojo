@@ -1223,6 +1223,10 @@ fn test_identity_pool() -> None:
     return external_call["test_identity_pool", NoneType]()
 
 
+fn seq_test_spdlog() -> None:
+    return external_call["seq_test_spdlog", NoneType]()
+
+
 fn test_ondemand_parser_pool() -> None:
     return external_call["test_ondemand_parser_pool", NoneType]()
 

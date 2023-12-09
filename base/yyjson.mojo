@@ -3,9 +3,9 @@ import sys
 import os
 
 from simpletools.simplelist import SimpleList
-from c import *
-from mo import *
-from yyjsonbase import *
+from .c import *
+from .mo import *
+from .yyjsonbase import *
 
 
 alias List = SimpleList

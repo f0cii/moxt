@@ -1,29 +1,30 @@
 import time
 from time import time_function
 from memory import unsafe
-from mo import *
-from c import *
-from sj_dom import *
-from sj_ondemand import OndemandParser
-from far import Far
-from ssmap import SSMap
-from httpclient import HttpClient, VERB_GET, Headers, StringRefPair, QueryParams
-from websocket import WebSocket
+from base.mo import *
+from base.c import *
+from base.sj_dom import *
+from base.sj_ondemand import OndemandParser
+from base.far import Far
+from base.ssmap import SSMap
+from base.httpclient import HttpClient, VERB_GET, Headers, StringRefPair, QueryParams
+from base.websocket import WebSocket
 from fnv1a import fnv1a64
 from stdlib_extensions.time import time_ns
 
-from okxconsts import *
-from okxclient import *
+from core.okxconsts import *
+from core.okxclient import *
 from simpletools.simplelist import SimpleList
 from testing import assert_equal, assert_true, assert_false
 from simpletools.simpletest import MojoTest
 
-from moutil import *
-from bybitmodel import *
-from sign import hmac_sha256_b64, hmac_sha256_hex
-from yyjson import *
-from bybitclient import *
-from bybitclientjson import *
+from base.moutil import *
+from core.bybitmodel import *
+from core.sign import hmac_sha256_b64, hmac_sha256_hex
+from base.yyjson import *
+from core.bybitclient import *
+from core.bybitclientjson import *
+from core.env import load_env
 
 
 fn test_ondemand_parser():
@@ -257,9 +258,11 @@ fn test_okx() raises:
     let a = hmac_sha256_b64(String("abc"), String("abb"))
     logi(a)
 
-    let api_key = ""
-    let api_secret_key = ""
-    let passphrase = ""
+    let env_dict = load_env()
+
+    let api_key = env_dict["OKEX_API_KEY"]
+    let api_secret_key = env_dict["OKEX_API_SECRET"]
+    let passphrase = env_dict["OKEX_API_PASSPHRASE"]
     let b = OkxClient(
         api_key=api_key, api_secret_key=api_secret_key, passphrase=passphrase
     )
@@ -279,8 +282,10 @@ fn test_okx() raises:
 
 
 fn test_bybitclient() raises:
-    let access_key = ""
-    let secret_key = ""
+    let env_dict = load_env()
+
+    let access_key = env_dict["BYBIT_API_KEY"]
+    let secret_key = env_dict["BYBIT_API_SECRET"]
     let client = BybitClient(
         testnet=False, access_key=access_key, secret_key=secret_key
     )

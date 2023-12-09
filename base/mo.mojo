@@ -1,7 +1,7 @@
 import sys.ffi
 from memory import memcpy, memset_zero
 from time import time_function
-from c import *
+from .c import *
 
 # typedef void (*task_entry)(void *arg);
 alias task_entry = fn (c_void_pointer) raises -> c_void_pointer
@@ -183,7 +183,7 @@ fn seq_simdjson_ondemand_get_string_o(
 
 # int64_t seq_simdjson_ondemand_get_int_d(
 #  ondemand::document *doc, const char *key, size_t len)
-# from C import LIBRARY.seq_simdjson_ondemand_get_int_d(cobj, cobj, int) -> int
+# from base.c import LIBRARY.seq_simdjson_ondemand_get_int_d(cobj, cobj, int) -> int
 fn seq_simdjson_ondemand_get_int_d(
     doc: c_void_pointer, key: c_char_pointer, len: c_size_t
 ) -> c_long:

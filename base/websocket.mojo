@@ -1,5 +1,5 @@
-from c import *
-from mo import *
+from .c import *
+from .mo import *
 
 
 alias TLS1_1_VERSION = 0x0302
@@ -103,7 +103,7 @@ struct WebSocket:
 
 #     fn __init__(inout self):
 #         self.dict = IMapDict[HandleWrap]
-    
+
 #     fn register(inout self, id: Int, handle: HandleWrap):
 #         self.dict.put(id, handle)
 

@@ -1,4 +1,4 @@
-from httpclient import (
+from base.httpclient import (
     HttpClient,
     HttpResponse,
     seq_hmac_sha256,
@@ -7,12 +7,12 @@ from httpclient import (
     Headers,
 )
 
-from c import *
-from mo import *
-import okxconsts as c
-from okxconsts import GET, POST
+from base.c import *
+from base.mo import *
+import .okxconsts as c
+from .okxconsts import GET, POST
 from morrow.morrow import Morrow
-from sign import hmac_sha256_b64
+from .sign import hmac_sha256_b64
 
 
 def get_timestamp() -> String:
@@ -91,9 +91,9 @@ struct OkxClient:
     fn __init__(
         inout self,
         base_url: StringLiteral = c.API_URL,
-        api_key: StringLiteral = "",
-        api_secret_key: StringLiteral = "",
-        passphrase: StringLiteral = "",
+        api_key: String = "",
+        api_secret_key: String = "",
+        passphrase: String = "",
         flag: StringLiteral = "0",
         debug: Bool = True,
     ) raises:

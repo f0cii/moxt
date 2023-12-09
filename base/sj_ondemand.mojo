@@ -1,5 +1,5 @@
-from c import *
-from mo import *
+from .c import *
+from .mo import *
 
 
 struct OndemandValue:

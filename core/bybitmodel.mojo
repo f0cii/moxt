@@ -1,5 +1,5 @@
 from simpletools.simplelist import SimpleList
-from moxt.str_utils import *
+from base.str_utils import *
 
 alias List = SimpleList
 

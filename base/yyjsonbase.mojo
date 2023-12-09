@@ -1,7 +1,7 @@
 import time
 import sys
 import os
-from c import *
+from .c import *
 
 
 # yyjson

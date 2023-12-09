@@ -1,5 +1,5 @@
-from c import *
-from mo import *
+from base.c import *
+from base.mo import *
 
 
 def hmac_sha256_b64(message: String, secret_key: String) -> String:

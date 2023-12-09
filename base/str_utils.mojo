@@ -4,10 +4,6 @@ from memory import memcpy
 # https://github.com/igorgue/firedis/blob/main/string_utils.mojo
 
 
-# cast String -> Int
-# atol
-
-
 fn to_repr(s: String) -> String:
     var res: String = '"'
 
@@ -65,3 +61,14 @@ fn to_upper(s: String, slen: Int) -> String:
 
 fn to_upper(s: String) -> String:
     return to_upper(s, len(s))
+
+
+fn str_contains(full_string: String, substring: String) -> Bool:
+    let m = len(full_string)
+    let n = len(substring)
+    if n > m:
+        return False
+    for i in range(m - n + 1):
+        if substring == full_string[i : i + n]:
+            return True
+    return False

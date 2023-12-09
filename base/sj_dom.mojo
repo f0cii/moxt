@@ -1,4 +1,4 @@
-from c import *
+from .c import *
 from simpletools.simplelist import SimpleList
 
 
@@ -790,7 +790,7 @@ struct DomParser:
         return DomElement(
             seq_simdjson_dom_parser_parse(self.p, s.data()._as_scalar_pointer(), len(s))
         )
-    
+
     @always_inline
     fn parse(self, s: StringRef) -> DomElement:
         return DomElement(

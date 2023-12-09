@@ -1,6 +1,6 @@
 from memory import unsafe
-import c
-from mo import *
+import .c
+from .mo import *
 
 
 fn set_global_value_ptr[V: AnyRegType](id: Int, v: Pointer[V]) -> Int:

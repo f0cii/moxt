@@ -97,25 +97,18 @@ struct HttpClient:
         self, path: String, verb: Int, headers: Headers, body: String
     ) -> HttpResponse:
         var n: Int = 0
-        let buff = Pointer[UInt8].alloc(1024 * 64)
-        # let path_ = to_schar_ptr(path)
-        # let body_ = to_schar_ptr(body)
+        let buff = Pointer[UInt8].alloc(1024 * 100)
         let status = seq_client_do_request(
             self.ptr,
             path._buffer.data.value,
             len(path),
             verb,
             headers.ptr,
-            # body_,
             body._buffer.data.value,
             len(body),
             buff,
             Pointer[Int].address_of(n),
         )
 
-        logd("do_request success")
-        # let s = c_str_to_string(self.res, n)
-
         let s = to_string_ref(buff, n)
-        # logi("do_request to_string_ref ok")
         return HttpResponse(status, s)

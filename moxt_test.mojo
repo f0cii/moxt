@@ -452,11 +452,9 @@ fn main() raises:
     let ret = seq_photon_init_default()
     seq_init_photon_work_pool(2)
 
-    seq_init_log(LOG_LEVEL_DBG, 1)
-    # seq_init_log(LOG_LEVEL_ERR, 1)
+    seq_init_log(LOG_LEVEL_DBG, "")
 
     seq_init_net(0)
-    # seq_init_net(1)
 
     logi("ret: " + str(ret))
 
@@ -476,6 +474,7 @@ fn main() raises:
     # test_query_params()
     # test_yyjson()
     # test_okx()
+
     test_bybitclient()
 
     # test_add()
@@ -491,8 +490,6 @@ fn main() raises:
 
     logi("started")
     run_forever()
-
-    # _ = seq_photon_thread_sleep_s(-1)
 
     print("Exit.")
 

@@ -52,9 +52,10 @@ let LOG_LEVEL_OFF: UInt8 = 4
 
 
 # 初始化日志
-# mode: 日志模式 0-fmtlog 1-printf
-fn seq_init_log(level: UInt8, mode: Int = 0) -> None:
-    external_call["seq_init_log", NoneType, UInt8, Int](level, mode)
+fn seq_init_log(level: UInt8, filename: String) -> None:
+    external_call["seq_init_log", NoneType, UInt8, Pointer[c_schar], c_int](
+        level, filename._buffer.data.value, len(filename)
+    )
 
 
 fn seq_logd(s: Pointer[c_schar], length: c_int):
@@ -1003,14 +1004,14 @@ alias tlsv13_client = 19
 fn seq_client_new(
     base_url: c_char_pointer, base_url_len: Int, method: Int = tlsv12_client
 ) -> c_void_pointer:
-    return external_call["seq_client_new", c_void_pointer, c_char_pointer, Int, Int](
+    return external_call["seq_cclient_new", c_void_pointer, c_char_pointer, Int, Int](
         base_url, base_url_len, method
     )
 
 
 # SEQ_FUNC void seq_client_free(Client* client);
 fn seq_client_free(client: c_void_pointer) -> None:
-    external_call["seq_client_free", NoneType, c_void_pointer](client)
+    external_call["seq_cclient_free", NoneType, c_void_pointer](client)
 
 
 # struct HttpRequest {
@@ -1036,7 +1037,7 @@ struct HttpRequest:
 
 
 # SEQ_FUNC int64_t seq_client_do_request(Client *client, HttpRequest *request, char *res, size_t *n);
-fn seq_client_do_request(
+fn seq_client_do_request_v0(
     client: c_void_pointer,
     path: c_char_pointer,
     path_len: c_size_t,
@@ -1050,7 +1051,7 @@ fn seq_client_do_request(
 ) -> Int:
     var request = HttpRequest(path, path_len, verb, headers, body, body_len, True)
     return external_call[
-        "seq_client_do_request",
+        "seq_cclient_do_request",
         Int,
         c_void_pointer,
         Pointer[HttpRequest],
@@ -1058,6 +1059,26 @@ fn seq_client_do_request(
         # Pointer[UInt8],
         Pointer[c_size_t],
     ](client, Pointer[HttpRequest].address_of(request), res, n)
+
+
+# SEQ_FUNC int64_t seq_cclient_do_request(
+#     CClient *client, const char *path, size_t path_len, int64_t verb,
+#     std::map<std::string, std::string> *headers, const char *body,
+#     size_t body_len, char *res, size_t *n);
+fn seq_client_do_request(
+    client: c_void_pointer,
+    path: c_char_pointer,
+    path_len: c_size_t,
+    verb: Int,
+    headers: c_void_pointer,
+    body: c_char_pointer,
+    body_len: c_size_t,
+    res: c_void_pointer,
+    n: Pointer[c_size_t],
+) -> Int:
+    return __mlir_op.`pop.external_call`[
+        func = "seq_cclient_do_request".value, _type=Int
+    ](client, path, path_len, verb, headers, body, body_len, res, n)
 
 
 # SEQ_FUNC void seq_c_free(char *res);

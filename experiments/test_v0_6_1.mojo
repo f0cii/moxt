@@ -55,8 +55,8 @@ fn main():
     let i7 = int(UInt32(10))
     let i8 = int(UInt64(10))
 
-    # let vec = DynamicVector[Bool]()
-    # let vec = DynamicVector[StringLiteral]()
+    let vec = DynamicVector[Bool]()
+    let vec0 = DynamicVector[StringLiteral]()
     let vec1 = DynamicVector[Int]()
     let vec2 = DynamicVector[StringRef]()
     let vec3 = DynamicVector[String]()

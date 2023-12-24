@@ -780,13 +780,13 @@ struct DomParser:
 
     @always_inline
     fn __init__(inout self, max_capacity: Int):
-        logd("DomParser.__init__ max_capacity=" + str(max_capacity))
+        # logd("DomParser.__init__ max_capacity=" + str(max_capacity))
         self.p = seq_simdjson_dom_parser_new(max_capacity)
-        logd("DomParser.__init__ OK max_capacity=" + str(max_capacity))
+        # logd("DomParser.__init__ OK max_capacity=" + str(max_capacity))
 
     @always_inline
     fn __del__(owned self):
-        logd("DomParser.__del__")
+        # logd("DomParser.__del__")
         seq_simdjson_dom_parser_free(self.p)
 
     @always_inline

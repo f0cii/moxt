@@ -641,22 +641,12 @@ struct BybitClient:
         if ret.status != 200:
             raise Error("error status=" + str(ret.status) + " body=" + str(ret.body))
 
-        # print(str(ret.body))
-
-        let body = String(ret.body)
-        # logd(body)
-
         # {"retCode":0,"retMsg":"OK","result":{"list":[],"nextPageCursor":"","category":"linear"},"retExtInfo":{},"time":1696392159183}
         # {"retCode":10002,"retMsg":"invalid request, please check your server timestamp or recv_window param. req_timestamp[1696396708819],server_timestamp[1696396707813],recv_window[15000]","result":{},"retExtInfo":{},"time":1696396707814}
         var res = List[OrderInfo]()
-        logd("300000")
 
-        let parser = DomParser(1024)
-        logd("body0=" + body)
-        let doc = parser.parse(body)
-        logd("body1=" + body)
-
-        logd("300001")
+        let parser = DomParser(1024*100)
+        let doc = parser.parse(ret.body)
 
         let ret_code = doc.get_int("retCode")
         let ret_msg = doc.get_str("retMsg")
@@ -1023,27 +1013,9 @@ struct BybitClient:
         self, path: StringLiteral, param: String, sign: Bool
     ) raises -> HttpResponse:
         let headers = Headers()
-        logd("param: " + param)
         let param_ = param
-        logd("param_: " + param_)
-        logd("param: " + param)
         self.do_sign(headers, param, sign)
-        # if sign:
-        #     # let timestamp = get_timestamp()
-        #     let time_ms_str = str(time_ns() / 1e6)
-        #     let recv_window_str = "15000"
-        #     logd("param_: " + param_)
-        #     let payload = param_
-        #     logd("param_: " + param_)
-        #     let param_str = time_ms_str + self.access_key + recv_window_str + payload
-        #     let sign_str = hmac_sha256_hex(param_str, self.secret_key)
-        #     headers["X-BAPI-API-KEY"] = self.access_key
-        #     headers["X-BAPI-TIMESTAMP"] = time_ms_str
-        #     headers["X-BAPI-SIGN"] = sign_str
-        #     headers["X-BAPI-RECV-WINDOW"] = recv_window_str
         
-        logd("100 param_: " + param_)
-
         let request_path: String
         if param != "":
             request_path = str(path) + "?" + param_
@@ -1059,16 +1031,6 @@ struct BybitClient:
         var headers = Headers()
         # headers["Content-Type"] = "application/json"
         self.do_sign(headers, body, sign)
-        # if sign:
-        #     let time_ms_str = str(time_ns() / 1e6)
-        #     let recv_window_str = "15000"
-        #     let payload = body
-        #     let param_str = time_ms_str + self.access_key + recv_window_str + payload
-        #     let sign_str = hmac_sha256_hex(param_str, self.secret_key)
-        #     headers["X-BAPI-API-KEY"] = self.access_key
-        #     headers["X-BAPI-TIMESTAMP"] = time_ms_str
-        #     headers["X-BAPI-SIGN"] = sign_str
-        #     headers["X-BAPI-RECV-WINDOW"] = recv_window_str
         return self.client.post(path, data=body, headers=headers)
 
 

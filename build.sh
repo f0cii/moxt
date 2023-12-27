@@ -1,0 +1,1 @@
+./scripts/mojoc main.mojo -lmoxt -L . -o moxt

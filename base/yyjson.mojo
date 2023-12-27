@@ -6,6 +6,7 @@ from simpletools.simplelist import SimpleList
 from .c import *
 from .mo import *
 from .yyjsonbase import *
+from stdlib_extensions.builtins import dict, list, HashableInt
 
 
 alias List = SimpleList
@@ -55,45 +56,45 @@ struct yyjson_mut_doc:
             self.doc, self.root, key.data()._as_scalar_pointer(), value
         )
 
-    # @always_inline
-    # fn arr_with_bool(self, key: StringLiteral, value: List[Bool]) raises:
-    #     let n = value.size()
-    #     var vp = Pointer[Bool].alloc(n)
-    #     for i in range(0, n):
-    #         vp[i] = value[i]
-    #     # print(vp)
-    #     let harr = seq_yyjson_mut_arr_with_bool(self.doc, vp, n)
-    #     _ = seq_yyjson_mut_obj_add_val(self.doc, self.root, key.data()._as_scalar_pointer(), harr)
+    @always_inline
+    fn arr_with_bool(self, key: StringLiteral, value: list[Bool]) raises:
+        let n = len(value)
+        var vp = Pointer[Bool].alloc(n)
+        for i in range(0, n):
+            vp[i] = value[i]
+        # print(vp)
+        let harr = seq_yyjson_mut_arr_with_bool(self.doc, vp, n)
+        _ = seq_yyjson_mut_obj_add_val(self.doc, self.root, key.data()._as_scalar_pointer(), harr)
 
-    # @always_inline
-    # fn arr_with_float(self, key: StringLiteral, value: List[Float64]) raises:
-    #     let n = value.size()
-    #     var vp = Pointer[Float64].alloc(n)
-    #     for i in range(0, n):
-    #         vp[i] = value[i]
-    #     # print(vp)
-    #     let harr = seq_yyjson_mut_arr_with_real(self.doc, vp, n)
-    #     _ = seq_yyjson_mut_obj_add_val(self.doc, self.root, key.data()._as_scalar_pointer(), harr)
+    @always_inline
+    fn arr_with_float(self, key: StringLiteral, value: list[Float64]) raises:
+        let n = len(value)
+        var vp = Pointer[Float64].alloc(n)
+        for i in range(0, n):
+            vp[i] = value[i]
+        # print(vp)
+        let harr = seq_yyjson_mut_arr_with_real(self.doc, vp, n)
+        _ = seq_yyjson_mut_obj_add_val(self.doc, self.root, key.data()._as_scalar_pointer(), harr)
 
-    # @always_inline
-    # fn arr_with_int(self, key: StringLiteral, value: List[Int]) raises:
-    #     let n = value.size()
-    #     var vp = Pointer[Int].alloc(n)
-    #     for i in range(0, n):
-    #         vp[i] = value[i]
-    #     # print(vp)
-    #     let harr = seq_yyjson_mut_arr_with_sint64(self.doc, vp, n)
-    #     _ = seq_yyjson_mut_obj_add_val(self.doc, self.root, key.data()._as_scalar_pointer(), harr)
+    @always_inline
+    fn arr_with_int(self, key: StringLiteral, value: list[Int]) raises:
+        let n = len(value)
+        var vp = Pointer[Int].alloc(n)
+        for i in range(0, n):
+            vp[i] = value[i]
+        # print(vp)
+        let harr = seq_yyjson_mut_arr_with_sint64(self.doc, vp, n)
+        _ = seq_yyjson_mut_obj_add_val(self.doc, self.root, key.data()._as_scalar_pointer(), harr)
 
-    # @always_inline
-    # fn arr_with_str(self, key: StringLiteral, value: List[StringRef]) raises:
-    #     let n = value.size()
-    #     var vp = Pointer[c_void_pointer].alloc(n)
-    #     for i in range(0, n):
-    #         vp[i] = value[i]
-    #     # print(vp)
-    #     let harr = seq_yyjson_mut_arr_with_str(self.doc, vp, n)
-    #     _ = seq_yyjson_mut_obj_add_val(self.doc, self.root, key.data()._as_scalar_pointer(), harr)
+    @always_inline
+    fn arr_with_str(self, key: StringLiteral, value: list[String]) raises:
+        let n = len(value)
+        let vp = Pointer[c_void_pointer].alloc(n)
+        for i in range(0, n):
+            vp[i] = to_char_ptr(value[i])
+        # print(vp)
+        let harr = seq_yyjson_mut_arr_with_str(self.doc, vp, n)
+        _ = seq_yyjson_mut_obj_add_val(self.doc, self.root, key.data()._as_scalar_pointer(), harr)
 
     @always_inline
     fn mut_write(self) -> String:

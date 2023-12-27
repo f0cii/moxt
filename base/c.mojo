@@ -255,6 +255,10 @@ alias any_pointer_simd_int8_to_pointer_simd_int8 = rebind[
 #         )
 
 
+fn exit(status: Int32) -> UInt8:
+    return external_call["exit", UInt8, Int32](status)
+
+
 fn strlen(s: Pointer[c_char]) -> c_size_t:
     """
     :strlen libc POSIX `strlen` function

@@ -166,6 +166,5 @@ cython_debug/
 # Do not ignore directories
 !*/
 
-libmo.so
 libmoxt.so
 .env

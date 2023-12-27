@@ -1,1 +1,0 @@
-./scripts/mojoc moxt_test.mojo -lmoxt -L . -o moxt_test

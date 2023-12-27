@@ -4,6 +4,8 @@ moxt 是一个基于 Mojo 编程语言的量化交易库，旨在提供简单而
 
 编译 libmoxt.so，请移步 [moxt-cpp](https://github.com/f0cii/moxt-cpp)
 
+注意: 编译后，请将编译后的 libmoxt.so 文件拷贝到本项目目录
+
 ## 特性
 
 - 支持多种交易所：（okx,bybit,...）

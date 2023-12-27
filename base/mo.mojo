@@ -11,6 +11,10 @@ fn seq_ct_init() -> Int:
     return external_call["seq_ct_init", Int]()
 
 
+fn seq_address_of(p: c_void_pointer) -> Int:
+    return external_call["seq_address_of", Int, c_void_pointer](p)
+
+
 # 读取全局对象地址值
 fn seq_store_object_address(id: Int, ptr: Int) -> None:
     return external_call["seq_store_object_address", NoneType, Int, Int](id, ptr)
@@ -42,6 +46,12 @@ fn seq_photon_thread_create_and_migrate_to_work_pool(
 
 fn seq_photon_init_default() -> Int:
     return external_call["seq_photon_init_default", Int]()
+
+
+fn seq_nanoid() -> String:
+    let result = Pointer[Int8].alloc(32)
+    let n = external_call["seq_nanoid", c_size_t, c_char_pointer](result)
+    return c_str_to_string(result, n)
 
 
 let LOG_LEVEL_DBG: UInt8 = 0
@@ -94,6 +104,7 @@ fn loge(s: String):
     seq_loge(s._buffer.data.value, len(s))
 
 
+# type: 0-STD_THREAD 1-PHOTON
 fn seq_init_net(type_: Int) -> None:
     external_call["seq_init_net", NoneType, Int](type_)
 
@@ -1014,15 +1025,6 @@ fn seq_client_free(client: c_void_pointer) -> None:
     external_call["seq_cclient_free", NoneType, c_void_pointer](client)
 
 
-# struct HttpRequest {
-#     const char *path;
-#     int64_t verb;
-#     void *headers;  // std::map<std::string, std::string>
-#     const char *body;
-#     size_t body_len;
-# };
-
-
 @value
 @register_passable
 struct HttpRequest:
@@ -1262,3 +1264,41 @@ fn seq_add_with_exception0(a: Int, b: Int) -> Int:
 
 fn seq_add_with_exception1(a: Int, b: Int) -> Int:
     return external_call["seq_add_with_exception1", Int, Int, Int](a, b)
+
+
+# typedef void (*signal_handle_t)(int sig);
+alias signal_handle_t = fn (c_int) raises -> None
+
+
+# SEQ_FUNC void seq_init_signal(signal_handle_t handle);
+fn seq_init_signal(callback: signal_handle_t) -> None:
+    return external_call["seq_init_signal", NoneType, signal_handle_t](callback)
+
+
+# SEQ_FUNC void seq_init_photon_signal(signal_handle_t handle);
+fn seq_init_photon_signal(callback: signal_handle_t) -> None:
+    return external_call["seq_init_photon_signal", NoneType, signal_handle_t](callback)
+
+
+fn seq_skiplist_new(is_forward: Bool) -> c_void_pointer:
+    return external_call["seq_skiplist_new", c_void_pointer, Bool](is_forward)
+
+
+fn seq_skiplist_free(list: c_void_pointer) -> None:
+    external_call["seq_skiplist_free", NoneType, c_void_pointer](list)
+
+
+fn seq_skiplist_insert(
+    list: c_void_pointer, key: Int64, value: Int64, update_if_exists: Bool
+) -> Bool:
+    return external_call[
+        "seq_skiplist_insert", Bool, c_void_pointer, Int64, Int64, Bool
+    ](list, key, value, update_if_exists)
+
+
+fn seq_skiplist_remove(list: c_void_pointer, key: Int64) -> Int64:
+    return external_call["seq_skiplist_remove", Int64, c_void_pointer, Int64](list, key)
+
+
+fn seq_skiplist_search(list: c_void_pointer, key: Int64) -> Int64:
+    return external_call["seq_skiplist_search", Int64, c_void_pointer, Int64](list, key)

@@ -6,17 +6,21 @@ from base.c import *
 from base.sj_dom import *
 from base.sj_ondemand import OndemandParser
 from base.far import Far
+from base.fixed import Fixed
 from base.ssmap import SSMap
 from base.httpclient import HttpClient, VERB_GET, Headers, StringRefPair, QueryParams
-from base.websocket import WebSocket
+from base.websocket import *
 from fnv1a import fnv1a64
 from stdlib_extensions.time import time_ns
+from stdlib_extensions.builtins import dict, HashableInt, HashableStr
 
 from core.okxconsts import *
 from core.okxclient import *
-from simpletools.simplelist import SimpleList
+
+# from simpletools.simplelist import SimpleList
 from testing import assert_equal, assert_true, assert_false
-from simpletools.simpletest import MojoTest
+
+# from simpletools.simpletest import MojoTest
 
 from base.moutil import *
 from core.bybitmodel import *
@@ -24,6 +28,7 @@ from core.sign import hmac_sha256_b64, hmac_sha256_hex
 from base.yyjson import *
 from core.bybitclient import *
 from core.bybitclientjson import *
+from core.bybitws import *
 from core.env import load_env
 
 
@@ -51,6 +56,30 @@ fn test_ondemand_parser():
 
     _ = doc
     _ = op
+
+
+fn test_ws_auth():
+    let s = '{"req_id":"LzIP5BH2aBVLUkmsOzg-q","success":true,"ret_msg":"","op":"auth","conn_id":"cldfn01dcjmj8l28s6sg-ngkux"}'
+    let od_parser = OndemandParser(1000*100)
+    let doc = od_parser.parse(s)
+    let op = doc.get_str("op")
+    logd("op: " + op)
+    let abc = doc.get_str("abc")
+    logd("abc: " + abc)
+    if abc == "":
+        logd("no abc")
+    # let ret_code = doc.get_int("retCode")
+    # let ret_msg = doc.get_str("retMsg")
+    # if ret_code != 0:
+    #     return
+
+    # let result = doc.get_object("result")
+
+    # let time_second = atol(result.get_str("timeSecond"))
+    # let time_nano = atol(result.get_str("timeNano"))
+
+    _ = doc
+    _ = od_parser
 
 
 fn test_raw():
@@ -88,6 +117,40 @@ fn test_far():
     let d = f.get_str("d")
     logi("d: " + d)
     f.release()
+
+
+fn test_fixed():
+    let f0 = Fixed()
+    logd(str(f0))
+
+    let f1 = Fixed(1)
+    logd(str(f1))
+
+    let f2 = Fixed(100)
+    logd(str(f2))
+
+    let f3 = Fixed(1.2)
+    logd(str(f3))
+
+    let f4 = Fixed("1000.5")
+    logd(str(f4))
+
+    let f5 = f2 + f4
+    logd(str(f5))
+
+    let f6 = Fixed("1.0999").round_to_fractional(10000000000)
+    logd("f6: " + str(f6))
+
+    let f7 = Fixed("1.123456").round(2)
+    logd("f7: " + str(f7))
+
+    let f8 = f2 * f4
+    logd("f8: " + str(f8))
+
+    let f9 = Fixed("55") / Fixed(2)
+    logd("f9: " + str(f9))
+
+    # seq_photon_thread_sleep_ms(10)
 
 
 struct A:
@@ -196,6 +259,8 @@ fn test_websocket() raises:
     # let port = "443"
     # let path = "/"
 
+    logd("test_websocket")
+
     let testnet = False
     let private = False
     let category = "linear"
@@ -204,9 +269,84 @@ fn test_websocket() raises:
     let path = "/v5/private" if private else "/v5/public/" + category
 
     let ws = WebSocket(host=host, port=port, path=path)
+    let id = ws.get_id()
+    var on_connect = ws.get_on_connect()
+    let on_connect_ptr = Pointer[on_connect_callback].address_of(
+        on_connect
+    ).__as_index()
+    # print("on_connect_ptr: " + str(aon_connect_ptr))
+    var on_heartbeat = ws.get_on_heartbeat()
+    let on_heartbeat_ptr = Pointer[on_heartbeat_callback].address_of(
+        on_heartbeat
+    ).__as_index()
+    # print("on_heartbeat_ptr: " + str(on_heartbeat_ptr))
+    var on_message = ws.get_on_message()
+    let on_message_ptr = Pointer[on_message_callback].address_of(
+        on_message
+    ).__as_index()
+    # print("on_message_ptr: " + str(on_message_ptr))
+    set_on_connect(id, on_connect_ptr)
+    set_on_heartbeat(id, on_heartbeat_ptr)
+    set_on_message(id, on_message_ptr)
     ws.connect()
     logi("connect done")
     run_forever()
+    _ = ws
+
+
+fn get_on_message() -> on_message_callback:
+    fn wrapper(data: c_char_pointer, data_len: Int):
+        # print("get_on_message")
+        # let s = String(data, data_len)
+        # logd("get_on_message::on_message: " + s)
+        # ok
+        logd("get_on_message")
+        # let s_ref = to_string_ref(data, data_len)
+        # logi("s_ref: " + String(s_ref))
+
+        let s = c_str_to_string(data, data_len)
+        logi("s=" + s)
+
+    return wrapper
+
+
+fn test_bybitws() raises:
+    logd("test_bybitws")
+    var ws = BybitWS(
+        is_private=False,
+        testnet=False,
+        access_key="",
+        secret_key="",
+        category="linear",
+        topics="orderbook.1.BTCUSDT",
+    )
+
+    # let id = ws.get_id()
+    var on_connect = ws.get_on_connect()
+    var on_heartbeat = ws.get_on_heartbeat()
+    var on_message = get_on_message()
+
+    # let on_connect_ptr = Pointer[on_connect_callback].address_of(on_connect).__as_index()
+    # let on_heartbeat_ptr = Pointer[on_heartbeat_callback].address_of(on_heartbeat).__as_index()
+    # let on_message_ptr = Pointer[on_message_callback].address_of(on_message).__as_index()
+
+    # ws.set_on_connect(on_connect_ptr)
+    ws.set_on_connect(Pointer[on_connect_callback].address_of(on_connect))
+    ws.set_on_heartbeat(Pointer[on_heartbeat_callback].address_of(on_heartbeat))
+    ws.set_on_message(Pointer[on_message_callback].address_of(on_message))
+
+    var topics = list[String]()
+    topics.append("orderbook.1.BTCUSDT")
+    ws.set_subscription(topics)
+    ws.connect()
+
+    logd("start")
+
+    run_forever()
+
+    _ = ws
+    # except err:
+    #     logi("error: " + str(err))
 
 
 @value
@@ -443,6 +583,19 @@ fn test_add():
     # let e = seq_add_with_exception1(a, b)
 
 
+fn test_json() raises:
+    let id = seq_nanoid()
+    let yy_doc = yyjson_mut_doc()
+    yy_doc.add_str("req_id", id)
+    yy_doc.add_str("op", "subscribe")
+    var values = list[String]()
+    values.append("ab")
+    values.append("ab3")
+    yy_doc.arr_with_str("args", values)
+    let body_str = yy_doc.mut_write()
+    logd("send: " + body_str)
+
+
 fn run_forever():
     seq_photon_join_current_vcpu_into_workpool(seq_photon_work_pool())
 
@@ -454,7 +607,7 @@ fn main() raises:
 
     seq_init_log(LOG_LEVEL_DBG, "")
 
-    seq_init_net(0)
+    seq_init_net(1)
 
     logi("ret: " + str(ret))
 
@@ -464,18 +617,20 @@ fn main() raises:
     # test_ssmap()
     # test_simplelist()
     # test_far()
+    # test_fixed()
     # test_parser(s)
     # test_ondemand_parser()
     # test_fetch_orders_body_parse()
     # test_httpclient()
     # test_websocket()
+    # test_bybitws()
     # test_h()
     # test_global_value()
     # test_query_params()
     # test_yyjson()
     # test_okx()
 
-    test_bybitclient()
+    # test_bybitclient()
 
     # test_add()
 
@@ -485,12 +640,14 @@ fn main() raises:
     # test_parse_fetch_kline_body()
     # test_json_parse()
 
+    test_ws_auth()
+
     # 协程运行
     # seq_photon_thread_create_and_migrate_to_work_pool(func1, c_void_pointer.get_null())
 
     logi("started")
     run_forever()
 
-    print("Exit.")
+    # ws_hold.nop()
 
     # seq_photon_fini()

@@ -352,7 +352,7 @@ struct OndemandDocument:
 
     @always_inline
     fn __del__(owned self):
-        logd("OndemandDocument.__del__")
+        # logd("OndemandDocument.__del__")
         seq_simdjson_ondemand_document_free(self.doc)
         seq_simdjson_padded_string_free(self.padded_string)
 

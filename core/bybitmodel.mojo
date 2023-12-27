@@ -15,7 +15,7 @@ struct ServerTime(Stringable):
         return (
             "<ServerTime: timeSecond="
             + str(self.time_second)
-            + " timeNano="
+            + ", timeNano="
             + str(self.time_nano)
             + ">"
         )

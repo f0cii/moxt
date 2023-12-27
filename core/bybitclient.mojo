@@ -290,12 +290,9 @@ struct BybitClient:
         yy_doc.add_str("mode", mode)
         let body_str = yy_doc.mut_write()
 
-        print("000000")
-
         # logi("body=" + body_str)
         # {"category":"linear","symbol":"BTCUSDT","mode":"0"}
         let ret = self.do_post("/v5/position/switch-mode", body_str, True)
-        print("000001")
         # print(ret)
         if ret.status != 200:
             raise Error("error status=" + str(ret.status))
@@ -309,24 +306,15 @@ struct BybitClient:
 
         # logi(ret.body)
 
-        print("10000")
-
         let parser = DomParser(ParserBufferSize)
-        print("10001")
         let doc = parser.parse(ret.body)
-        print("10002")
         let ret_code = doc.get_int("retCode")
         let ret_msg = doc.get_str("retMsg")
-        print("10003")
         if ret_code != 0:
             raise Error("error retCode=" + str(ret_code) + ", retMsg=" + ret_msg)
 
-        print("10004")
         _ = doc
         _ = parser
-        print("10005")
-        # _ = ret
-        print("10006")
 
         return True
 
@@ -645,7 +633,7 @@ struct BybitClient:
         # {"retCode":10002,"retMsg":"invalid request, please check your server timestamp or recv_window param. req_timestamp[1696396708819],server_timestamp[1696396707813],recv_window[15000]","result":{},"retExtInfo":{},"time":1696396707814}
         var res = List[OrderInfo]()
 
-        let parser = DomParser(1024*100)
+        let parser = DomParser(1024 * 100)
         let doc = parser.parse(ret.body)
 
         let ret_code = doc.get_int("retCode")
@@ -993,8 +981,10 @@ struct BybitClient:
         _ = doc
 
         return res
-    
-    fn do_sign(self, owned headers: Headers, borrowed data: String, sign: Bool) raises -> None:
+
+    fn do_sign(
+        self, owned headers: Headers, borrowed data: String, sign: Bool
+    ) raises -> None:
         if not sign:
             return
         let time_ms_str = str(time_ns() / 1e6)
@@ -1015,7 +1005,7 @@ struct BybitClient:
         let headers = Headers()
         let param_ = param
         self.do_sign(headers, param, sign)
-        
+
         let request_path: String
         if param != "":
             request_path = str(path) + "?" + param_

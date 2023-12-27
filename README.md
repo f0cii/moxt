@@ -25,10 +25,12 @@ modular install mojo
 # 设置脚本可执行权限
 chmod +x ./scripts/ld
 chmod +x ./scripts/mojoc
-chmod +x ./moxt_test.sh
+chmod +x ./build.sh
 
 # 运行示例项目
-./moxt_test.sh
+./build.sh
+export LD_LIBRARY_PATH=./:$LD_LIBRARY_PATH
+./moxt
 
 # 创建交易实例
 

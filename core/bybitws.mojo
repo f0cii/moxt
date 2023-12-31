@@ -1,5 +1,5 @@
 from base.websocket import *
-from base.yyjson import yyjson_doc, yyjson_mut_doc, yyjson_val
+from base.yyjson import yyjson_doc, yyjson_mut_doc
 from stdlib_extensions.builtins import dict, list, HashableInt
 from stdlib_extensions.builtins.string import *
 from core.sign import hmac_sha256_hex
@@ -20,6 +20,7 @@ struct BybitWS:
     var _category: String
     var _subscription_topics: list[String]
     var _subscription_topics_str: String
+    var _heartbeat_time: Pointer[Int64]
 
     fn __init__(
         inout self,
@@ -68,51 +69,56 @@ struct BybitWS:
             path_,
             TLS1_3_VERSION,
         )
+        host_.free()
+        port_.free()
+        path_.free()
         register_websocket(ptr)
-        logd("ws._ptr=" + str(seq_address_of(ptr)))
+        # logd("ws._ptr=" + str(seq_address_of(ptr)))
         self._ptr = ptr
         self._id = seq_address_of(ptr)
+        self._heartbeat_time = Pointer[Int64].alloc(1)
+        self._heartbeat_time.store(0)
 
     fn __del__(owned self):
         print("BybitWS.__del__")
 
-    fn __copyinit__(inout self, existing: Self):
-        logd("BybitWS.__copyinit__")
-        self._ptr = existing._ptr
-        self._id = existing._id
-        self._is_private = existing._is_private
-        self._access_key = existing._access_key
-        self._secret_key = existing._secret_key
-        self._category = existing._category
-        self._subscription_topics = existing._subscription_topics
-        self._subscription_topics_str = existing._subscription_topics_str
-        logd(
-            "BybitWS.__copyinit__ existing._subscription_topics_str: "
-            + existing._subscription_topics_str
-        )
-        logd(
-            "BybitWS.__copyinit__ self._subscription_topics_str: "
-            + self._subscription_topics_str
-        )
+    # fn __copyinit__(inout self, existing: Self):
+    #     logd("BybitWS.__copyinit__")
+    #     self._ptr = existing._ptr
+    #     self._id = existing._id
+    #     self._is_private = existing._is_private
+    #     self._access_key = existing._access_key
+    #     self._secret_key = existing._secret_key
+    #     self._category = existing._category
+    #     self._subscription_topics = existing._subscription_topics
+    #     self._subscription_topics_str = existing._subscription_topics_str
+    #     logd(
+    #         "BybitWS.__copyinit__ existing._subscription_topics_str: "
+    #         + existing._subscription_topics_str
+    #     )
+    #     logd(
+    #         "BybitWS.__copyinit__ self._subscription_topics_str: "
+    #         + self._subscription_topics_str
+    #     )
 
-    fn __moveinit__(inout self, owned existing: Self):
-        logd("BybitWS.__moveinit__")
-        self._ptr = existing._ptr
-        self._id = existing._id
-        self._is_private = existing._is_private
-        self._access_key = existing._access_key
-        self._secret_key = existing._secret_key
-        self._category = existing._category
-        self._subscription_topics = existing._subscription_topics
-        self._subscription_topics_str = existing._subscription_topics_str
-        logd(
-            "BybitWS.__moveinit__ existing._subscription_topics_str: "
-            + existing._subscription_topics_str
-        )
-        logd(
-            "BybitWS.__moveinit__ self._subscription_topics_str: "
-            + self._subscription_topics_str
-        )
+    # fn __moveinit__(inout self, owned existing: Self):
+    #     logd("BybitWS.__moveinit__")
+    #     self._ptr = existing._ptr
+    #     self._id = existing._id
+    #     self._is_private = existing._is_private
+    #     self._access_key = existing._access_key
+    #     self._secret_key = existing._secret_key
+    #     self._category = existing._category
+    #     self._subscription_topics = existing._subscription_topics
+    #     self._subscription_topics_str = existing._subscription_topics_str
+    #     logd(
+    #         "BybitWS.__moveinit__ existing._subscription_topics_str: "
+    #         + existing._subscription_topics_str
+    #     )
+    #     logd(
+    #         "BybitWS.__moveinit__ self._subscription_topics_str: "
+    #         + self._subscription_topics_str
+    #     )
 
     fn get_id(self) -> Int:
         return self._id
@@ -140,8 +146,8 @@ struct BybitWS:
 
     fn subscribe(self):
         logd("BybitWS.subscribe")
-        logd("id=" + str(self._id))
-        logd("_subscription_topics_str=" + str(self._subscription_topics_str))
+        # logd("id=" + str(self._id))
+        # logd("_subscription_topics_str=" + str(self._subscription_topics_str))
         # if len(self._subscription_topics) == 0:
         #     logd("BybitWS 没有任何订阅")
         #     return
@@ -151,7 +157,7 @@ struct BybitWS:
 
         try:
             let id = seq_nanoid()
-            let yy_doc = yyjson_mut_doc()
+            var yy_doc = yyjson_mut_doc()
             yy_doc.add_str("req_id", id)
             yy_doc.add_str("op", "subscribe")
             var values = list[String]()
@@ -177,17 +183,18 @@ struct BybitWS:
 
         return wrapper
 
-    fn get_on_message(self) -> on_message_callback:
-        fn wrapper(data: c_char_pointer, data_len: Int):
-            self.on_message(data, data_len)
+    # fn get_on_message(self) -> on_message_callback:
+    #     fn wrapper(data: c_char_pointer, data_len: Int):
+    #         self.on_message(data, data_len)
 
-        return wrapper
+    #     return wrapper
 
     fn on_connect(self) -> None:
         logd("BybitWS.on_connect")
+        self._heartbeat_time.store(time_ms())
         if self._is_private:
             let param = self.generate_auth_payload()
-            logd("auth: " + param)
+            # logd("auth: " + param)
             self.send(param)
         else:
             self.subscribe()
@@ -198,12 +205,12 @@ struct BybitWS:
             let req: String = "GET/realtime" + expires
             let hex_signature = hmac_sha256_hex(req, self._secret_key)
 
-            logd("expires=" + expires)
-            logd("req=" + req)
-            logd("hex_signature=" + hex_signature)
+            # logd("expires=" + expires)
+            # logd("req=" + req)
+            # logd("hex_signature=" + hex_signature)
 
             let id = seq_nanoid()
-            let yy_doc = yyjson_mut_doc()
+            var yy_doc = yyjson_mut_doc()
             yy_doc.add_str("req_id", id)
             yy_doc.add_str("op", "auth")
             var args = list[String]()
@@ -219,18 +226,19 @@ struct BybitWS:
 
     fn on_heartbeat(self) -> None:
         logd("BybitWS.on_heartbeat")
+        let elapsed_time = time_ms() - self._heartbeat_time.load()
+        if elapsed_time <= 5000:
+            # logd("BybitWS.on_heartbeat ignore [" + str(elapsed_time) + "]")
+            return
+
         let id = seq_nanoid()
 
-        let yy_doc = yyjson_mut_doc()
+        var yy_doc = yyjson_mut_doc()
         yy_doc.add_str("req_id", id)
         yy_doc.add_str("op", "ping")
         let body_str = yy_doc.mut_write()
-        logd("send: " + body_str)
+        # logd("send: " + body_str)
         self.send(body_str)
-
-    fn on_message(self, data: c_char_pointer, data_len: Int) -> None:
-        let s = String(data, data_len)
-        self.on_message(s)
 
     fn on_message(self, s: String) -> None:
         logd("BybitWS::on_message: " + s)
@@ -243,8 +251,8 @@ struct BybitWS:
         # pong 消息
         # {"req_id":"VCKnRAeA6qrQXS8H94a-_","op":"pong","args":["1703683273204"],"conn_id":"cl9i0rtdaugsu2kfn8ng-3aqxh"}
 
-        let od_parser = OndemandParser(ParserBufferSize)
-        let doc = od_parser.parse(s)
+        let parser = OndemandParser(ParserBufferSize)
+        let doc = parser.parse(s)
         let op = doc.get_str("op")
         if op == "auth":
             let success = doc.get_bool("success")
@@ -257,7 +265,7 @@ struct BybitWS:
             pass
 
         _ = doc
-        _ = od_parser
+        _ = parser
 
     fn release(self) -> None:
         seq_websocket_delete(self._ptr)

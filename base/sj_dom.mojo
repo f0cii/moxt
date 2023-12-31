@@ -28,6 +28,10 @@ fn seq_simdjson_dom_parser_parse(
     ](parser, s, len)
 
 
+fn seq_simdjson_dom_element_is_valid(p: c_void_pointer) -> Bool:
+    return external_call["seq_simdjson_dom_element_is_valid", Bool, c_void_pointer](p)
+
+
 fn seq_simdjson_dom_element_free(p: c_void_pointer) -> None:
     external_call["seq_simdjson_dom_element_free", NoneType, c_void_pointer](p)
 
@@ -426,7 +430,9 @@ struct DomElement:
 
     @always_inline
     fn __del__(owned self):
+        # logd("DomElement.__del__")
         seq_simdjson_dom_element_free(self.p)
+        # logd("DomElement.__del__ done")
 
     @always_inline
     fn __getitem__(self, key: StringLiteral) -> DomElement:
@@ -558,7 +564,9 @@ struct DomObject(CollectionElement):
 
     @always_inline
     fn __del__(owned self):
+        # logd("DomObject.__del__")
         seq_simdjson_dom_object_free(self.p)
+        # logd("DomObject.__del__ done")
 
     @always_inline
     fn get_int(self, key: StringLiteral) -> Int:
@@ -623,7 +631,9 @@ struct DomArray:
 
     @always_inline
     fn __del__(owned self):
+        # logd("DomArray.__del__")
         seq_simdjson_dom_array_free(self.p)
+        # logd("DomArray.__del__ done")
 
     @always_inline
     fn __len__(self) -> Int:
@@ -676,42 +686,6 @@ struct DomArray:
     fn iter(self) -> DomArrayIter:
         return DomArrayIter(self.p)
 
-    @always_inline
-    fn iter_test(self) -> None:
-        let it = seq_simdjson_dom_array_begin(self.p)
-        # print('it: ', it)
-        let end = seq_simdjson_dom_array_end(self.p)
-        # print('end: ', end)
-        var count = 0
-        let e_list = List[DomObject]()
-        while seq_simdjson_dom_array_iter_not_equal(it, end):
-            # print("1", count)
-            let el = seq_simdjson_dom_array_iter_get(it)
-            # el = seq_simdjson_dom_array_iter_get_obj(it)
-            # e = DomObject(el)
-            let e = DomElement(el)
-            # print('1 e: ', e)
-            let T = e.get_uint("T")
-            let s = e.get_str("s")
-            let S = e.get_str("S")
-            # print(T, s, S)
-            let v = e.get_str("v")
-            let p = e.get_str("p")
-            let L = e.get_str("L")
-            let i_ = e.get_str("i")
-            let BT = e.get_bool("BT")
-            # print(T, s, S, v)
-            # print(p, L, i_, BT)
-            seq_simdjson_dom_array_iter_step(it)
-            # print('2 e: ', e)
-            # e.release()
-            # print('3 e: ', e)
-            # e_list.append(e)
-            count += 1
-
-        seq_simdjson_dom_array_iter_free(it)
-        seq_simdjson_dom_array_iter_free(end)
-
     fn __repr__(self) -> String:
         return "<DomArray: p={self.p}>"
 
@@ -730,8 +704,11 @@ struct DomArrayIter:
 
     @always_inline
     fn __del__(owned self):
+        # logd("DomArrayIter.__del__")
         seq_simdjson_dom_array_iter_free(self.it)
         seq_simdjson_dom_array_iter_free(self.end)
+        # seq_simdjson_dom_array_free(self.arr)
+        # logd("DomArrayIter.__del__ done")
 
     @always_inline
     fn has_element(self) -> Bool:
@@ -780,14 +757,13 @@ struct DomParser:
 
     @always_inline
     fn __init__(inout self, max_capacity: Int):
-        # logd("DomParser.__init__ max_capacity=" + str(max_capacity))
         self.p = seq_simdjson_dom_parser_new(max_capacity)
-        # logd("DomParser.__init__ OK max_capacity=" + str(max_capacity))
 
     @always_inline
     fn __del__(owned self):
         # logd("DomParser.__del__")
         seq_simdjson_dom_parser_free(self.p)
+        # logd("DomParser.__del__ done")
 
     @always_inline
     fn parse(self, s: StringLiteral) -> DomElement:
@@ -802,8 +778,10 @@ struct DomParser:
         )
 
     @always_inline
-    fn parse(self, s: String) -> DomElement:
+    fn parse(self, s: String) raises -> DomElement:
         let p = seq_simdjson_dom_parser_parse(self.p, s._buffer.data.value, len(s))
+        if not seq_simdjson_dom_element_is_valid(p):
+            raise Error("解析json出错: [" + s + "]")
         return DomElement(p)
 
     fn __repr__(self) -> String:

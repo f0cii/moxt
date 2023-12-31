@@ -1,6 +1,11 @@
 from memory import unsafe
 import .c
 from .mo import *
+from stdlib_extensions.time import time_ns
+
+
+fn time_ms() -> Int64:
+    return time_ns() / 1e6
 
 
 fn set_global_value_ptr[V: AnyRegType](id: Int, v: Pointer[V]) -> Int:
@@ -43,6 +48,8 @@ fn strtod(s: String) -> Float64:
 #     return String(ptr, data_len)
 
 
-fn to_string_ref(i: Int) -> StringRef:
-    let s = String(i)
-    return c.to_string_ref(s)
+
+
+# fn to_string_ref(i: Int) -> StringRef:
+#     let s = str(i)
+#     return c.to_string_ref(s)

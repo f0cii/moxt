@@ -8,7 +8,7 @@ from base.sj_ondemand import OndemandParser
 from base.far import Far
 from base.fixed import Fixed
 from base.ssmap import SSMap
-from base.httpclient import HttpClient, VERB_GET, Headers, StringRefPair, QueryParams
+from base.httpclient import HttpClient, VERB_GET, Headers, QueryParams
 from base.websocket import *
 from fnv1a import fnv1a64
 from stdlib_extensions.time import time_ns
@@ -83,7 +83,6 @@ fn get_on_message() -> on_message_callback:
         # logd("get_on_message::on_message: " + s)
         # ok
         logd("get_on_message")
-        # let s_ref = to_string_ref(data, data_len)
         # logi("s_ref: " + String(s_ref))
 
         let s = c_str_to_string(data, data_len)
@@ -248,6 +247,7 @@ fn main() raises:
     let ret = seq_photon_init_default()
     seq_init_photon_work_pool(2)
     seq_init_log(LOG_LEVEL_DBG, "")
+    # seq_init_log(LOG_LEVEL_OFF, "")
     seq_init_net(1)
 
     logi("初始化返回: " + str(ret))

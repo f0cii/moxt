@@ -5,7 +5,7 @@ from base.mo import *
 from base.moutil import *
 from base.httpclient import *
 
-from base.yyjson import yyjson_doc, yyjson_mut_doc, yyjson_val
+from base.yyjson import yyjson_doc, yyjson_mut_doc
 from .bybitmodel import (
     ServerTime,
     ExchangeInfo,
@@ -32,8 +32,6 @@ struct BybitClient:
     var access_key: String
     var secret_key: String
     var client: HttpClient
-    # var od_parser: OndemandParser
-    # var dom_parser: DomParser
 
     fn __init__(inout self, testnet: Bool, access_key: String, secret_key: String):
         let base_url = "https://api-testnet.bybit.com" if testnet else "https://api.bybit.com"
@@ -55,8 +53,8 @@ struct BybitClient:
         logi("body: " + str(ret.body))
 
         # {"retCode":0,"retMsg":"OK","result":{"timeSecond":"1696233582","timeNano":"1696233582169993116"},"retExtInfo":{},"time":1696233582169}
-        let od_parser = OndemandParser(ParserBufferSize)
-        let doc = od_parser.parse(ret.body)
+        let parser = OndemandParser(ParserBufferSize)
+        let doc = parser.parse(ret.body)
         let ret_code = doc.get_int("retCode")
         let ret_msg = doc.get_str("retMsg")
         if ret_code != 0:
@@ -68,7 +66,7 @@ struct BybitClient:
         let time_nano = atol(result.get_str("timeNano"))
 
         _ = doc
-        _ = od_parser
+        _ = parser
 
         return ServerTime(time_second, time_nano)
 
@@ -91,8 +89,8 @@ struct BybitClient:
         var tick_size: Float64 = 0
         var stepSize: Float64 = 0
 
-        let od_parser = OndemandParser(ParserBufferSize)
-        let doc = od_parser.parse(ret.body)
+        let parser = OndemandParser(ParserBufferSize)
+        let doc = parser.parse(ret.body)
         let ret_code = doc.get_int("retCode")
         let ret_msg = doc.get_str("retMsg")
         if ret_code != 0:
@@ -122,10 +120,13 @@ struct BybitClient:
             # logi("tick_size: " + str(tick_size))
             # logi("stepSize: " + str(stepSize))
 
+            _ = obj
+
             list_iter.step()
 
+        _ = result
         _ = doc
-        _ = od_parser
+        _ = parser
 
         return ExchangeInfo(symbol, tick_size, stepSize)
 
@@ -143,11 +144,11 @@ struct BybitClient:
         query_values["symbol"] = symbol
         query_values["interval"] = interval
         if limit > 0:
-            query_values["limit"] = to_string_ref(limit)
+            query_values["limit"] = str(limit)
         if start > 0:
-            query_values["start"] = to_string_ref(start)
+            query_values["start"] = str(start)
         if end > 0:
-            query_values["end"] = to_string_ref(end)
+            query_values["end"] = str(end)
         let query_str = query_values.to_string()
         let ret = self.do_get("/v5/market/kline", query_str, False)
         if ret.status != 200:
@@ -209,7 +210,7 @@ struct BybitClient:
         query_values["category"] = category
         query_values["symbol"] = symbol
         if limit > 0:
-            query_values["limit"] = to_string_ref(limit)
+            query_values["limit"] = str(limit)
         let query_str = query_values.to_string()
         let ret = self.do_get("/v5/market/orderbook", query_str, False)
         if ret.status != 200:
@@ -388,7 +389,7 @@ struct BybitClient:
         if time_in_force != "":
             yy_doc.add_str("timeInForce", time_in_force)
         if position_idx != 0:
-            yy_doc.add_str("positionIdx", to_string_ref(position_idx))
+            yy_doc.add_str("positionIdx", str(position_idx))
         if order_link_id != "":
             yy_doc.add_str("orderLinkId", order_link_id)
         if reduce_only:
@@ -515,7 +516,7 @@ struct BybitClient:
             raise Error("error retCode=" + str(ret_code) + ", retMsg=" + ret_msg)
 
         let result_list = root["result"]["list"].array_list()
-        for index in range(result_list.size()):
+        for index in range(len(result_list)):
             let i = result_list[index]
             let order_id = i["orderId"].str()
             let order_link_id = i["orderLinkId"].str()
@@ -595,8 +596,10 @@ struct BybitClient:
             elif account_type == "SPOT":
                 pass
 
+            _ = obj
             list_iter.step()
 
+        _ = result_list
         _ = doc
         _ = parser
 
@@ -620,7 +623,7 @@ struct BybitClient:
         if order_link_id != "":
             query_values["orderLinkId"] = order_link_id
         if limit > 0:
-            query_values["limit"] = to_string_ref(limit)
+            query_values["limit"] = str(limit)
         if cursor != "":
             query_values["cursor"] = cursor
         let query_str = query_values.to_string()
@@ -787,11 +790,11 @@ struct BybitClient:
         if order_status != "":
             query_values["orderStatus"] = order_status
         if start_time_ms > 0:
-            query_values["startTimeMs"] = to_string_ref(start_time_ms)
+            query_values["startTimeMs"] = str(start_time_ms)
         if end_time_ms > 0:
-            query_values["endTimeMs"] = to_string_ref(end_time_ms)
+            query_values["endTimeMs"] = str(end_time_ms)
         if limit > 0:
-            query_values["limit"] = to_string_ref(limit)
+            query_values["limit"] = str(limit)
         if cursor != "":
             query_values["cursor"] = cursor
         var query_str = query_values.to_string()
@@ -813,7 +816,7 @@ struct BybitClient:
 
         let result_list = root["result"]["list"].array_list()
 
-        for index in range(result_list.size()):
+        for index in range(len(result_list)):
             let i = result_list[index]
             # position_idx: int   # positionIdx
             # order_id: StringLiteral       # orderId
@@ -901,7 +904,7 @@ struct BybitClient:
 
         let result_list = root["result"]["list"].array_list()
 
-        for index in range(result_list.size()):
+        for index in range(len(result_list)):
             let i = result_list[index]
             let _symbol = i["symbol"].str()
             if _symbol != symbol:

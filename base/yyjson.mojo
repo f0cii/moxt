@@ -1,41 +1,40 @@
 import time
 import sys
 import os
-
-from simpletools.simplelist import SimpleList
+from memory import unsafe
+from base.str_cache import *
 from .c import *
 from .mo import *
 from .yyjsonbase import *
 from stdlib_extensions.builtins import dict, list, HashableInt
 
 
-alias List = SimpleList
-
-
 @value
 struct yyjson_mut_doc:
     var doc: c_void_pointer
     var root: c_void_pointer
+    var _sc: MyStringCache
 
     @always_inline
     fn __init__(inout self):
         self.doc = seq_yyjson_mut_doc_new(Pointer[UInt8]())
         self.root = seq_yyjson_mut_obj(self.doc)
         seq_yyjson_mut_doc_set_root(self.doc, self.root)
+        self._sc = MyStringCache()
 
     @always_inline
     fn __del__(owned self):
         seq_yyjson_mut_doc_free(self.doc)
 
     @always_inline
-    fn add_str(self, key: StringLiteral, value: String):
-        let c_str = to_schar_ptr(value)
+    fn add_str(inout self, key: StringLiteral, value: String):
+        let v = self._sc.set_string(value)
         _ = seq_yyjson_mut_obj_add_strn(
             self.doc,
             self.root,
             key.data()._as_scalar_pointer(),
-            c_str,
-            len(value),
+            v.data,
+            v.len,
         )
 
     @always_inline
@@ -62,9 +61,11 @@ struct yyjson_mut_doc:
         var vp = Pointer[Bool].alloc(n)
         for i in range(0, n):
             vp[i] = value[i]
-        # print(vp)
         let harr = seq_yyjson_mut_arr_with_bool(self.doc, vp, n)
-        _ = seq_yyjson_mut_obj_add_val(self.doc, self.root, key.data()._as_scalar_pointer(), harr)
+        _ = seq_yyjson_mut_obj_add_val(
+            self.doc, self.root, key.data()._as_scalar_pointer(), harr
+        )
+        vp.free()
 
     @always_inline
     fn arr_with_float(self, key: StringLiteral, value: list[Float64]) raises:
@@ -72,9 +73,11 @@ struct yyjson_mut_doc:
         var vp = Pointer[Float64].alloc(n)
         for i in range(0, n):
             vp[i] = value[i]
-        # print(vp)
         let harr = seq_yyjson_mut_arr_with_real(self.doc, vp, n)
-        _ = seq_yyjson_mut_obj_add_val(self.doc, self.root, key.data()._as_scalar_pointer(), harr)
+        _ = seq_yyjson_mut_obj_add_val(
+            self.doc, self.root, key.data()._as_scalar_pointer(), harr
+        )
+        vp.free()
 
     @always_inline
     fn arr_with_int(self, key: StringLiteral, value: list[Int]) raises:
@@ -82,19 +85,24 @@ struct yyjson_mut_doc:
         var vp = Pointer[Int].alloc(n)
         for i in range(0, n):
             vp[i] = value[i]
-        # print(vp)
         let harr = seq_yyjson_mut_arr_with_sint64(self.doc, vp, n)
-        _ = seq_yyjson_mut_obj_add_val(self.doc, self.root, key.data()._as_scalar_pointer(), harr)
+        _ = seq_yyjson_mut_obj_add_val(
+            self.doc, self.root, key.data()._as_scalar_pointer(), harr
+        )
+        vp.free()
 
     @always_inline
-    fn arr_with_str(self, key: StringLiteral, value: list[String]) raises:
+    fn arr_with_str(inout self, key: StringLiteral, value: list[String]) raises:
         let n = len(value)
-        let vp = Pointer[c_void_pointer].alloc(n)
+        let vp = Pointer[c_char_pointer].alloc(n)
         for i in range(0, n):
-            vp[i] = to_char_ptr(value[i])
-        # print(vp)
+            let v = self._sc.set_string(value[i])
+            vp[i] = v.data
         let harr = seq_yyjson_mut_arr_with_str(self.doc, vp, n)
-        _ = seq_yyjson_mut_obj_add_val(self.doc, self.root, key.data()._as_scalar_pointer(), harr)
+        _ = seq_yyjson_mut_obj_add_val(
+            self.doc, self.root, key.data()._as_scalar_pointer(), harr
+        )
+        vp.free()
 
     @always_inline
     fn mut_write(self) -> String:
@@ -102,8 +110,7 @@ struct yyjson_mut_doc:
         let json_cstr = seq_yyjson_mut_write(
             self.doc, YYJSON_WRITE_NOFLAG, Pointer[Int].address_of(pLen)
         )
-        # logi("pLen: " + str(pLen))
-        return c_str_to_string(json_cstr.bitcast[UInt8](), pLen)
+        return String(json_cstr.bitcast[Int8](), pLen + 1)
 
     fn __repr__(self) -> String:
         return "<yyjson_mut_doc: doc={self.doc}, root={self.root}>"
@@ -177,8 +184,8 @@ struct yyjson_val(CollectionElement):
         return seq_yyjson_arr_size(self.p)
 
     @always_inline
-    fn array_list(self) -> List[yyjson_val]:
-        var res = List[yyjson_val]()
+    fn array_list(self) -> list[yyjson_val]:
+        var res = list[yyjson_val]()
         var idx: Int = 0
         let max: Int = seq_yyjson_arr_size(self.p)
         var val = seq_yyjson_arr_get_first(self.p)
@@ -216,12 +223,8 @@ struct yyjson_doc:
         let flg = YYJSON_READ_INSITU if read_insitu else 0
         self.doc = seq_yyjson_read(to_char_ptr(s), len(s), flg)
 
-    # @always_inline
-    # fn __del__(self):
-    #     seq_yyjson_doc_free(self.doc)
-
     @always_inline
-    fn release(owned self):
+    fn __del__(owned self):
         seq_yyjson_doc_free(self.doc)
 
     @always_inline

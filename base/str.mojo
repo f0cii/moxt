@@ -2,12 +2,28 @@ from .list_iterator import ListIterator
 from memory import memcpy
 
 
+# @value
+# @register_passable("trivial")
+# struct Str2:
+#     var data: DynamicVector[Int8]
+
+#     fn __init__(value: StringLiteral) -> Str2:
+#         let l = len(value)
+#         let s = String(value)
+#         let p = Pointer[Int8].alloc(l)
+
+#         for i in range(l):
+#             p.store(i, s._buffer[i])
+
+#         return Str(p, l)
+
+
 @value
-@register_passable("trivial")
-struct Str:
+@register_passable
+struct Str(Stringable):
     """
     A string that is dodgy because it is not null-terminated.
-    Ref: https://github.com/igorgue/firedis/blob/617038bdd83b7b41c671c634397b2e4187f2fe62/dodgy.mojo
+    https://github.com/igorgue/firedis/blob/main/dodgy.mojo
     """
 
     var data: Pointer[Int8]
@@ -42,7 +58,11 @@ struct Str:
 
         return Str(p, l)
 
-    fn __eq__(self, other: Str) -> Bool:
+    @always_inline("nodebug")
+    fn __del__(owned self: Self):
+        self.data.free()
+
+    fn __eq__(self, other: Self) -> Bool:
         if self.size != other.size:
             return False
 
@@ -52,7 +72,7 @@ struct Str:
 
         return True
 
-    fn __ne__(self, other: Str) -> Bool:
+    fn __ne__(self, other: Self) -> Bool:
         return not self.__eq__(other)
 
     fn __iter__(self) -> ListIterator[Int8]:
@@ -60,16 +80,16 @@ struct Str:
 
     fn to_string(self) -> String:
         let ptr = Pointer[Int8]().alloc(self.size)
-
         memcpy(ptr, self.data, self.size)
+        return String(ptr, self.size + 1)
 
-        return String(ptr, self.size)
+    # fn to_string_ref(self) -> StringRef:
+    #     # 返回的StringRef有内存泄漏问题
+    #     let ptr = Pointer[Int8]().alloc(self.size)
+    #     memcpy(ptr, self.data, self.size)
+    #     return StringRef(
+    #         ptr.bitcast[__mlir_type.`!pop.scalar<si8>`]().address, self.size
+    #     )
 
-    fn to_string_ref(self) -> StringRef:
-        let ptr = Pointer[Int8]().alloc(self.size)
-
-        memcpy(ptr, self.data, self.size)
-
-        return StringRef(
-            ptr.bitcast[__mlir_type.`!pop.scalar<si8>`]().address, self.size
-        )
+    fn __str__(self) -> String:
+        return self.to_string()

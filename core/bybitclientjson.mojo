@@ -5,7 +5,7 @@ from base.mo import *
 from base.moutil import *
 from base.httpclient import *
 
-from base.yyjson import yyjson_doc, yyjson_mut_doc, yyjson_val
+from base.yyjson import yyjson_doc, yyjson_mut_doc
 from .bybitmodel import (
     ServerTime,
     ExchangeInfo,

@@ -2,6 +2,7 @@ from .c import *
 from .mo import *
 from .ssmap import SSMap
 from simpletools.simplelist import SimpleList
+from stdlib_extensions.builtins import dict, list, HashableInt, HashableStr
 
 
 alias VERB_UNKNOWN = 0
@@ -16,52 +17,41 @@ alias Headers = SSMap
 
 
 @value
-@register_passable
-struct StringRefPair(CollectionElement):
-    var name: StringRef
-    var value: StringRef
-
-
-@value
 struct QueryParams:
-    var data: SimpleList[StringRefPair]
+    var data: dict[HashableStr, String]
 
     fn __init__(inout self):
-        self.data = SimpleList[StringRefPair]()
+        self.data = dict[HashableStr, String]()
 
-    fn __setitem__(inout self, name: StringRef, value: StringRef):
-        self.data.append(StringRefPair(name, value))
+    fn __setitem__(inout self, name: String, value: String):
+        self.data[name] = value
 
     fn to_string(self) raises -> String:
-        if self.data.size() == 0:
+        if len(self.data) == 0:
             return ""
 
         var url = String("?")
-        for i in range(0, self.data.size()):
-            let name = self.data[i].name
-            let value = self.data[i].value
-            # logi("name: " + String(name) + " value: " + String(value))
-            # if value == "":
+        for item in self.data.items():
+            # if item.value == "":
             #     continue
-            url += String(name) + "=" + String(value) + "&"
+            url += str(item.key) + "=" + str(item.value) + "&"
         return url[1:-1]
 
     fn debug(inout self) raises:
-        for i in range(0, self.data.size()):
+        for item in self.data.items():
             logi(
-                String(i)
-                + ": "
-                + String(self.data[i].name)
+                # str(i)
+                # + ": "
+                str(item.key)
                 + " = "
-                + String(self.data[i].value)
+                + str(item.value)
             )
 
 
 @value
-@register_passable
 struct HttpResponse:
     var status: Int
-    var body: StringRef
+    var body: String
 
 
 @value
@@ -110,5 +100,9 @@ struct HttpClient:
             Pointer[Int].address_of(n),
         )
 
-        let s = to_string_ref(buff, n)
+        let s = c_str_to_string(buff, n)
+        buff.free()
+
+        # let s = to_string_ref(buff, n)
+        # return HttpResponse(status, s)
         return HttpResponse(status, s)

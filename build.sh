@@ -1,1 +1,1 @@
-./scripts/mojoc main.mojo -lmoxt -L . -o moxt
+./scripts/mojoc main.mojo --debug-level full -lmoxt -L . -o moxt

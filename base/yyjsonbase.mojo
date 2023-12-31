@@ -1223,13 +1223,14 @@ fn seq_yyjson_mut_arr_with_sint64(
 # SEQ_FUNC yyjson_mut_val *seq_yyjson_mut_arr_with_str(
 #     yyjson_mut_doc *doc, const char **vals, size_t count);
 fn seq_yyjson_mut_arr_with_str(
-    doc: c_void_pointer, vals: Pointer[c_void_pointer], count: c_size_t
+    doc: c_void_pointer, vals: Pointer[c_char_pointer], count: c_size_t
 ) -> c_void_pointer:
     return external_call[
         "seq_yyjson_mut_arr_with_str",
         c_void_pointer,
         c_void_pointer,
-        Pointer[c_void_pointer],
+        # Pointer[c_void_pointer],
+        Pointer[c_char_pointer],
         c_size_t,
     ](doc, vals, count)
 

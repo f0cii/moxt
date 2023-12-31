@@ -1302,3 +1302,47 @@ fn seq_skiplist_remove(list: c_void_pointer, key: Int64) -> Int64:
 
 fn seq_skiplist_search(list: c_void_pointer, key: Int64) -> Int64:
     return external_call["seq_skiplist_search", Int64, c_void_pointer, Int64](list, key)
+
+
+fn seq_skiplist_dump(list: c_void_pointer) -> None:
+    return external_call["seq_skiplist_dump", NoneType, c_void_pointer](list)
+
+
+fn seq_skiplist_begin(list: c_void_pointer) -> c_void_pointer:
+    return external_call["seq_skiplist_begin", c_void_pointer, c_void_pointer](list)
+
+
+fn seq_skiplist_end(list: c_void_pointer) -> c_void_pointer:
+    return external_call["seq_skiplist_end", c_void_pointer, c_void_pointer](list)
+
+
+fn seq_skiplist_next(list: c_void_pointer, node: c_void_pointer) -> c_void_pointer:
+    return external_call[
+        "seq_skiplist_next", c_void_pointer, c_void_pointer, c_void_pointer
+    ](list, node)
+
+
+fn seq_skiplist_node_value(
+    node: c_void_pointer, key: Pointer[Int64], value: Pointer[Int64]
+) -> None:
+    external_call[
+        "seq_skiplist_node_value",
+        NoneType,
+        c_void_pointer,
+        Pointer[Int64],
+        Pointer[Int64],
+    ](node, key, value)
+
+
+fn seq_test_sonic_cpp() -> None:
+    external_call[
+        "seq_test_sonic_cpp",
+        NoneType,
+    ]()
+
+
+fn seq_test_sonic_cpp_wrap() -> None:
+    external_call[
+        "seq_test_sonic_cpp_wrap",
+        NoneType,
+    ]()

@@ -1,5 +1,9 @@
 from simpletools.simplelist import SimpleList
 from base.str_utils import *
+from base.str import Str
+from base.fixed import Fixed
+from stdlib_extensions.builtins import dict, list, HashableInt, HashableStr
+
 
 alias List = SimpleList
 
@@ -22,9 +26,8 @@ struct ServerTime(Stringable):
 
 
 @value
-@register_passable
 struct ExchangeInfo(Stringable):
-    var symbol: StringRef
+    var symbol: String
     var tick_size: Float64  # 价格 0.01
     var step_size: Float64  # 数量 0.001
 
@@ -139,74 +142,55 @@ struct OrderBook(Stringable):
 
 
 @value
-@register_passable
 struct PositionInfo(Stringable, CollectionElement):
     var position_idx: Int
     # riskId: Int
-    var symbol: StringRef
-    var side: StringRef  # "None"
-    var size: StringRef
-    var avg_price: StringRef
-    var position_value: StringRef
+    var symbol: String
+    var side: String  # "None"
+    var size: String
+    var avg_price: String
+    var position_value: String
     # tradeMode: Int    # 0
     # positionStatus: String # Normal
     # autoAddMargin: Int    # 0
     # adlRankIndicator: Int # 0
     var leverage: Float64  # 1
     # positionBalance: String    # 0
-    var mark_price: StringRef  # 26515.73
+    var mark_price: String  # 26515.73
     # liq_price: String           # ""
     # bust_price: String          # "0.00"
-    var position_mm: StringRef  # "0"
-    var position_im: StringRef  # "0"
+    var position_mm: String  # "0"
+    var position_im: String  # "0"
     # tpslMode: String           # "Full"
-    var take_profit: StringRef  # "0.00"
-    var stop_loss: StringRef  # "0.00"
+    var take_profit: String  # "0.00"
+    var stop_loss: String  # "0.00"
     # trailingStop: String       # "0.00"
-    var unrealised_pnl: StringRef  # "0"
-    var cum_realised_pnl: StringRef  # "-19.59637027"
+    var unrealised_pnl: String  # "0"
+    var cum_realised_pnl: String  # "-19.59637027"
     # seq: Int                # 8172241025
-    var created_time: StringRef  # "1682125794703"
-    var updated_time: StringRef  # "updatedTime"
+    var created_time: String  # "1682125794703"
+    var updated_time: String  # "updatedTime"
+
+    fn __init__(inout self):
+        self.position_idx = 0
+        self.symbol = ""
+        self.side = ""
+        self.size = ""
+        self.avg_price = ""
+        self.position_value = ""
+        self.leverage = 1
+        self.mark_price = ""
+        self.position_mm = ""
+        self.position_im = ""
+        self.take_profit = ""
+        self.stop_loss = ""
+        self.unrealised_pnl = ""
+        self.cum_realised_pnl = ""
+        self.created_time = ""
+        self.updated_time = ""
 
     fn __init__(
-        position_idx: Int,
-        symbol: StringRef,
-        side: StringRef,
-        size: StringRef,
-        avg_price: StringRef,
-        position_value: StringRef,
-        leverage: Float64,
-        mark_price: StringRef,
-        position_mm: StringRef,
-        position_im: StringRef,
-        take_profit: StringRef,
-        stop_loss: StringRef,
-        unrealised_pnl: StringRef,
-        cum_realised_pnl: StringRef,
-        created_time: StringRef,
-        updated_time: StringRef,
-    ) -> Self:
-        return Self {
-            position_idx: position_idx,
-            symbol: symbol,
-            side: side,
-            size: size,
-            avg_price: avg_price,
-            position_value: position_value,
-            leverage: leverage,
-            mark_price: mark_price,
-            position_mm: position_mm,
-            position_im: position_im,
-            take_profit: take_profit,
-            stop_loss: stop_loss,
-            unrealised_pnl: unrealised_pnl,
-            cum_realised_pnl: cum_realised_pnl,
-            created_time: created_time,
-            updated_time: updated_time,
-        }
-
-    fn __init__(
+        inout self,
         position_idx: Int,
         symbol: String,
         side: String,
@@ -223,25 +207,23 @@ struct PositionInfo(Stringable, CollectionElement):
         cum_realised_pnl: String,
         created_time: String,
         updated_time: String,
-    ) -> Self:
-        return Self {
-            position_idx: position_idx,
-            symbol: to_string_ref(symbol),
-            side: to_string_ref(side),
-            size: to_string_ref(size),
-            avg_price: to_string_ref(avg_price),
-            position_value: to_string_ref(position_value),
-            leverage: leverage,
-            mark_price: to_string_ref(mark_price),
-            position_mm: to_string_ref(position_mm),
-            position_im: to_string_ref(position_im),
-            take_profit: to_string_ref(take_profit),
-            stop_loss: to_string_ref(stop_loss),
-            unrealised_pnl: to_string_ref(unrealised_pnl),
-            cum_realised_pnl: to_string_ref(cum_realised_pnl),
-            created_time: to_string_ref(created_time),
-            updated_time: to_string_ref(updated_time),
-        }
+    ):
+        self.position_idx = position_idx
+        self.symbol = symbol
+        self.side = side
+        self.size = size
+        self.avg_price = avg_price
+        self.position_value = position_value
+        self.leverage = leverage
+        self.mark_price = mark_price
+        self.position_mm = position_mm
+        self.position_im = position_im
+        self.take_profit = take_profit
+        self.stop_loss = stop_loss
+        self.unrealised_pnl = unrealised_pnl
+        self.cum_realised_pnl = cum_realised_pnl
+        self.created_time = created_time
+        self.updated_time = updated_time
 
     fn __str__(self) -> String:
         return (
@@ -278,26 +260,17 @@ struct PositionInfo(Stringable, CollectionElement):
             + ", updated_time="
             + str(self.updated_time)
             + ">"
-        )  # noqa: E501
+        )
 
 
 @value
-@register_passable
 struct OrderResponse(Stringable, CollectionElement):
-    var order_id: StringRef
-    var order_link_id: StringRef
+    var order_id: String
+    var order_link_id: String
 
-    fn __init__(order_id: StringRef, order_link_id: StringRef) -> Self:
-        return Self {
-            order_id: order_id,
-            order_link_id: order_link_id,
-        }
-
-    fn __init__(order_id: String, order_link_id: String) -> Self:
-        return Self {
-            order_id: to_string_ref(order_id),
-            order_link_id: to_string_ref(order_link_id),
-        }
+    fn __init__(inout self, order_id: String, order_link_id: String):
+        self.order_id = order_id
+        self.order_link_id = order_link_id
 
     fn __str__(self) -> String:
         return (
@@ -310,9 +283,8 @@ struct OrderResponse(Stringable, CollectionElement):
 
 
 @value
-@register_passable
 struct BalanceInfo(Stringable, CollectionElement):
-    var coin_name: StringRef
+    var coin_name: String
     var equity: Float64
     var available_to_withdraw: Float64
     var wallet_balance: Float64
@@ -320,21 +292,20 @@ struct BalanceInfo(Stringable, CollectionElement):
     var total_position_im: Float64
 
     fn __init__(
+        inout self,
         coin_name: String,
         equity: Float64,
         available_to_withdraw: Float64,
         wallet_balance: Float64,
         total_order_im: Float64,
         total_position_im: Float64,
-    ) -> Self:
-        return Self {
-            coin_name: to_string_ref(coin_name),
-            equity: equity,
-            available_to_withdraw: available_to_withdraw,
-            wallet_balance: wallet_balance,
-            total_order_im: total_order_im,
-            total_position_im: total_position_im,
-        }
+    ):
+        self.coin_name = coin_name
+        self.equity = equity
+        self.available_to_withdraw = available_to_withdraw
+        self.wallet_balance = wallet_balance
+        self.total_order_im = total_order_im
+        self.total_position_im = total_position_im
 
     fn __str__(self) -> String:
         return (
@@ -355,23 +326,22 @@ struct BalanceInfo(Stringable, CollectionElement):
 
 
 @value
-@register_passable
 struct OrderInfo(Stringable, CollectionElement):
     # position_idx:
     # 0 - 单向持仓
     # 1 - 买侧双向持仓
     # 2 - 卖侧双向持仓
     var position_idx: Int  # positionIdx
-    var order_id: StringRef  # orderId
-    var symbol: StringRef  # BTCUSDT
-    var side: StringRef  # Buy/Sell
-    var type_: StringRef  # orderType Limit/Market
+    var order_id: String  # orderId
+    var symbol: String  # BTCUSDT
+    var side: String  # Buy/Sell
+    var type_: String  # orderType Limit/Market
     var price: Float64
     var qty: Float64
     var cum_exec_qty: Float64  # cumExecQty
-    var status: StringRef  # orderStatus
-    var created_time: StringRef  # createdTime
-    var updated_time: StringRef  # updatedTime
+    var status: String  # orderStatus
+    var created_time: String  # createdTime
+    var updated_time: String  # updatedTime
     var avg_price: Float64  # avgPrice
     var cum_exec_fee: Float64  # cumExecFee
     # time_in_force:
@@ -379,48 +349,30 @@ struct OrderInfo(Stringable, CollectionElement):
     # IOC - Immediate or Cancel 无法立即成交(吃单)的部分就撤销
     # FOK - Fill or Kill 无法全部立即成交就撤销
     # PostOnly - 只做Maker单, 如果会成为Taker单则取消
-    var time_in_force: StringRef  # timeInForce
+    var time_in_force: String  # timeInForce
     var reduce_only: Bool  # reduceOnly
-    var order_link_id: StringRef  # orderLinkId
+    var order_link_id: String  # orderLinkId
+
+    fn __init__(inout self):
+        self.position_idx = 0
+        self.order_id = ""
+        self.symbol = ""
+        self.side = ""
+        self.type_ = ""
+        self.price = 0
+        self.qty = 0
+        self.cum_exec_qty = 0
+        self.status = ""
+        self.created_time = ""
+        self.updated_time = ""
+        self.avg_price = 0
+        self.cum_exec_fee = 0
+        self.time_in_force = ""
+        self.reduce_only = False
+        self.order_link_id = ""
 
     fn __init__(
-        position_idx: Int,
-        order_id: StringRef,
-        symbol: StringRef,
-        side: StringRef,
-        type_: StringRef,
-        price: Float64,
-        qty: Float64,
-        cum_exec_qty: Float64,
-        status: StringRef,
-        created_time: StringRef,
-        updated_time: StringRef,
-        avg_price: Float64,
-        cum_exec_fee: Float64,
-        time_in_force: StringRef,
-        reduce_only: Bool,
-        order_link_id: StringRef,
-    ) -> Self:
-        return Self {
-            position_idx: position_idx,
-            order_id: order_id,
-            symbol: symbol,
-            side: side,
-            type_: type_,
-            price: price,
-            qty: qty,
-            cum_exec_qty: cum_exec_qty,
-            status: status,
-            created_time: created_time,
-            updated_time: updated_time,
-            avg_price: avg_price,
-            cum_exec_fee: cum_exec_fee,
-            time_in_force: time_in_force,
-            reduce_only: reduce_only,
-            order_link_id: order_link_id,
-        }
-
-    fn __init__(
+        inout self,
         position_idx: Int,
         order_id: String,
         symbol: String,
@@ -437,25 +389,23 @@ struct OrderInfo(Stringable, CollectionElement):
         time_in_force: String,
         reduce_only: Bool,
         order_link_id: String,
-    ) -> Self:
-        return Self {
-            position_idx: position_idx,
-            order_id: to_string_ref(order_id),
-            symbol: to_string_ref(symbol),
-            side: to_string_ref(side),
-            type_: to_string_ref(type_),
-            price: price,
-            qty: qty,
-            cum_exec_qty: cum_exec_qty,
-            status: to_string_ref(status),
-            created_time: to_string_ref(created_time),
-            updated_time: to_string_ref(updated_time),
-            avg_price: avg_price,
-            cum_exec_fee: cum_exec_fee,
-            time_in_force: to_string_ref(time_in_force),
-            reduce_only: reduce_only,
-            order_link_id: to_string_ref(order_link_id),
-        }
+    ):
+        self.position_idx = position_idx
+        self.order_id = order_id
+        self.symbol = symbol
+        self.side = side
+        self.type_ = type_
+        self.price = price
+        self.qty = qty
+        self.cum_exec_qty = cum_exec_qty
+        self.status = status
+        self.created_time = created_time
+        self.updated_time = updated_time
+        self.avg_price = avg_price
+        self.cum_exec_fee = cum_exec_fee
+        self.time_in_force = time_in_force
+        self.reduce_only = reduce_only
+        self.order_link_id = order_link_id
 
     fn __str__(self) -> String:
         return (
@@ -493,3 +443,20 @@ struct OrderInfo(Stringable, CollectionElement):
             + str(self.order_link_id)
             + ">"
         )
+
+
+@value
+@register_passable
+struct OrderBookLevel(CollectionElement):
+    var price: Fixed
+    var qty: Fixed
+
+
+@value
+struct OrderBookLite:
+    var asks: list[OrderBookLevel]
+    var bids: list[OrderBookLevel]
+
+    fn __init__(inout self):
+        self.asks = list[OrderBookLevel]()
+        self.bids = list[OrderBookLevel]()

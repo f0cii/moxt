@@ -294,6 +294,10 @@ fn c_str_to_string(s: Pointer[c_char]) -> String:
     return String(s.bitcast[Int8](), strlen(s))
 
 
+# fn c_str_to_string(s: Pointer[UInt8], n: Int) -> String:
+#     return String(s.bitcast[Int8](), n)
+
+
 fn c_str_to_string(s: Pointer[c_schar], n: Int) -> String:
     let size = n + 1
     let ptr = Pointer[Int8]().alloc(size)
@@ -310,30 +314,21 @@ fn c_str_to_string(s: Pointer[c_char], n: Int) -> String:
     return String(ptr.bitcast[Int8](), size)
 
 
-fn c_charptr_to_string(s: Pointer[UInt8], n: Int) -> String:
-    return String(s.bitcast[Int8](), n)
-
-
 fn to_string_ref(s: String) -> StringRef:
     let slen = len(s)
     let ptr = Pointer[Int8]().alloc(slen)
-
     memcpy(ptr, s._buffer.data.value, slen)
-
-    return StringRef(ptr.bitcast[__mlir_type.`!pop.scalar<si8>`]().address, slen)
+    let s_ref = StringRef(ptr.bitcast[__mlir_type.`!pop.scalar<si8>`]().address, slen)
+    return s_ref
 
 
 fn to_string_ref(data: Pointer[Int8], data_len: Int) -> StringRef:
     let ptr = Pointer[Int8]().alloc(data_len)
-
     memcpy(ptr, data, data_len)
-
     return StringRef(ptr.bitcast[__mlir_type.`!pop.scalar<si8>`]().address, data_len)
 
 
 fn to_string_ref(data: Pointer[UInt8], data_len: Int) -> StringRef:
     let ptr = Pointer[Int8]().alloc(data_len)
-
     memcpy(ptr, data.bitcast[Int8](), data_len)
-
     return StringRef(ptr.bitcast[__mlir_type.`!pop.scalar<si8>`]().address, data_len)

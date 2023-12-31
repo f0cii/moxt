@@ -8,20 +8,14 @@ from base.sj_ondemand import OndemandParser
 from base.far import Far
 from base.fixed import Fixed
 from base.ssmap import SSMap
-from base.httpclient import HttpClient, VERB_GET, Headers, StringRefPair, QueryParams
+from base.httpclient import HttpClient, VERB_GET, Headers, QueryParams
 from base.websocket import *
 from fnv1a import fnv1a64
 from stdlib_extensions.time import time_ns
 from stdlib_extensions.builtins import dict, HashableInt, HashableStr
-
 from core.okxconsts import *
 from core.okxclient import *
-
-# from simpletools.simplelist import SimpleList
 from testing import assert_equal, assert_true, assert_false
-
-# from simpletools.simpletest import MojoTest
-
 from base.moutil import *
 from core.bybitmodel import *
 from core.sign import hmac_sha256_b64, hmac_sha256_hex
@@ -60,7 +54,7 @@ fn test_ondemand_parser():
 
 fn test_ws_auth():
     let s = '{"req_id":"LzIP5BH2aBVLUkmsOzg-q","success":true,"ret_msg":"","op":"auth","conn_id":"cldfn01dcjmj8l28s6sg-ngkux"}'
-    let od_parser = OndemandParser(1000*100)
+    let od_parser = OndemandParser(1000 * 100)
     let doc = od_parser.parse(s)
     let op = doc.get_str("op")
     logd("op: " + op)
@@ -623,7 +617,7 @@ fn main() raises:
     # test_fetch_orders_body_parse()
     # test_httpclient()
     # test_websocket()
-    # test_bybitws()
+    test_bybitws()
     # test_h()
     # test_global_value()
     # test_query_params()
@@ -640,7 +634,8 @@ fn main() raises:
     # test_parse_fetch_kline_body()
     # test_json_parse()
 
-    test_ws_auth()
+    # test_ws_auth()
+    # test_parse_order()
 
     # 协程运行
     # seq_photon_thread_create_and_migrate_to_work_pool(func1, c_void_pointer.get_null())

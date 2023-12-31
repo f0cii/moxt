@@ -63,6 +63,12 @@ struct Fixed(Stringable):
             _value: v_,
         }
 
+    @staticmethod
+    fn from_value(value: Int64) -> Self:
+        return Self {
+            _value: value,
+        }
+
     fn is_zero(self) -> Bool:
         return self._value == 0
 
@@ -108,4 +114,6 @@ struct Fixed(Stringable):
     fn __str__(self) -> String:
         let ptr = Pointer[c_char].alloc(17)
         let n = fixed_12_string_res(self._value, ptr)
-        return c_str_to_string(ptr, n)
+        let s = c_str_to_string(ptr, n)
+        ptr.free()
+        return s

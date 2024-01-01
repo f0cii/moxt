@@ -15,6 +15,9 @@ from typing import List
 def make_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument(
+        "--debug-level", default='none', action="store", dest="debug_level"
+    )
+    parser.add_argument(
         "-shared", default=False, action='store_true'
     )
     parser.add_argument(
@@ -77,9 +80,11 @@ def run_mojo(args, mojo_args):
     env["PATH"] = mojoc_real_dir + ":" + env["PATH"]
 
     #print("MOJOC_LD_FWD", ld_fwd_json)
-
+    
+    # print(*mojo_args)
+    
     exec_args = (
-        "mojo", "build", *mojo_args
+        "mojo", "build", "--debug-level", args.debug_level, *mojo_args
     )
     exec_kwargs = {
         "env": env,

@@ -11,9 +11,9 @@ struct OndemandValue:
 
     @always_inline
     fn __del__(owned self):
-        logd("OndemandValue.__del__")
+        # logd("OndemandValue.__del__")
         seq_simdjson_ondemand_value_free(self.p)
-        logd("OndemandValue.__del__ done")
+        # logd("OndemandValue.__del__ done")
 
     @always_inline
     fn int(self) -> Int:
@@ -153,9 +153,9 @@ struct OndemandArray(Sized):
 
     @always_inline
     fn __del__(owned self):
-        logd("OndemandArray.__del__")
+        # logd("OndemandArray.__del__")
         seq_simdjson_ondemand_array_free(self.p)
-        logd("OndemandArray.__del__ done")
+        # logd("OndemandArray.__del__ done")
 
     @always_inline
     fn __len__(self) -> Int:
@@ -218,9 +218,9 @@ struct OndemandObject:
 
     @always_inline
     fn __del__(owned self):
-        logd("OndemandObject.__del__")
+        # logd("OndemandObject.__del__")
         seq_simdjson_ondemand_object_free(self.p)
-        logd("OndemandObject.__del__ done")
+        # logd("OndemandObject.__del__ done")
 
     @always_inline
     fn get_int(self, key: StringLiteral) -> Int:
@@ -311,11 +311,11 @@ struct OndemandArrayIter:
 
     @always_inline
     fn __del__(owned self):
-        logd("OndemandArrayIter.__del__")
+        # logd("OndemandArrayIter.__del__")
         seq_simdjson_ondemand_array_iter_free(self.it)
         seq_simdjson_ondemand_array_iter_free(self.end)
-        logd("OndemandArrayIter.__del__ done")
         # seq_simdjson_ondemand_array_free(self.arr)
+        # logd("OndemandArrayIter.__del__ done")
 
     @always_inline
     fn has_value(self) -> Bool:
@@ -392,10 +392,10 @@ struct OndemandDocument:
 
     @always_inline
     fn __del__(owned self):
-        logd("OndemandDocument.__del__")
+        # logd("OndemandDocument.__del__")
         seq_simdjson_ondemand_document_free(self.doc)
         seq_simdjson_padded_string_free(self.padded_string)
-        logd("OndemandDocument.__del__ done")
+        # logd("OndemandDocument.__del__ done")
 
     @always_inline
     fn get_int(self, key: StringLiteral) -> Int:
@@ -472,9 +472,9 @@ struct OndemandParser:
 
     @always_inline
     fn __del__(owned self):
-        logd("OndemandParser.__del__")
+        # logd("OndemandParser.__del__")
         seq_simdjson_ondemand_parser_free(self.parser)
-        logd("OndemandParser.__del__ done")
+        # logd("OndemandParser.__del__ done")
 
     @always_inline
     fn parse(self, s: StringLiteral) -> OndemandDocument:

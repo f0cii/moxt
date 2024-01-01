@@ -3,7 +3,7 @@ from memory import unsafe
 from base.mo import *
 from base.c import *
 from base.str import Str
-from base.strlist import StrList
+from base.stringlist import StringList
 from base.str_cache import *
 from base.sj_dom import *
 from base.sj_ondemand import OndemandParser
@@ -83,8 +83,8 @@ fn test_hmac_sha256_b64() raises:
 #         return StringSlice(self.ptr.offset(idxs.start), end - idxs.start)
 
 
-fn test_strlist() raises:
-    var slist = StrList()
+fn test_stringlist() raises:
+    var slist = StringList()
     slist.append("abc")
     slist.append("10000")
     
@@ -508,14 +508,14 @@ fn main() raises:
     for i in range (n):
         # test_str()
         # test_c_str()
-        # test_fixed()
+        test_fixed()
         # test_hmac_sha256_b64()
-        # test_strlist()
+        # test_stringlist()
         # test_str_cache()
         # test_query_values()
         # test_sonic_raw()
         # test_sonic()
-        test_subscribe_message()
+        # test_subscribe_message()
         # test_base()
         # test_order_info()
 

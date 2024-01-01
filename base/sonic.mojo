@@ -1,7 +1,7 @@
 from memory import unsafe
 from .c import *
 from .mo import *
-from .strlist import StrList
+from .stringlist import StringList
 
 
 fn seq_sonic_json_document_new() -> c_void_pointer:

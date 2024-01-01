@@ -415,7 +415,7 @@ fn test_data_handler() raises:
     var asks = list[OrderBookLevel]()
     var bids = list[OrderBookLevel]()
     for i in range(100):
-        dh.update("snapshot", asks, bids)
+        dh.update_orderbook("snapshot", asks, bids)
 
 
 fn test_orderbook() raises:

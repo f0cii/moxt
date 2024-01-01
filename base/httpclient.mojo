@@ -1,7 +1,6 @@
 from .c import *
 from .mo import *
 from .ssmap import SSMap
-from simpletools.simplelist import SimpleList
 from stdlib_extensions.builtins import dict, list, HashableInt, HashableStr
 
 

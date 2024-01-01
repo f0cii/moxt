@@ -609,7 +609,6 @@ fn main() raises:
 
     # seq_test_spdlog()
     # test_ssmap()
-    # test_simplelist()
     # test_far()
     # test_fixed()
     # test_parser(s)

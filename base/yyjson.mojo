@@ -140,18 +140,18 @@ struct yyjson_val(CollectionElement):
 
     @always_inline
     fn type_desc(self) -> String:
-        return c_str_to_string(seq_yyjson_get_type_desc(self.p))
+        return c_str_to_string_raw(seq_yyjson_get_type_desc(self.p))
 
     @always_inline
     fn str(self) -> String:
         let s = seq_yyjson_get_str(self.p)
-        return c_str_to_string(s)
+        return c_str_to_string_raw(s)
 
     @always_inline
     fn safe_str(self) -> String:
         if not self:
             return ""
-        return c_str_to_string(seq_yyjson_get_str(self.p))
+        return c_str_to_string_raw(seq_yyjson_get_str(self.p))
 
     @always_inline
     fn uint(self) -> Int:
@@ -171,7 +171,7 @@ struct yyjson_val(CollectionElement):
 
     @always_inline
     fn raw(self) -> String:
-        return c_str_to_string(seq_yyjson_get_raw(self.p))
+        return c_str_to_string_raw(seq_yyjson_get_raw(self.p))
 
     @always_inline
     fn object(self, key: StringLiteral) -> yyjson_val:

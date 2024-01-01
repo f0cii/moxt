@@ -26,6 +26,8 @@ from core.bybitws import *
 from core.env import load_env
 from trade.config import load_config
 from trade.trade_executor import TradeExecutor
+from trade.base_strategy import *
+from trade.grid_strategy import GridStrategy
 
 
 fn test_websocket() raises:
@@ -73,7 +75,7 @@ fn test_websocket() raises:
     ws.connect()
     logi("connect done")
     run_forever()
-    _ = ws
+    _ = ws ^
 
 
 fn get_on_message() -> on_message_callback:
@@ -125,7 +127,7 @@ fn test_bybitws() raises:
 
     run_forever()
 
-    _ = ws
+    _ = ws ^
 
 
 fn test_bybitclient() raises:
@@ -215,17 +217,16 @@ fn test_bybitclient() raises:
         #     logi("item=" + str(item))
 
         let res = client.fetch_orders(category, symbol)
-        for index in range(res.size()):
+        for index in range(len(res)):
             let item = res[index]
             logi("item=" + str(item))
         logi("OK")
     except err:
         logi("error: " + str(err))
 
-    # _ = client
     run_forever()
 
-    _ = client
+    _ = client ^
 
 
 fn run_forever():
@@ -258,11 +259,12 @@ fn main() raises:
     let app_config = load_config("config.toml")
 
     logd("加载配置信息: " + str(app_config))
-    # test_bybitws()
-    let executor = TradeExecutor(app_config)
+    # var strategy = GridStrategy(app_config)
+    var strategy = create_strategy[GridStrategy](app_config)
+    let executor = TradeExecutor[GridStrategy](app_config, strategy)
     executor.start()
 
     logi("程序已准备就绪，等待事件中...")
     run_forever()
 
-    _ = executor
+    _ = executor ^

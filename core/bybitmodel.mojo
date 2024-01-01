@@ -1,11 +1,7 @@
-from simpletools.simplelist import SimpleList
 from base.str_utils import *
 from base.str import Str
 from base.fixed import Fixed
 from stdlib_extensions.builtins import dict, list, HashableInt, HashableStr
-
-
-alias List = SimpleList
 
 
 @value
@@ -128,10 +124,10 @@ struct OrderBook(Stringable):
     订单薄
     """
 
-    var asks: List[OrderBookItem]
-    var bids: List[OrderBookItem]
+    var asks: list[OrderBookItem]
+    var bids: list[OrderBookItem]
 
-    def __init__(inout self, asks: List[OrderBookItem], bids: List[OrderBookItem]):
+    def __init__(inout self, asks: list[OrderBookItem], bids: list[OrderBookItem]):
         self.asks = asks
         self.bids = bids
 

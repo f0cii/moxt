@@ -5,7 +5,6 @@ from core.bybitmodel import *
 from stdlib_extensions.builtins import dict, list, HashableInt, HashableStr
 
 
-@value
 struct DataHandler:
     var _asks: Pointer[c_void_pointer]
     var _bids: Pointer[c_void_pointer]
@@ -16,13 +15,26 @@ struct DataHandler:
         self._asks.store(seq_skiplist_new(True))
         self._bids.store(seq_skiplist_new(False))
 
+    fn __moveinit__(inout self, owned existing: Self):
+        logi("DataHandler.__moveinit__")
+        self._asks = Pointer[c_void_pointer].alloc(1)
+        self._bids = Pointer[c_void_pointer].alloc(1)
+        self._asks.store(seq_skiplist_new(True))
+        self._bids.store(seq_skiplist_new(False))
+        # self._asks = existing._asks
+        # self._bids = existing._bids
+        # seq_skiplist_free(existing._asks.load())
+        # seq_skiplist_free(existing._bids.load())
+        # existing._asks.free()
+        # existing._bids.free()
+
     fn __del__(owned self):
         seq_skiplist_free(self._asks.load())
         seq_skiplist_free(self._bids.load())
         self._asks.free()
         self._bids.free()
 
-    fn update(
+    fn update_orderbook(
         self,
         type_: String,
         inout asks: list[OrderBookLevel],
@@ -53,7 +65,7 @@ struct DataHandler:
         except err:
             loge("DataHandler.update error: " + str(err))
 
-    fn top_n(self, n: Int) -> OrderBookLite:
+    fn get_orderbook(self, n: Int) -> OrderBookLite:
         var ob = OrderBookLite()
 
         let _asks = self._asks.load()

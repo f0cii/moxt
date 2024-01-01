@@ -1,9 +1,5 @@
 from .c import *
 from .mo import *
-from simpletools.simplelist import SimpleList
-
-
-alias List = SimpleList
 
 
 fn seq_simdjson_dom_parser_new(max_capacity: Int) -> c_void_pointer:

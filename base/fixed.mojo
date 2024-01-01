@@ -2,7 +2,7 @@ from .c import *
 from .mo import *
 
 
-alias FIXED_SCALE = 1000000000000
+alias FIXED_SCALE_I = 1000000000000
 alias FIXED_SCALE_F = 1000000000000.0
 
 
@@ -48,7 +48,7 @@ struct Fixed(Stringable):
 
     fn __init__(v: Int) -> Self:
         return Self {
-            _value: FIXED_SCALE * v,
+            _value: FIXED_SCALE_I * v,
         }
 
     fn __init__(v: FloatLiteral) -> Self:
@@ -76,7 +76,7 @@ struct Fixed(Stringable):
         return self._value
 
     fn to_int(self) -> Int:
-        return int(self._value / FIXED_SCALE)
+        return int(self._value / FIXED_SCALE_I)
 
     fn to_float(self) -> Float64:
         return self._value.cast[DType.float64]() / FIXED_SCALE_F

@@ -13,6 +13,7 @@ import .okxconsts as c
 from .okxconsts import GET, POST
 from morrow.morrow import Morrow
 from .sign import hmac_sha256_b64
+from stdlib_extensions.builtins import dict, list, HashableInt
 
 
 def get_timestamp() -> String:
@@ -74,7 +75,6 @@ def get_header_no_sign(flag: String, debug: Bool = True) -> Headers:
     return headers
 
 
-@value
 struct OkxClient:
     """
     :doc https://www.okx.com/docs-v5/zh/#overview

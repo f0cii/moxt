@@ -10,7 +10,6 @@ from base.sj_ondemand import OndemandParser
 alias ParserBufferSize = 1000 * 100
 
 
-@value
 struct BybitWS:
     var _ptr: c_void_pointer
     var _id: Int
@@ -172,12 +171,14 @@ struct BybitWS:
             loge("subscribe err " + str(err))
 
     fn get_on_connect(self) -> on_connect_callback:
+        @parameter
         fn wrapper():
             self.on_connect()
 
         return wrapper
 
     fn get_on_heartbeat(self) -> on_heartbeat_callback:
+        @parameter
         fn wrapper():
             self.on_heartbeat()
 

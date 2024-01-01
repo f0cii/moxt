@@ -84,7 +84,7 @@ struct Str(Stringable):
         return String(ptr, self.size + 1)
 
     # fn to_string_ref(self) -> StringRef:
-    #     # 返回的StringRef有内存泄漏问题
+    #     # 返回的StringRef，需要自己释放内存，否则有泄漏问题
     #     let ptr = Pointer[Int8]().alloc(self.size)
     #     memcpy(ptr, self.data, self.size)
     #     return StringRef(

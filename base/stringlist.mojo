@@ -1,13 +1,13 @@
 from .c import *
 from collections.vector import DynamicVector
-from stdlib_extensions.builtins import dict, list, HashableInt, HashableStr
+from stdlib_extensions.builtins import HashableInt, HashableStr
 
 
 struct StrListIter:
-    var data: StrList
+    var data: StringList
     var idx: Int
 
-    fn __init__(inout self, data: StrList):
+    fn __init__(inout self, data: StringList):
         self.idx = -1
         self.data = data
 
@@ -20,7 +20,7 @@ struct StrListIter:
 
 
 @value
-struct StrList(Sized, Movable):
+struct StringList(Sized, Movable):
     var _internal_vector: DynamicVector[String]
 
     fn __init__(inout self):
@@ -42,10 +42,10 @@ struct StrList(Sized, Movable):
     fn clear(inout self):
         self._internal_vector.clear()
 
-    fn copy(self) -> list[String]:
-        return list(self._internal_vector)
+    fn copy(self) -> StringList:
+        return StringList(self._internal_vector)
 
-    fn extend(inout self, other: StrList):
+    fn extend(inout self, other: Self):
         for i in range(len(other)):
             self.append(other.unchecked_get(i))
 
@@ -91,9 +91,9 @@ struct StrList(Sized, Movable):
     @always_inline
     fn unchecked_get(self, index: Int) -> String:
         return self._internal_vector[index]
-    
-    fn unchecked_get_buffer(self, index: Int) -> AnyPointer[c_schar]: #c_char_pointer:
-        return self._internal_vector[index]._buffer.data#.value
+
+    fn unchecked_get_buffer(self, index: Int) -> AnyPointer[c_schar]:
+        return self._internal_vector[index]._buffer.data
 
     fn __setitem__(inout self, key: Int, value: String) raises:
         if key >= len(self._internal_vector):
@@ -112,8 +112,8 @@ struct StrList(Sized, Movable):
         return StrListIter(self)
 
     @staticmethod
-    fn from_string(input_value: String) -> list[String]:
-        var result = list[String]()
+    fn from_string(input_value: String) -> StringList:
+        var result = StringList()
         for i in range(len(input_value)):
             result.append(input_value[i])
         return result

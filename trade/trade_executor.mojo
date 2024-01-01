@@ -6,19 +6,19 @@ from core.bybitmodel import *
 from core.bybitws import *
 from .config import AppConfig
 from .data_handler import DataHandler
+from .base_strategy import *
 
 
 alias ParserBufferSize = 1000 * 100
 
 
-@value
-struct TradeExecutor:
+struct TradeExecutor[T: BaseStrategy]:
     var _client: BybitClient
     var _public_ws: BybitWS
     var _private_ws: BybitWS
-    var _dataHandler: DataHandler
+    var _strategy: T
 
-    fn __init__(inout self, config: AppConfig) raises:
+    fn __init__(inout self, config: AppConfig, inout strategy: T) raises:
         self._client = BybitClient(
             testnet=config.testnet,
             access_key=config.access_key,
@@ -44,8 +44,8 @@ struct TradeExecutor:
             category=config.category,
             topics=private_topic,
         )
-        self._dataHandler = DataHandler()
-
+        self._strategy = strategy^
+    
     fn start(self):
         var on_connect_private = self._private_ws.get_on_connect()
         var on_heartbeat_private = self._private_ws.get_on_heartbeat()
@@ -82,12 +82,14 @@ struct TradeExecutor:
         logi("TradeExecutor.stop")
 
     fn get_private_on_message(self) -> on_message_callback:
+        @parameter
         fn wrapper(data: c_char_pointer, data_len: Int):
             self.on_private_message(data, data_len)
 
         return wrapper
 
     fn get_public_on_message(self) -> on_message_callback:
+        @parameter
         fn wrapper(data: c_char_pointer, data_len: Int):
             self.on_public_message(data, data_len)
 
@@ -182,11 +184,12 @@ struct TradeExecutor:
 
         # logd("asks=" + str(len(asks)) + " bids=" + str(len(bids)))
 
-        self._dataHandler.update(type_, asks, bids)
+        self._strategy.update_orderbook(type_, asks, bids)
 
-        _ = self._dataHandler.top_n(5)
+        let ob = self._strategy.get_orderbook(5)
+        self._strategy.on_orderbook(ob)
 
-        logd("_dataHandler.top_n(5) done")
+        # logd("process_orderbook_message done")
 
     fn process_order_message(self, inout doc: OndemandDocument) -> None:
         let data = doc.get_array("data")

@@ -41,7 +41,7 @@ fn set_on_message(id: Int, ptr: Int) -> None:
 
 fn emit_on_connect(id: Int) -> None:
     # print("emit_on_connect id=" + str(id))
-    logd("emit_on_connect")
+    # logd("emit_on_connect")
     let ptr = seq_retrieve_object_address(id)
     if ptr == 0:
         logd("emit_on_connect nil")
@@ -50,11 +50,11 @@ fn emit_on_connect(id: Int) -> None:
     let wrap = unsafe.bitcast[on_connect_callback](ptr).load()
     wrap()
     # print("emit_on_connect done id=" + str(id))
-    logd("emit_on_connect done")
+    # logd("emit_on_connect done")
 
 
 fn emit_on_heartbeat(id: Int) -> None:
-    logd("emit_on_heartbeat")
+    # logd("emit_on_heartbeat")
     let id_ = id + 1
     let ptr = seq_retrieve_object_address(id_)
     if ptr == 0:
@@ -62,7 +62,7 @@ fn emit_on_heartbeat(id: Int) -> None:
         return
     let wrap = unsafe.bitcast[on_heartbeat_callback](ptr).load()
     wrap()
-    logd("emit_on_heartbeat done")
+    # logd("emit_on_heartbeat done")
 
 
 fn emit_on_message(id: Int, data: c_char_pointer, data_len: c_size_t) -> None:
@@ -77,7 +77,6 @@ fn emit_on_message(id: Int, data: c_char_pointer, data_len: c_size_t) -> None:
     # logd("emit_on_message done")
 
 
-@value
 struct WebSocket:
     var _ptr: c_void_pointer
     var _id: Int
@@ -113,18 +112,21 @@ struct WebSocket:
         return self._id
 
     fn get_on_connect(self) -> on_connect_callback:
+        @parameter
         fn wrapper():
             self.on_connect()
 
         return wrapper
 
     fn get_on_heartbeat(self) -> on_heartbeat_callback:
+        @parameter
         fn wrapper():
             self.on_heartbeat()
 
         return wrapper
 
     fn get_on_message(self) -> on_message_callback:
+        @parameter
         fn wrapper(data: c_char_pointer, data_len: Int):
             self.on_message(data, data_len)
 

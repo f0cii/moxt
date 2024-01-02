@@ -299,7 +299,7 @@ struct BybitClient:
         切换持仓模式
         mode: 0-PositionModeMergedSingle 3-PositionModeBothSides
         """
-        let yy_doc = yyjson_mut_doc()
+        var yy_doc = yyjson_mut_doc()
         yy_doc.add_str("category", category)
         yy_doc.add_str("symbol", symbol)
         yy_doc.add_str("mode", mode)
@@ -343,7 +343,7 @@ struct BybitClient:
         """
         设置杠杆倍数
         """
-        let yy_doc = yyjson_mut_doc()
+        var yy_doc = yyjson_mut_doc()
         yy_doc.add_str("category", category)
         yy_doc.add_str("symbol", symbol)
         yy_doc.add_str("buyLeverage", buy_leverage)
@@ -391,7 +391,7 @@ struct BybitClient:
         """
         下单
         """
-        let yy_doc = yyjson_mut_doc()
+        var yy_doc = yyjson_mut_doc()
         yy_doc.add_str("category", category)
         yy_doc.add_str("symbol", symbol)
         yy_doc.add_str("side", side)
@@ -447,13 +447,13 @@ struct BybitClient:
         self,
         category: StringLiteral,
         symbol: StringLiteral,
-        order_id: StringLiteral,
-        order_link_id: StringLiteral = "",
+        order_id: String = "",
+        order_link_id: String = "",
     ) raises -> OrderResponse:
         """
         撤单
         """
-        let yy_doc = yyjson_mut_doc()
+        var yy_doc = yyjson_mut_doc()
         yy_doc.add_str("category", category)
         yy_doc.add_str("symbol", symbol)
         if order_id != "":
@@ -502,7 +502,7 @@ struct BybitClient:
         """
         批量撤单
         """
-        let yy_doc = yyjson_mut_doc()
+        var yy_doc = yyjson_mut_doc()
         yy_doc.add_str("category", category)
         yy_doc.add_str("symbol", symbol)
         if base_coin != "":
@@ -720,69 +720,6 @@ struct BybitClient:
         _ = result ^
         _ = doc ^
         _ = parser ^
-
-        logi("fetch_orders parse ok")
-
-        # let parser = OndemandParser(1024 * 10)
-        # logd("300001")
-        # let doc = parser.parse(body)
-        # logd("300002")
-        # let ret_code = doc.get_int("retCode")
-        # let ret_msg = doc.get_str("retMsg")
-        # if ret_code != 0:
-        #     raise Error("error retCode=" + str(ret_code) + ", retMsg=" + ret_msg)
-
-        # let result = doc.get_object("result")
-        # let result_list = result.get_array("list")
-
-        # let list_iter = result_list.iter()
-
-        # while list_iter.has_value():
-        #     let i = list_iter.get()
-        #     let position_idx = i.get_int("positionIdx")
-        #     let order_id = i.get_str("orderId")
-        #     let _symbol = i.get_str("symbol")
-        #     let side = i.get_str("side")
-        #     let order_type = i.get_str("orderType")
-        #     let price = strtod(i.get_str("price"))
-        #     let qty = strtod(i.get_str("qty"))
-        #     let cum_exec_qty = strtod(i.get_str("cumExecQty"))
-        #     let order_status = i.get_str("orderStatus")
-        #     let created_time = i.get_str("createdTime")
-        #     let updated_time = i.get_str("updatedTime")
-        #     let avg_price = strtod(i.get_str("avgPrice"))
-        #     let cum_exec_fee = strtod(i.get_str("cumExecFee"))
-        #     let time_in_force = i.get_str("timeInForce")
-        #     let reduce_only = i.get_bool("reduceOnly")
-        #     let order_link_id = i.get_str("orderLinkId")
-
-        #     res.append(
-        #         OrderInfo(
-        #             position_idx=position_idx,
-        #             order_id=order_id,
-        #             symbol=_symbol,
-        #             side=side,
-        #             type_=order_type,
-        #             price=price,
-        #             qty=qty,
-        #             cum_exec_qty=cum_exec_qty,
-        #             status=order_status,
-        #             created_time=created_time,
-        #             updated_time=updated_time,
-        #             avg_price=avg_price,
-        #             cum_exec_fee=cum_exec_fee,
-        #             time_in_force=time_in_force,
-        #             reduce_only=reduce_only,
-        #             order_link_id=order_link_id,
-        #         )
-        #     )
-
-        #     list_iter.step()
-
-        # _ = result_list
-        # _ = result
-        # _ = doc
-        # _ = parser
 
         return res
 

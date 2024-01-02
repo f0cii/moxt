@@ -780,5 +780,12 @@ struct DomParser:
             raise Error("解析json出错: [" + s + "]")
         return DomElement(p)
 
+    @always_inline
+    fn parse(self, data: Pointer[c_schar], data_len: Int) raises -> DomElement:
+        let p = seq_simdjson_dom_parser_parse(self.p, data, data_len)
+        if not seq_simdjson_dom_element_is_valid(p):
+            raise Error("解析json出错: [" + c_str_to_string(data, data_len) + "]")
+        return DomElement(p)
+
     fn __repr__(self) -> String:
         return "<DomParser: p={self.p}>"

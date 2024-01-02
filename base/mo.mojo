@@ -1025,44 +1025,6 @@ fn seq_client_free(client: c_void_pointer) -> None:
     external_call["seq_cclient_free", NoneType, c_void_pointer](client)
 
 
-@value
-@register_passable
-struct HttpRequest:
-    var path: c_char_pointer
-    # size_t path_len;
-    var path_len: c_size_t
-    var verb: Int64
-    var headers: c_void_pointer
-    var body: c_char_pointer
-    var body_len: c_size_t
-    var debug: Bool
-
-
-# SEQ_FUNC int64_t seq_client_do_request(Client *client, HttpRequest *request, char *res, size_t *n);
-fn seq_client_do_request_v0(
-    client: c_void_pointer,
-    path: c_char_pointer,
-    path_len: c_size_t,
-    verb: Int,
-    headers: c_void_pointer,
-    body: c_char_pointer,
-    body_len: c_size_t,
-    res: c_void_pointer,
-    # res: Pointer[UInt8],
-    n: Pointer[c_size_t],
-) -> Int:
-    var request = HttpRequest(path, path_len, verb, headers, body, body_len, True)
-    return external_call[
-        "seq_cclient_do_request",
-        Int,
-        c_void_pointer,
-        Pointer[HttpRequest],
-        c_void_pointer,
-        # Pointer[UInt8],
-        Pointer[c_size_t],
-    ](client, Pointer[HttpRequest].address_of(request), res, n)
-
-
 # SEQ_FUNC int64_t seq_cclient_do_request(
 #     CClient *client, const char *path, size_t path_len, int64_t verb,
 #     std::map<std::string, std::string> *headers, const char *body,

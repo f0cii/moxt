@@ -32,15 +32,21 @@ struct BybitClient:
     var client: HttpClient
 
     fn __init__(inout self, testnet: Bool, access_key: String, secret_key: String):
-        let base_url = "https://api-testnet.bybit.com" if testnet else "https://api.bybit.com"
         # print(base_url)
         self.testnet = testnet
         self.access_key = access_key
         self.secret_key = secret_key
+        let base_url = "https://api-testnet.bybit.com" if self.testnet else "https://api.bybit.com"
         self.client = HttpClient(base_url, tlsv13_client)
-        # self.client = HttpClient(base_url, tlsv12_client)
-        # self.od_parser = OndemandParser(1000 * 100)
-        # self.dom_parser = DomParser(1000 * 100)
+
+    fn __moveinit__(inout self, owned existing: Self):
+        logd("BybitClient.__moveinit__")
+        self.testnet = existing.testnet
+        self.access_key = existing.access_key
+        self.secret_key = existing.secret_key
+        let base_url = "https://api-testnet.bybit.com" if self.testnet else "https://api.bybit.com"
+        self.client = existing.client ^
+        logd("BybitClient.__moveinit__ done")
 
     fn fetch_public_time(self) raises -> ServerTime:
         let ret = self.do_get("/v3/public/time", "", False)
@@ -48,7 +54,7 @@ struct BybitClient:
             raise Error("error status=" + str(ret.status))
 
         # print(ret.body)
-        logi("body: " + str(ret.body))
+        logd("body: " + str(ret.body))
 
         # {"retCode":0,"retMsg":"OK","result":{"timeSecond":"1696233582","timeNano":"1696233582169993116"},"retExtInfo":{},"time":1696233582169}
         let parser = OndemandParser(ParserBufferSize)
@@ -80,7 +86,7 @@ struct BybitClient:
         if ret.status != 200:
             raise Error("error status=" + str(ret.status))
 
-        # logi(ret.body)
+        logd(ret.body)
 
         # {"retCode":0,"retMsg":"OK","result":{"category":"linear","list":[{"symbol":"BTCUSDT","contractType":"LinearPerpetual","status":"Trading","baseCoin":"BTC","quoteCoin":"USDT","launchTime":"1584230400000","deliveryTime":"0","deliveryFeeRate":"","priceScale":"2","leverageFilter":{"minLeverage":"1","maxLeverage":"100.00","leverageStep":"0.01"},"priceFilter":{"minPrice":"0.10","maxPrice":"199999.80","tickSize":"0.10"},"lotSizeFilter":{"maxOrderQty":"100.000","minOrderQty":"0.001","qtyStep":"0.001","postOnlyMaxOrderQty":"1000.000"},"unifiedMarginTrade":true,"fundingInterval":480,"settleCoin":"USDT","copyTrading":"both"}],"nextPageCursor":""},"retExtInfo":{},"time":1701762078208}
 
@@ -105,9 +111,9 @@ struct BybitClient:
             let obj = list_iter.get()
             let symbol_ = obj.get_str("symbol")
             # if symbol.upper() != symbol_.upper():
-            logi("symbol_: " + symbol_ + " symbol: " + symbol)
+            # logd("symbol_: " + symbol_ + " symbol: " + symbol)
             if str(symbol) != symbol_:
-                logi("not eq")
+                # logd("not eq")
                 continue
 
             let priceFilter = obj.get_object("priceFilter")
@@ -118,13 +124,14 @@ struct BybitClient:
             # logi("tick_size: " + str(tick_size))
             # logi("stepSize: " + str(stepSize))
 
-            _ = obj
+            _ = obj ^
 
             list_iter.step()
 
-        _ = result
-        _ = doc
-        _ = parser
+        _ = result_list ^
+        _ = result ^
+        _ = doc ^
+        _ = parser ^
 
         return ExchangeInfo(symbol, tick_size, stepSize)
 
@@ -194,10 +201,14 @@ struct BybitClient:
                 )
             )
 
+            _ = obj ^
+
             list_iter.step()
 
-        _ = doc
-        _ = parser
+        _ = result_list ^
+        _ = result ^
+        _ = doc ^
+        _ = parser ^
 
         return res
 
@@ -253,8 +264,10 @@ struct BybitClient:
             let qty = strtod(i_arr_list.at_str(1))
 
             asks.append(OrderBookItem(price, qty))
-
+            _ = obj ^
             list_iter_a.step()
+
+        _ = a_list ^
 
         let b_list = result.get_array("b")
 
@@ -271,8 +284,11 @@ struct BybitClient:
 
             list_iter_b.step()
 
-        _ = doc
-        _ = parser
+        _ = b_list ^
+
+        _ = result ^
+        _ = doc ^
+        _ = parser ^
 
         return OrderBook(asks, bids)
 
@@ -312,8 +328,8 @@ struct BybitClient:
         if ret_code != 0:
             raise Error("error retCode=" + str(ret_code) + ", retMsg=" + ret_msg)
 
-        _ = doc
-        _ = parser
+        _ = doc ^
+        _ = parser ^
 
         return True
 
@@ -347,16 +363,15 @@ struct BybitClient:
         # * {"retCode":110043,"retMsg":"Set leverage not modified","result":{},"retExtInfo":{},"time":1701874812321}
         # */
 
-        let doc = yyjson_doc(ret.body)
-        let root = doc.root()
-        let ret_code = root["retCode"].int()
-        let ret_msg = root["retMsg"].str()
-
-        _ = root
-        _ = doc
-
+        let parser = DomParser(ParserBufferSize)
+        let doc = parser.parse(ret.body)
+        let ret_code = doc.get_int("retCode")
+        let ret_msg = doc.get_str("retMsg")
         if ret_code != 0:
             raise Error("error retCode=" + str(ret_code) + ", retMsg=" + ret_msg)
+
+        _ = doc ^
+        _ = parser ^
 
         return True
 
@@ -411,19 +426,20 @@ struct BybitClient:
 
         # print(ret.body)
 
-        let doc = yyjson_doc(ret.body)
-        let root = doc.root()
-        let ret_code = root["retCode"].int()
-        let ret_msg = root["retMsg"].str()
+        let parser = DomParser(ParserBufferSize)
+        let doc = parser.parse(ret.body)
+        let ret_code = doc.get_int("retCode")
+        let ret_msg = doc.get_str("retMsg")
         if ret_code != 0:
             raise Error("error retCode=" + str(ret_code) + ", retMsg=" + ret_msg)
 
-        let result = root["result"]
-        let _order_id = result["orderId"].str()
-        let _order_link_id = result["orderLinkId"].str()
+        let result = doc.get_object("result")
+        let _order_id = result.get_str("orderId")
+        let _order_link_id = result.get_str("orderLinkId")
 
-        _ = root
-        _ = doc
+        _ = result ^
+        _ = doc ^
+        _ = parser ^
 
         return OrderResponse(order_id=_order_id, order_link_id=_order_link_id)
 
@@ -459,19 +475,20 @@ struct BybitClient:
         # * {"retCode":110001,"retMsg":"Order does not exist","result":{},"retExtInfo":{},"time":1689203937336}
         # * {"retCode":0,"retMsg":"OK","result":{"orderId":"1c64212f-8b16-4d4b-90c1-7a4cb55f240a","orderLinkId":""},"retExtInfo":{},"time":1689204723386}
 
-        let doc = yyjson_doc(ret.body)
-        let root = doc.root()
-        let ret_code = root["retCode"].int()
-        let ret_msg = root["retMsg"].str()
+        let parser = DomParser(ParserBufferSize)
+        let doc = parser.parse(ret.body)
+        let ret_code = doc.get_int("retCode")
+        let ret_msg = doc.get_str("retMsg")
         if ret_code != 0:
             raise Error("error retCode=" + str(ret_code) + ", retMsg=" + ret_msg)
 
-        let result = root["result"]
-        let _order_id = result["orderId"].str()
-        let _order_link_id = result["orderLinkId"].str()
+        let result = doc.get_object("result")
+        let _order_id = result.get_str("orderId")
+        let _order_link_id = result.get_str("orderLinkId")
 
-        _ = root
-        _ = doc
+        _ = result ^
+        _ = doc ^
+        _ = parser ^
 
         return OrderResponse(_order_id, _order_link_id)
 
@@ -506,22 +523,30 @@ struct BybitClient:
         # * {"retCode":0,"retMsg":"OK","result":{"list":[]},"retExtInfo":{},"time":1687612231164}
         var res = list[OrderResponse]()
 
-        let doc = yyjson_doc(ret.body)
-        let root = doc.root()
-        let ret_code = root["retCode"].int()
-        let ret_msg = root["retMsg"].str()
+        let parser = DomParser(ParserBufferSize)
+        let doc = parser.parse(ret.body)
+        let ret_code = doc.get_int("retCode")
+        let ret_msg = doc.get_str("retMsg")
         if ret_code != 0:
             raise Error("error retCode=" + str(ret_code) + ", retMsg=" + ret_msg)
 
-        let result_list = root["result"]["list"].array_list()
-        for index in range(len(result_list)):
-            let i = result_list[index]
-            let order_id = i["orderId"].str()
-            let order_link_id = i["orderLinkId"].str()
+        let result = doc.get_object("result")
+        let a_list = result.get_array("list")
+
+        let list_iter_a = a_list.iter()
+        while list_iter_a.has_element():
+            let obj = list_iter_a.get()
+
+            let order_id = obj.get_str("orderId")
+            let order_link_id = obj.get_str("orderLinkId")
             res.append(OrderResponse(order_id=order_id, order_link_id=order_link_id))
 
-        _ = root
-        _ = doc
+            list_iter_a.step()
+
+        _ = a_list ^
+        _ = result ^
+        _ = doc ^
+        _ = parser ^
 
         return res
 
@@ -549,7 +574,7 @@ struct BybitClient:
         # {"retCode":0,"retMsg":"OK","result":{"list":[{"accountType":"CONTRACT","accountIMRate":"","accountMMRate":"","totalEquity":"","totalWalletBalance":"","totalMarginBalance":"","totalAvailableBalance":"","totalPerpUPL":"","totalInitialMargin":"","totalMaintenanceMargin":"","accountLTV":"","coin":[{"coin":"USDT","equity":"20.21","usdValue":"","walletBalance":"20.21","borrowAmount":"","availableToBorrow":"","availableToWithdraw":"20.21","accruedInterest":"","totalOrderIM":"0","totalPositionIM":"0","totalPositionMM":"","unrealisedPnl":"0","cumRealisedPnl":"0"}]}]},"retExtInfo":{},"time":1687608906096}
         var res = list[BalanceInfo]()
 
-        let parser = OndemandParser(1000 * 100)
+        let parser = OndemandParser(ParserBufferSize)
         let doc = parser.parse(ret.body)
 
         let ret_code = doc.get_int("retCode")
@@ -591,15 +616,17 @@ struct BybitClient:
                         )
                     )
                     coin_iter.step()
+
+                _ = coin_list ^
             elif account_type == "SPOT":
                 pass
 
-            _ = obj
+            _ = obj ^
             list_iter.step()
 
-        _ = result_list
-        _ = doc
-        _ = parser
+        _ = result_list ^
+        _ = doc ^
+        _ = parser ^
 
         return res
 
@@ -634,7 +661,7 @@ struct BybitClient:
         # {"retCode":10002,"retMsg":"invalid request, please check your server timestamp or recv_window param. req_timestamp[1696396708819],server_timestamp[1696396707813],recv_window[15000]","result":{},"retExtInfo":{},"time":1696396707814}
         var res = list[OrderInfo]()
 
-        let parser = DomParser(1024 * 100)
+        let parser = DomParser(ParserBufferSize)
         let doc = parser.parse(ret.body)
 
         let ret_code = doc.get_int("retCode")
@@ -689,10 +716,10 @@ struct BybitClient:
 
             list_iter.step()
 
-        _ = result
-        _ = result_list
-        _ = doc
-        _ = parser
+        _ = result_list ^
+        _ = result ^
+        _ = doc ^
+        _ = parser ^
 
         logi("fetch_orders parse ok")
 
@@ -805,17 +832,20 @@ struct BybitClient:
 
         let res = list[OrderInfo]()
 
-        let doc = yyjson_doc(ret.body)
-        let root = doc.root()
-        let ret_code = root["retCode"].int()
-        let ret_msg = root["retMsg"].str()
+        let parser = DomParser(ParserBufferSize)
+        let doc = parser.parse(ret.body)
+        let ret_code = doc.get_int("retCode")
+        let ret_msg = doc.get_str("retMsg")
         if ret_code != 0:
             raise Error("error retCode=" + str(ret_code) + ", retMsg=" + ret_msg)
 
-        let result_list = root["result"]["list"].array_list()
+        let result = doc.get_object("result")
+        let a_list = result.get_array("list")
 
-        for index in range(len(result_list)):
-            let i = result_list[index]
+        let list_iter_a = a_list.iter()
+        while list_iter_a.has_element():
+            let i = list_iter_a.get()
+
             # position_idx: int   # positionIdx
             # order_id: StringLiteral       # orderId
             # symbol: StringLiteral
@@ -870,8 +900,12 @@ struct BybitClient:
                 )
             )
 
-        _ = root
-        _ = doc
+            list_iter_a.step()
+
+        _ = a_list ^
+        _ = result ^
+        _ = doc ^
+        _ = parser ^
 
         return res
 
@@ -893,17 +927,20 @@ struct BybitClient:
 
         let res = list[PositionInfo]()
 
-        let doc = yyjson_doc(ret.body)
-        let root = doc.root()
-        let ret_code = root["retCode"].int()
-        let ret_msg = root["retMsg"].str()
+        let parser = DomParser(ParserBufferSize)
+        let doc = parser.parse(ret.body)
+        let ret_code = doc.get_int("retCode")
+        let ret_msg = doc.get_str("retMsg")
         if ret_code != 0:
             raise Error("error retCode=" + str(ret_code) + ", retMsg=" + ret_msg)
 
-        let result_list = root["result"]["list"].array_list()
+        let result = doc.get_object("result")
+        let a_list = result.get_array("list")
 
-        for index in range(len(result_list)):
-            let i = result_list[index]
+        let list_iter_a = a_list.iter()
+        while list_iter_a.has_element():
+            let i = list_iter_a.get()
+
             let _symbol = i["symbol"].str()
             if _symbol != symbol:
                 continue
@@ -978,21 +1015,25 @@ struct BybitClient:
             )
             res.append(pos)
 
-        _ = root
-        _ = doc
+            list_iter_a.step()
+
+        _ = a_list ^
+        _ = result ^
+        _ = doc ^
+        _ = parser ^
 
         return res
 
     fn do_sign(
-        self, owned headers: Headers, borrowed data: String, sign: Bool
+        self, inout headers: Headers, borrowed data: String, sign: Bool
     ) raises -> None:
         if not sign:
             return
         let time_ms_str = str(time_ns() / 1e6)
         let recv_window_str = "15000"
-        logd("do_sign: " + data)
+        # logd("do_sign: " + data)
         let payload = data
-        logd("do_sign: " + data)
+        # logd("do_sign: " + data)
         let param_str = time_ms_str + self.access_key + recv_window_str + payload
         let sign_str = hmac_sha256_hex(param_str, self.secret_key)
         headers["X-BAPI-API-KEY"] = self.access_key
@@ -1003,7 +1044,7 @@ struct BybitClient:
     fn do_get(
         self, path: StringLiteral, param: String, sign: Bool
     ) raises -> HttpResponse:
-        let headers = Headers()
+        var headers = Headers()
         let param_ = param
         self.do_sign(headers, param, sign)
 
@@ -1012,8 +1053,8 @@ struct BybitClient:
             request_path = str(path) + "?" + param_
         else:
             request_path = path
-        logd("request_path: " + request_path)
-        logd("param: " + param_)
+        # logd("request_path: " + request_path)
+        # logd("param: " + param_)
         return self.client.get(request_path, headers=headers)
 
     fn do_post(

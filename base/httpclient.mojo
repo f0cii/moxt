@@ -53,24 +53,39 @@ struct HttpResponse:
     var body: String
 
 
-@value
 struct HttpClient:
+    var _base_url: StringLiteral
+    var _method: Int
     var ptr: c_void_pointer
-    # var buff: Pointer[UInt8]
 
     fn __init__(inout self, base_url: StringLiteral, method: Int = tlsv12_client):
-        # print("Client.__init__")
+        logd("HttpClient.__init__")
+        self._base_url = base_url
+        self._method = method
         self.ptr = seq_client_new(
             base_url.data()._as_scalar_pointer(), len(base_url), method
         )
-        # self.buff = Pointer[UInt8].alloc(1024 * 64)
-        logd("HttpClient.__init__")
+        logd("HttpClient.__init__ done")
+
+    fn __moveinit__(inout self, owned existing: Self):
+        logi("HttpClient.__moveinit__")
+        self._base_url = existing._base_url
+        self._method = existing._method
+        self.ptr = seq_client_new(
+            self._base_url.data()._as_scalar_pointer(),
+            len(self._base_url),
+            self._method,
+        )
+        existing.ptr = c_void_pointer.get_null()
+        logi("HttpClient.__moveinit__ done")
 
     fn __del__(owned self):
         logd("HttpClient.__del__")
-        seq_client_free(self.ptr)
-        # self.res.free()
-        logd("HttpClient.__del__ success")
+        let NULL = c_void_pointer.get_null()
+        if self.ptr != NULL:
+            seq_client_free(self.ptr)
+            self.ptr = NULL
+        logd("HttpClient.__del__ done")
 
     fn get(self, request_path: String, headers: Headers) -> HttpResponse:
         # print("get", request_path, headers)
@@ -102,6 +117,6 @@ struct HttpClient:
         let s = c_str_to_string(buff, n)
         buff.free()
 
-        # let s = to_string_ref(buff, n)
-        # return HttpResponse(status, s)
+        # print("s=" + s)
+
         return HttpResponse(status, s)

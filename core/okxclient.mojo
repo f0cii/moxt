@@ -63,7 +63,7 @@ def get_header(
     headers["x-simulated-trading"] = flag
     # if debug:
     #     print('header: ', header)
-    return headers
+    return headers ^
 
 
 def get_header_no_sign(flag: String, debug: Bool = True) -> Headers:
@@ -72,7 +72,7 @@ def get_header_no_sign(flag: String, debug: Bool = True) -> Headers:
     headers["x-simulated-trading"] = flag
     # if debug:
     #     print('headers: ', headers)
-    return headers
+    return headers ^
 
 
 struct OkxClient:

@@ -16,7 +16,7 @@ trait StrategyConstructible:
         ...
 
 
-trait BaseStrategy(DefaultConstructible, StrategyConstructible, Movable):
+trait BaseStrategy(StrategyConstructible, Movable):
     fn on_init(self):
         ...
 

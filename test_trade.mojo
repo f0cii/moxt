@@ -22,7 +22,8 @@ from core.bybitmodel import *
 from core.bybitclient import *
 from core.bybitclientjson import *
 from core.bybitws import *
-from trade.data_handler import DataHandler
+from trade.config import AppConfig
+from trade.platform import Platform
 from stdlib_extensions.builtins.string import __str_contains__
 
 
@@ -407,15 +408,15 @@ fn test_parse_orderbook() raises:
         pass
 
 
-fn test_data_handler() raises:
+fn test_platform() raises:
     let asks_ = seq_skiplist_new(True)
     seq_skiplist_free(asks_)
 
-    let dh = DataHandler()
+    let platform = Platform(AppConfig())
     var asks = list[OrderBookLevel]()
     var bids = list[OrderBookLevel]()
     for i in range(100):
-        dh.update_orderbook("snapshot", asks, bids)
+        platform.update_orderbook("snapshot", asks, bids)
 
 
 fn test_orderbook() raises:
@@ -523,11 +524,11 @@ fn main() raises:
         # test_parse_position()
         # test_parse_orderbook()
 
-        # test_data_handler()
+        # test_platform()
         # test_orderbook()
         # test_parse_orderbook_bids()
 
-    logi("完成")
+    logi("Done!!!")
     run_forever()
 
     # ./scripts/mojoc test_trade.mojo -lmoxt -L . -o test_trade

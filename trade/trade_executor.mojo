@@ -5,7 +5,7 @@ from core.bybitclient import BybitClient
 from core.bybitmodel import *
 from core.bybitws import *
 from .config import AppConfig
-from .data_handler import DataHandler
+from .platform import *
 from .base_strategy import *
 
 
@@ -18,7 +18,7 @@ struct TradeExecutor[T: BaseStrategy]:
     var _private_ws: BybitWS
     var _strategy: T
 
-    fn __init__(inout self, config: AppConfig, inout strategy: T) raises:
+    fn __init__(inout self, config: AppConfig, owned strategy: T) raises:
         self._client = BybitClient(
             testnet=config.testnet,
             access_key=config.access_key,
@@ -44,7 +44,7 @@ struct TradeExecutor[T: BaseStrategy]:
             category=config.category,
             topics=private_topic,
         )
-        self._strategy = strategy^
+        self._strategy = strategy ^
     
     fn start(self):
         var on_connect_private = self._private_ws.get_on_connect()
@@ -74,6 +74,8 @@ struct TradeExecutor[T: BaseStrategy]:
         self._public_ws.set_on_message(
             Pointer[on_message_callback].address_of(on_message_public)
         )
+
+        self._strategy.on_init()
 
         self._private_ws.connect()
         self._public_ws.connect()
@@ -122,11 +124,12 @@ struct TradeExecutor[T: BaseStrategy]:
 
     fn on_public_message(self, data: c_char_pointer, data_len: Int):
         try:
-            let s = c_str_to_string(data, data_len)
-            logi("on_public_message message: " + s)
+            # let s = c_str_to_string(data, data_len)
+            # logi("on_public_message message: " + s)
 
             let parser = DomParser(ParserBufferSize)
-            var doc = parser.parse(s)
+            # var doc = parser.parse(s)
+            var doc = parser.parse(data, data_len)
             let topic = doc.get_str("topic")
 
             if __str_contains__("orderbook.", topic):
@@ -185,7 +188,6 @@ struct TradeExecutor[T: BaseStrategy]:
         # logd("asks=" + str(len(asks)) + " bids=" + str(len(bids)))
 
         self._strategy.update_orderbook(type_, asks, bids)
-
         let ob = self._strategy.get_orderbook(5)
         self._strategy.on_orderbook(ob)
 

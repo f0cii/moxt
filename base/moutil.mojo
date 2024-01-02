@@ -8,6 +8,10 @@ fn time_ms() -> Int64:
     return time_ns() / 1e6
 
 
+fn time_us() -> Int64:
+    return time_ns() / 1e3
+
+
 fn set_global_value_ptr[V: AnyRegType](id: Int, v: Pointer[V]) -> Int:
     let ptr = v.__as_index()
     seq_store_object_address(id, ptr)

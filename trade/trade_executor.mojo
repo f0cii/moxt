@@ -115,8 +115,8 @@ struct TradeExecutor[T: BaseStrategy]:
         elif topic != "":
             return
 
-        _ = doc
-        _ = parser
+        _ = doc ^
+        _ = parser ^
 
         let msg = s
 
@@ -124,19 +124,19 @@ struct TradeExecutor[T: BaseStrategy]:
 
     fn on_public_message(self, data: c_char_pointer, data_len: Int):
         try:
-            # let s = c_str_to_string(data, data_len)
-            # logi("on_public_message message: " + s)
+            let s = c_str_to_string(data, data_len)
+            logi("on_public_message message: " + s)
 
             let parser = DomParser(ParserBufferSize)
-            # var doc = parser.parse(s)
-            var doc = parser.parse(data, data_len)
+            var doc = parser.parse(s)
+            # var doc = parser.parse(data, data_len)
             let topic = doc.get_str("topic")
 
             if __str_contains__("orderbook.", topic):
                 self.process_orderbook_message(doc)
 
-            _ = doc
-            _ = parser
+            _ = doc ^
+            _ = parser ^
         except err:
             loge("on_public_message error: " + str(err))
             _ = exit(0)
@@ -163,10 +163,10 @@ struct TradeExecutor[T: BaseStrategy]:
             # logd("price: " + str(price))
             # logd("qty: " + str(qty))
             asks.append(OrderBookLevel(price, qty))
-            _ = a_obj
+            _ = a_obj ^
             a_iter.step()
 
-        _ = a
+        _ = a ^
         
         let b = data.get_array("b")
         let b_iter = b.iter()
@@ -182,8 +182,8 @@ struct TradeExecutor[T: BaseStrategy]:
             _ = b_obj
             b_iter.step()
 
-        _ = b
-        _ = data
+        _ = b ^
+        _ = data ^
 
         # logd("asks=" + str(len(asks)) + " bids=" + str(len(bids)))
 
@@ -191,7 +191,7 @@ struct TradeExecutor[T: BaseStrategy]:
         let ob = self._strategy.get_orderbook(5)
         self._strategy.on_orderbook(ob)
 
-        # logd("process_orderbook_message done")
+        logd("process_orderbook_message done")
 
     fn process_order_message(self, inout doc: OndemandDocument) -> None:
         let data = doc.get_array("data")
@@ -224,7 +224,7 @@ struct TradeExecutor[T: BaseStrategy]:
 
             iter.step()
 
-        _ = data
+        _ = data ^
         
     fn process_position_message(self, inout doc: OndemandDocument) -> None:
         let data = doc.get_array("data")
@@ -272,4 +272,4 @@ struct TradeExecutor[T: BaseStrategy]:
             logd("postion_info: " + str(position_info))
             iter.step()
 
-        _ = data
+        _ = data ^

@@ -982,6 +982,7 @@ struct BybitClient:
         self, path: StringLiteral, param: String, sign: Bool
     ) raises -> HttpResponse:
         var headers = Headers()
+        headers["Connection"] = "Keep-Alive"
         let param_ = param
         self.do_sign(headers, param, sign)
 
@@ -998,6 +999,7 @@ struct BybitClient:
         self, path: StringLiteral, body: String, sign: Bool
     ) raises -> HttpResponse:
         var headers = Headers()
+        headers["Connection"] = "Keep-Alive"
         # headers["Content-Type"] = "application/json"
         self.do_sign(headers, body, sign)
         return self.client.post(path, data=body, headers=headers)

@@ -236,7 +236,7 @@ fn test_bybitclient() raises:
         let order_end = time_us()
 
         logi(
-            str(i) + ":下单返回" + str(res) + " 耗时: " + str(order_end - order_start) + " us"
+            str(i) + ":下单返回=" + str(res) + " 耗时: " + str(order_end - order_start) + " us"
         )
 
         let order_id = res.order_id

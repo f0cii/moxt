@@ -40,21 +40,18 @@ fn set_on_message(id: Int, ptr: Int) -> None:
 
 
 fn emit_on_connect(id: Int) -> None:
-    # print("emit_on_connect id=" + str(id))
-    # logd("emit_on_connect")
+    logd("emit_on_connect")
     let ptr = seq_retrieve_object_address(id)
     if ptr == 0:
         logd("emit_on_connect nil")
         return
-    # print("emit_on_connect ptr=" + str(ptr))
     let wrap = unsafe.bitcast[on_connect_callback](ptr).load()
     wrap()
-    # print("emit_on_connect done id=" + str(id))
-    # logd("emit_on_connect done")
+    logd("emit_on_connect done")
 
 
 fn emit_on_heartbeat(id: Int) -> None:
-    # logd("emit_on_heartbeat")
+    logd("emit_on_heartbeat")
     let id_ = id + 1
     let ptr = seq_retrieve_object_address(id_)
     if ptr == 0:
@@ -62,11 +59,11 @@ fn emit_on_heartbeat(id: Int) -> None:
         return
     let wrap = unsafe.bitcast[on_heartbeat_callback](ptr).load()
     wrap()
-    # logd("emit_on_heartbeat done")
+    logd("emit_on_heartbeat done")
 
 
 fn emit_on_message(id: Int, data: c_char_pointer, data_len: c_size_t) -> None:
-    # logd("emit_on_message")
+    logd("emit_on_message")
     let id_ = id + 2
     let ptr = seq_retrieve_object_address(id_)
     if ptr == 0:
@@ -74,7 +71,7 @@ fn emit_on_message(id: Int, data: c_char_pointer, data_len: c_size_t) -> None:
         return
     let wrap = unsafe.bitcast[on_message_callback](ptr).load()
     wrap(data, data_len)
-    # logd("emit_on_message done")
+    logd("emit_on_message done")
 
 
 struct WebSocket:

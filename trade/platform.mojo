@@ -14,7 +14,7 @@ struct Platform:
     var _client: BybitClient
 
     fn __init__(inout self, config: AppConfig):
-        logi("Platform.__init__")
+        logd("Platform.__init__")
         self._asks = Pointer[c_void_pointer].alloc(1)
         self._bids = Pointer[c_void_pointer].alloc(1)
         self._asks.store(0, seq_skiplist_new(True))
@@ -23,7 +23,7 @@ struct Platform:
         self._client = BybitClient(config.testnet, config.access_key, config.secret_key)
 
     fn __moveinit__(inout self, owned existing: Self):
-        logi("Platform.__moveinit__")
+        logd("Platform.__moveinit__")
         self._asks = Pointer[c_void_pointer].alloc(1)
         self._bids = Pointer[c_void_pointer].alloc(1)
         let asks_ptr = existing._asks.load(0)
@@ -32,10 +32,10 @@ struct Platform:
         self._bids.store(0, bids_ptr)
         self._config = existing._config
         self._client = existing._client ^
-        logi("Platform.__moveinit__ done")
+        logd("Platform.__moveinit__ done")
 
     fn __del__(owned self):
-        print("Platform.__del__")
+        logd("Platform.__del__")
         let NULL = c_void_pointer.get_null()
         let asks_ptr = self._asks.load(0)
         if asks_ptr != NULL:
@@ -45,7 +45,7 @@ struct Platform:
             seq_skiplist_free(bids_ptr)
         self._asks.free()
         self._bids.free()
-        print("Platform.__del__ done")
+        logd("Platform.__del__ done")
 
     fn update_orderbook(
         self,
@@ -53,6 +53,7 @@ struct Platform:
         inout asks: list[OrderBookLevel],
         inout bids: list[OrderBookLevel],
     ):
+        # logd("Platform.update_orderbook")
         if type_ == "snapshot":
             seq_skiplist_free(self._asks.load(0))
             seq_skiplist_free(self._bids.load(0))

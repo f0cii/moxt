@@ -413,10 +413,14 @@ fn test_platform() raises:
     seq_skiplist_free(asks_)
 
     let platform = Platform(AppConfig())
+    let platform_ = platform ^
     var asks = list[OrderBookLevel]()
     var bids = list[OrderBookLevel]()
+    # {"topic":"orderbook.1.BTCUSDT","type":"snapshot","ts":1704262157072,"data":{"s":"BTCUSDT","b":[["45195.00","7.794"]],"a":[["45195.10","3.567"]],"u":11104722,"seq":114545691619},"cts":1704262157070}
+    asks.append(OrderBookLevel(Fixed("45195.10"), Fixed("3.567")))
+    bids.append(OrderBookLevel(Fixed("45195.00"), Fixed("7.794")))
     for i in range(100):
-        platform.update_orderbook("snapshot", asks, bids)
+        platform_.update_orderbook("snapshot", asks, bids)
 
 
 fn test_orderbook() raises:
@@ -495,7 +499,7 @@ fn main() raises:
 
     var n = 1
     n = 1
-    n = 1000000000000
+    # n = 1000000000000
     if n == 1:
         seq_init_log(LOG_LEVEL_DBG, "")
     else:
@@ -507,26 +511,26 @@ fn main() raises:
     # logi("seq_test_sonic_cpp_wrap done")
 
     for i in range (n):
-        # test_str()
-        # test_c_str()
+        test_str()
+        test_c_str()
         test_fixed()
-        # test_hmac_sha256_b64()
-        # test_stringlist()
-        # test_str_cache()
-        # test_query_values()
+        test_hmac_sha256_b64()
+        test_stringlist()
+        test_str_cache()
+        test_query_values()
         # test_sonic_raw()
         # test_sonic()
-        # test_subscribe_message()
-        # test_base()
-        # test_order_info()
+        test_subscribe_message()
+        test_base()
+        test_order_info()
 
-        # test_parse_order()
-        # test_parse_position()
-        # test_parse_orderbook()
+        test_parse_order()
+        test_parse_position()
+        test_parse_orderbook()
 
-        # test_platform()
-        # test_orderbook()
-        # test_parse_orderbook_bids()
+        test_platform()
+        test_orderbook()
+        test_parse_orderbook_bids()
 
     logi("Done!!!")
     run_forever()

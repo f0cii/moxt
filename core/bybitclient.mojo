@@ -69,8 +69,8 @@ struct BybitClient:
         let time_second = atol(result.get_str("timeSecond"))
         let time_nano = atol(result.get_str("timeNano"))
 
-        _ = doc
-        _ = parser
+        _ = doc ^
+        _ = parser ^
 
         return ServerTime(time_second, time_nano)
 
@@ -518,7 +518,7 @@ struct BybitClient:
         if ret.status != 200:
             raise Error("error status=" + str(ret.status))
 
-        # print(ret.body)
+        # logd(ret.body)
 
         # * {"retCode":0,"retMsg":"OK","result":{"list":[]},"retExtInfo":{},"time":1687612231164}
         var res = list[OrderResponse]()
@@ -982,7 +982,7 @@ struct BybitClient:
         self, path: StringLiteral, param: String, sign: Bool
     ) raises -> HttpResponse:
         var headers = Headers()
-        headers["Connection"] = "Keep-Alive"
+        # headers["Connection"] = "Keep-Alive"
         let param_ = param
         self.do_sign(headers, param, sign)
 
@@ -993,16 +993,20 @@ struct BybitClient:
             request_path = path
         # logd("request_path: " + request_path)
         # logd("param: " + param_)
-        return self.client.get(request_path, headers=headers)
+        let res = self.client.get(request_path, headers=headers)
+        logd("res.status=" + str(res.status) + " body=" + res.body)
+        return res
 
     fn do_post(
         self, path: StringLiteral, body: String, sign: Bool
     ) raises -> HttpResponse:
         var headers = Headers()
-        headers["Connection"] = "Keep-Alive"
+        # headers["Connection"] = "Keep-Alive"
         # headers["Content-Type"] = "application/json"
         self.do_sign(headers, body, sign)
-        return self.client.post(path, data=body, headers=headers)
+        let res = self.client.post(path, data=body, headers=headers)
+        logd("res.status=" + str(res.status) + " body=" + res.body)
+        return res
 
 
 # {"retCode":10010,"retMsg":"Unmatched IP, please check your API key's bound IP addresses.","result":{},"retExtInfo":{},"time":1701783283807}

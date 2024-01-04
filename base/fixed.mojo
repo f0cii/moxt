@@ -6,14 +6,14 @@ alias FIXED_SCALE_I = 1000000000000
 alias FIXED_SCALE_F = 1000000000000.0
 
 
-fn fixed_12_new_string_n(cstr: c_char_pointer, cstr_len: c_size_t) -> Int64:
-    return external_call["fixed_12_new_string_n", Int64, c_char_pointer, c_size_t](
+fn seq_fixed12_new_string(cstr: c_char_pointer, cstr_len: c_size_t) -> Int64:
+    return external_call["seq_fixed12_new_string", Int64, c_char_pointer, c_size_t](
         cstr, cstr_len
     )
 
 
-fn fixed_12_string_res(fixed: Int64, result: c_void_pointer) -> c_size_t:
-    return external_call["fixed_12_string_res", c_size_t, Int64, c_void_pointer](
+fn seq_fixed12_to_string(fixed: Int64, result: c_void_pointer) -> c_size_t:
+    return external_call["seq_fixed12_to_string", c_size_t, Int64, c_void_pointer](
         fixed, result
     )
 
@@ -58,7 +58,7 @@ struct Fixed(Stringable):
         return Self {_value: int(FIXED_SCALE_F * v)}
 
     fn __init__(v: String) -> Self:
-        let v_ = fixed_12_new_string_n(v._buffer.data.value, len(v))
+        let v_ = seq_fixed12_new_string(v._buffer.data.value, len(v))
         return Self {
             _value: v_,
         }
@@ -80,6 +80,13 @@ struct Fixed(Stringable):
 
     fn to_float(self) -> Float64:
         return self._value.cast[DType.float64]() / FIXED_SCALE_F
+
+    fn to_string(self) -> String:
+        let ptr = Pointer[c_char].alloc(17)
+        let n = seq_fixed12_to_string(self._value, ptr)
+        let s = c_str_to_string(ptr, n)
+        ptr.free()
+        return s
 
     fn round_to_fractional(self, scale: Int) -> Self:
         let v = seq_fixed_round_to_fractional(self._value, scale)
@@ -112,8 +119,4 @@ struct Fixed(Stringable):
         return Self {_value: v}
 
     fn __str__(self) -> String:
-        let ptr = Pointer[c_char].alloc(17)
-        let n = fixed_12_string_res(self._value, ptr)
-        let s = c_str_to_string(ptr, n)
-        ptr.free()
-        return s
+        return self.to_string()

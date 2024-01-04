@@ -125,18 +125,17 @@ fn test_sonic_raw() raises:
     assert_equal(result_str, '{"a":"12345"}')
     seq_sonic_json_document_free(doc)
 
-    _ = key
-    _ = value
+    _ = value ^
 
 
 fn test_sonic() raises:
     var doc = SonicDocument()
     doc.set_object()
-    let v = String("12345")
+    let v = "12345"
     doc.add_string("a", v)
     let s = doc.to_string()
     assert_equal(s, '{"a":"12345"}')
-    _ = doc
+    _ = doc ^
 
 
 fn test_subscribe_message() raises:
@@ -476,10 +475,10 @@ fn test_parse_orderbook_bids() raises:
         orderbook.bids.append(OrderBookLevel(Fixed(price), Fixed(qty)))
         b_iter.step()
 
-    _ = data
+    _ = data ^
 
-    _ = doc
-    _ = dom_parser
+    _ = doc ^
+    _ = dom_parser ^
 
     assert_equal(len(orderbook.asks), 0)
     assert_equal(len(orderbook.bids), 1)
@@ -518,8 +517,8 @@ fn main() raises:
         test_stringlist()
         test_str_cache()
         test_query_values()
-        # test_sonic_raw()
-        # test_sonic()
+        test_sonic_raw()
+        test_sonic()
         test_subscribe_message()
         test_base()
         test_order_info()

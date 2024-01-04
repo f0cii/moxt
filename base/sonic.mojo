@@ -1,7 +1,7 @@
 from memory import unsafe
 from .c import *
 from .mo import *
-from .stringlist import StringList
+from base.str_cache import *
 
 
 fn seq_sonic_json_document_new() -> c_void_pointer:
@@ -170,10 +170,12 @@ fn seq_sonic_json_document_to_string(
 struct SonicDocument:
     var _doc: c_void_pointer
     var _alloc: c_void_pointer
+    var _sc: MyStringCache
 
     fn __init__(inout self):
         self._doc = seq_sonic_json_document_new()
         self._alloc = seq_sonic_json_document_get_allocator(self._doc)
+        self._sc = MyStringCache()
 
     fn __del__(owned self):
         seq_sonic_json_document_free(self._doc)
@@ -182,13 +184,14 @@ struct SonicDocument:
         seq_sonic_json_document_set_object(self._doc)
 
     fn add_string(inout self, key: StringLiteral, value: String) raises -> None:
+        let v = self._sc.set_string(value)
         seq_sonic_json_document_add_string(
             self._doc,
             self._alloc,
             key.data()._as_scalar_pointer(),
             len(key),
-            value._buffer.data.value,
-            len(value),
+            v.data,
+            v.len,
         )
 
     fn to_string(self, buff_size: Int = 1024) -> String:

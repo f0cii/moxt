@@ -1029,7 +1029,7 @@ fn seq_client_free(client: c_void_pointer) -> None:
 #     CClient *client, const char *path, size_t path_len, int64_t verb,
 #     std::map<std::string, std::string> *headers, const char *body,
 #     size_t body_len, char *res, size_t *n);
-fn seq_client_do_request(
+fn seq_cclient_do_request(
     client: c_void_pointer,
     path: c_char_pointer,
     path_len: c_size_t,
@@ -1039,10 +1039,11 @@ fn seq_client_do_request(
     body_len: c_size_t,
     res: c_void_pointer,
     n: Pointer[c_size_t],
+    verbose: Bool = False,
 ) -> Int:
     return __mlir_op.`pop.external_call`[
         func = "seq_cclient_do_request".value, _type=Int
-    ](client, path, path_len, verb, headers, body, body_len, res, n)
+    ](client, path, path_len, verb, headers, body, body_len, res, n, verbose)
 
 
 # SEQ_FUNC void seq_c_free(char *res);

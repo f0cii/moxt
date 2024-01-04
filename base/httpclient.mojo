@@ -57,6 +57,7 @@ struct HttpClient:
     var _base_url: StringLiteral
     var _method: Int
     var ptr: c_void_pointer
+    var _verbose: Bool
 
     fn __init__(inout self, base_url: StringLiteral, method: Int = tlsv12_client):
         logd("HttpClient.__init__")
@@ -65,10 +66,11 @@ struct HttpClient:
         self.ptr = seq_client_new(
             base_url.data()._as_scalar_pointer(), len(base_url), method
         )
+        self._verbose = False
         logd("HttpClient.__init__ done")
 
     fn __moveinit__(inout self, owned existing: Self):
-        logi("HttpClient.__moveinit__")
+        logd("HttpClient.__moveinit__")
         self._base_url = existing._base_url
         self._method = existing._method
         self.ptr = seq_client_new(
@@ -76,8 +78,9 @@ struct HttpClient:
             len(self._base_url),
             self._method,
         )
+        self._verbose = existing._verbose
         existing.ptr = c_void_pointer.get_null()
-        logi("HttpClient.__moveinit__ done")
+        logd("HttpClient.__moveinit__ done")
 
     fn __del__(owned self):
         logd("HttpClient.__del__")
@@ -87,9 +90,22 @@ struct HttpClient:
             self.ptr = NULL
         logd("HttpClient.__del__ done")
 
+    fn set_verbose(inout self, verbose: Bool):
+        self._verbose = verbose
+
+    fn delete(self, request_path: String, headers: Headers) -> HttpResponse:
+        # print("post", request_path, data, headers)
+        let res = self.do_request(request_path, VERB_DELETE, headers, "")
+        return res
+
     fn get(self, request_path: String, headers: Headers) -> HttpResponse:
         # print("get", request_path, headers)
         let res = self.do_request(request_path, VERB_GET, headers, "")
+        return res
+
+    fn head(self, request_path: String, data: String, headers: Headers) -> HttpResponse:
+        # print("post", request_path, data, headers)
+        let res = self.do_request(request_path, VERB_HEAD, headers, data)
         return res
 
     fn post(self, request_path: String, data: String, headers: Headers) -> HttpResponse:
@@ -97,12 +113,17 @@ struct HttpClient:
         let res = self.do_request(request_path, VERB_POST, headers, data)
         return res
 
+    fn put(self, request_path: String, data: String, headers: Headers) -> HttpResponse:
+        # print("post", request_path, data, headers)
+        let res = self.do_request(request_path, VERB_PUT, headers, data)
+        return res
+
     fn do_request(
         self, path: String, verb: Int, headers: Headers, body: String
     ) -> HttpResponse:
         var n: Int = 0
         let buff = Pointer[UInt8].alloc(1024 * 100)
-        let status = seq_client_do_request(
+        let status = seq_cclient_do_request(
             self.ptr,
             path._buffer.data.value,
             len(path),
@@ -112,6 +133,7 @@ struct HttpClient:
             len(body),
             buff,
             Pointer[Int].address_of(n),
+            self._verbose,
         )
 
         let s = c_str_to_string(buff, n)

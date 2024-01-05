@@ -48,6 +48,9 @@ struct BybitClient:
         self.client = existing.client ^
         logd("BybitClient.__moveinit__ done")
 
+    fn set_verbose(inout self, verbose: Bool):
+        self.client.set_verbose(verbose)
+
     fn fetch_public_time(self) raises -> ServerTime:
         let ret = self.do_get("/v3/public/time", "", False)
         if ret.status != 200:
@@ -1002,7 +1005,7 @@ struct BybitClient:
     ) raises -> HttpResponse:
         var headers = Headers()
         # headers["Connection"] = "Keep-Alive"
-        # headers["Content-Type"] = "application/json"
+        headers["Content-Type"] = "application/json"
         self.do_sign(headers, body, sign)
         let res = self.client.post(path, data=body, headers=headers)
         logd("res.status=" + str(res.status) + " body=" + res.body)

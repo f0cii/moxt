@@ -93,16 +93,10 @@ fn test_websocket() raises:
 
 
 fn get_on_message() -> on_message_callback:
+    @parameter
     fn wrapper(data: c_char_pointer, data_len: Int):
-        # print("get_on_message")
-        # let s = String(data, data_len)
-        # logd("get_on_message::on_message: " + s)
-        # ok
-        logd("get_on_message")
-        # logi("s_ref: " + String(s_ref))
-
         let s = c_str_to_string(data, data_len)
-        logi("s=" + s)
+        logi("get_on_message=" + s)
 
     return wrapper
 
@@ -156,15 +150,16 @@ fn test_bybitclient() raises:
 
     let access_key = env_dict["BYBIT_API_KEY"]
     let secret_key = env_dict["BYBIT_API_SECRET"]
-    let client = BybitClient(
+    var client = BybitClient(
         testnet=False, access_key=access_key, secret_key=secret_key
     )
 
+    # client.set_verbose(True)
+
     # 预热
-    for i in range(10):
-        let server_time = client.fetch_public_time()
-        logi(str(server_time))
-        _ = seq_photon_thread_sleep_ms(200)
+    let server_time = client.fetch_public_time()
+    logi(str(server_time))
+    # _ = seq_photon_thread_sleep_ms(200)
 
     let category = "linear"
     let symbol = "BTCUSDT"
@@ -218,7 +213,7 @@ fn test_bybitclient() raises:
     #     logi("item=" + str(item))
 
     # 测试下单速度
-    let times = 50
+    let times = 30
     var order_times = list[Int]()  # 记录每次下单耗时
     var cancel_times = list[Int]()  # 记录每次撤单耗时
 
@@ -236,7 +231,12 @@ fn test_bybitclient() raises:
         let order_end = time_us()
 
         logi(
-            str(i) + ":下单返回=" + str(res) + " 耗时: " + str(order_end - order_start) + " us"
+            str(i)
+            + ":下单返回="
+            + str(res)
+            + " 耗时: "
+            + str(order_end - order_start)
+            + " us"
         )
 
         let order_id = res.order_id

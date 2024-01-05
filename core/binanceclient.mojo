@@ -48,7 +48,7 @@ struct BinanceClient:
     fn public_time(self) raises -> Int:
         let ret = self.do_get("/fapi/v1/time", "", False)
         if ret.status != 200:
-            raise Error("error status=" + str(ret.status))
+            raise Error("error status=" + str(ret.status) + " body=" + ret.body)
 
         logd("body: " + str(ret.body))
 
@@ -103,7 +103,7 @@ struct BinanceClient:
         if reduce_only:
             query_values["reduceOnly"] = "true"
         let query_str = query_values.to_string()
-        logd(query_str)
+        # logd(query_str)
 
         let ret = self.do_post("/fapi/v1/order", query_str, True)
         # print(ret)
@@ -114,14 +114,14 @@ struct BinanceClient:
         # {"code":-1102,"msg":"Mandatory parameter 'price' was not sent, was empty/null, or malformed."}
         # {"code":-4061,"msg":"Order's position side does not match user's setting."}
         # {"orderId":237740210409,"symbol":"BTCUSDT","status":"NEW","clientOrderId":"62ayQ4MjyVIaCkvDX00dhh","price":"20000.00","avgPrice":"0.00","origQty":"0.010","executedQty":"0.000","cumQty":"0.000","cumQuote":"0.00000","timeInForce":"GTC","type":"LIMIT","reduceOnly":false,"closePosition":false,"side":"BUY","positionSide":"LONG","stopPrice":"0.00","workingType":"CONTRACT_PRICE","priceProtect":false,"origType":"LIMIT","priceMatch":"NONE","selfTradePreventionMode":"NONE","goodTillDate":0,"updateTime":1704291033033}
-        logd(ret.body)
+        # logd(ret.body)
 
         let parser = DomParser(ParserBufferSize)
         let doc = parser.parse(ret.body)
         let code = doc.get_int("code")
         if code != 0:
             let msg = doc.get_str("msg")
-            raise Error("error retCode=" + str(code) + ", retMsg=" + msg)
+            raise Error("error code=" + str(code) + ", msg=" + msg)
 
         let _order_id = doc.get_int("orderId")
         let _client_order_id = doc.get_str("clientOrderId")
@@ -147,7 +147,7 @@ struct BinanceClient:
         if client_order_id != "":
             query_values["origClientOrderId"] = client_order_id
         let query_str = query_values.to_string()
-        logd(query_str)
+        # logd(query_str)
 
         let ret = self.do_delete("/fapi/v1/order", query_str, True)
         # print(ret)
@@ -156,14 +156,14 @@ struct BinanceClient:
 
         # {"code":-2015,"msg":"Invalid API-key, IP, or permissions for action, request ip: 100.100.100.100"}
         # {"orderId":237740210409,"symbol":"BTCUSDT","status":"CANCELED","clientOrderId":"62ayQ4MjyVIaCkvDX00dhh","price":"20000.00","avgPrice":"0.00","origQty":"0.010","executedQty":"0.000","cumQty":"0.000","cumQuote":"0.00000","timeInForce":"GTC","type":"LIMIT","reduceOnly":false,"closePosition":false,"side":"BUY","positionSide":"LONG","stopPrice":"0.00","workingType":"CONTRACT_PRICE","priceProtect":false,"origType":"LIMIT","priceMatch":"NONE","selfTradePreventionMode":"NONE","goodTillDate":0,"updateTime":1704339843127}
-        logd(ret.body)
+        # logd(ret.body)
 
         let parser = DomParser(ParserBufferSize)
         let doc = parser.parse(ret.body)
         let code = doc.get_int("code")
         if code != 0:
             let msg = doc.get_str("msg")
-            raise Error("error retCode=" + str(code) + ", retMsg=" + msg)
+            raise Error("error code=" + str(code) + ", msg=" + msg)
 
         let _order_id = doc.get_int("orderId")
         let _client_order_id = doc.get_str("clientOrderId")
@@ -195,7 +195,7 @@ struct BinanceClient:
             request_path = str(path) + "?" + param_
         else:
             request_path = path
-        logd("request_path: " + request_path)
+        # logd("request_path: " + request_path)
         # logd("param: " + param_)
         return self.client.delete(request_path, headers=headers)
 
@@ -204,7 +204,7 @@ struct BinanceClient:
     ) raises -> HttpResponse:
         var headers = Headers()
         # headers["Connection"] = "Keep-Alive"
-        var param_ = self.do_sign(headers, param) if sign else param
+        let param_ = self.do_sign(headers, param) if sign else param
 
         let request_path: String
         if param_ != "":
@@ -222,7 +222,7 @@ struct BinanceClient:
         # headers["Content-Type"] = "application/json"
         if sign:
             let body_ = self.do_sign(headers, body)
-            logi("body_=" + body_)
+            # logi("body_=" + body_)
             # return HttpResponse(200, "")
             return self.client.post(path, data=body_, headers=headers)
         else:

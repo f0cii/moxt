@@ -29,9 +29,11 @@ chmod +x ./scripts/ld
 chmod +x ./scripts/mojoc
 chmod +x ./build.sh
 
-# 运行示例项目
-./build.sh
-export LD_LIBRARY_PATH=./:$LD_LIBRARY_PATH
+# 编译
+./build.sh main.mojo -o moxt
+# 设置环境变量
+source setup.sh
+# 运行
 ./moxt
 
 # 创建交易实例
@@ -41,14 +43,6 @@ export LD_LIBRARY_PATH=./:$LD_LIBRARY_PATH
 # 实现你的交易策略...
 ```
 
-## 文档
-
-详细的文档和 API 参考请参阅 [文档链接]。
-
-## 贡献
-
-欢迎贡献代码、报告问题或提出改进建议。请查看 [贡献指南] 了解更多信息。
-
 ## 授权
 
 本项目采用 MIT 授权许可 - 请查看 [LICENSE] 文件了解更多细节。
@@ -56,7 +50,3 @@ export LD_LIBRARY_PATH=./:$LD_LIBRARY_PATH
 ---
 
 **免责声明：** 本项目仅供学习和研究使用，不构成任何交易建议或投资建议。请谨慎使用该项目进行实际交易。
-
-[文档链接]: #  # TODO: 添加文档链接
-[贡献指南]: CONTRIBUTING.md # TODO: 创建贡献指南文件
-[LICENSE]: LICENSE

@@ -17,10 +17,10 @@ trait StrategyConstructible:
 
 
 trait BaseStrategy(StrategyConstructible, Movable):
-    fn on_init(self):
+    fn on_init(self) raises:
         ...
 
-    fn on_exit(self):
+    fn on_exit(self) raises:
         ...
 
     # 临时放到策略类，因为mojo的Pointer还不支持AnyType，目前只支持AnyRegType
@@ -29,22 +29,22 @@ trait BaseStrategy(StrategyConstructible, Movable):
         type_: String,
         inout asks: list[OrderBookLevel],
         inout bids: list[OrderBookLevel],
-    ):
+    ) raises:
         ...
 
-    fn get_orderbook(self, n: Int) -> OrderBookLite:
+    fn get_orderbook(self, n: Int) raises -> OrderBookLite:
         ...
 
-    fn on_tick(self):
+    fn on_tick(self) raises:
         ...
 
-    fn on_orderbook(self, ob: OrderBookLite):
+    fn on_orderbook(self, ob: OrderBookLite) raises:
         ...
 
-    fn on_order(self, order: OrderInfo):
+    fn on_order(self, order: OrderInfo) raises:
         ...
 
-    fn on_position(self, position: PositionInfo):
+    fn on_position(self, position: PositionInfo) raises:
         ...
 
 

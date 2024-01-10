@@ -175,11 +175,64 @@ struct BinanceClient:
         order_info.order_id = _order_id
         order_info.client_order_id = _client_order_id
         return order_info
+    
+    fn generate_listen_key(
+        self,
+    ) raises -> String:
+        """
+        生成listenKey (USER_STREAM)
+        """
+        let ret = self.do_post("/fapi/v1/listenKey", "", True)
+        # print(ret)
+        if ret.status != 200:
+            raise Error("error status=" + str(ret.status) + " body=" + ret.body)
+
+        logd("body=" + ret.body)
+
+        let parser = DomParser(ParserBufferSize)
+        let doc = parser.parse(ret.body)
+        let code = doc.get_int("code")
+        if code != 0:
+            let msg = doc.get_str("msg")
+            raise Error("error code=" + str(code) + ", msg=" + msg)
+
+        let listen_key = doc.get_str("listenKey")
+
+        _ = doc ^
+        _ = parser ^
+
+        return listen_key
+    
+    fn extend_listen_key(
+        self,
+    ) raises -> Bool:
+        """
+        延长listenKey有效期 (USER_STREAM)
+        """
+        let ret = self.do_put("/fapi/v1/listenKey", "", True)
+        # print(ret)
+        if ret.status != 200:
+            raise Error("error status=" + str(ret.status) + " body=" + ret.body)
+
+        logd("body=" + ret.body)
+        # {}
+
+        let parser = DomParser(ParserBufferSize)
+        let doc = parser.parse(ret.body)
+        let code = doc.get_int("code")
+        if code != 0:
+            let msg = doc.get_str("msg")
+            raise Error("error code=" + str(code) + ", msg=" + msg)
+
+        _ = doc ^
+        _ = parser ^
+
+        return True
 
     fn do_sign(self, inout headers: Headers, data: String) raises -> String:
-        let time_ms_str = str(time_ms())
+        let ts_str = "recvWindow=5000&timestamp=" + str(time_ms())
         # let recv_window_str = "5000"
-        let payload = data + "&recvWindow=5000&timestamp=" + time_ms_str
+        let payload = data + "&" + ts_str if data != "" else ts_str
         let signature = hmac_sha256_hex(payload, self.secret_key)
         headers["X-MBX-APIKEY"] = self.access_key
         return payload + "&signature=" + signature
@@ -219,7 +272,7 @@ struct BinanceClient:
         self, path: StringLiteral, body: String, sign: Bool
     ) raises -> HttpResponse:
         var headers = Headers()
-        # headers["Content-Type"] = "application/json"
+        headers["Content-Type"] = "application/json"
         if sign:
             let body_ = self.do_sign(headers, body)
             # logi("body_=" + body_)
@@ -227,3 +280,16 @@ struct BinanceClient:
             return self.client.post(path, data=body_, headers=headers)
         else:
             return self.client.post(path, data=body, headers=headers)
+    
+    fn do_put(
+        self, path: StringLiteral, body: String, sign: Bool
+    ) raises -> HttpResponse:
+        var headers = Headers()
+        headers["Content-Type"] = "application/json"
+        if sign:
+            let body_ = self.do_sign(headers, body)
+            # logi("body_=" + body_)
+            # return HttpResponse(200, "")
+            return self.client.put(path, data=body_, headers=headers)
+        else:
+            return self.client.put(path, data=body, headers=headers)

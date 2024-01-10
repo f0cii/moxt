@@ -100,22 +100,40 @@ struct Fixed(Stringable):
             _value: v,
         }
 
+    fn __eq__(self, other: Self) -> Bool:
+        return self._value == other._value
+
+    fn __ne__(self, other: Self) -> Bool:
+        return self._value != other._value
+
+    fn __lt__(self, other: Self) -> Bool:
+        return self._value < other._value
+
+    fn __le__(self, other: Self) -> Bool:
+        return self._value <= other._value
+
+    fn __gt__(self, other: Self) -> Bool:
+        return self._value > other._value
+
+    fn __ge__(self, other: Self) -> Bool:
+        return self._value >= other._value
+
     # 自定义+
-    fn __add__(self, rhs: Self) -> Self:
-        return Self {_value: self._value + rhs._value}
+    fn __add__(self, other: Self) -> Self:
+        return Self {_value: self._value + other._value}
 
     # 自定义-
-    fn __sub__(self, rhs: Self) -> Self:
-        return Self {_value: self._value - rhs._value}
+    fn __sub__(self, other: Self) -> Self:
+        return Self {_value: self._value - other._value}
 
     # 自定义*
-    fn __mul__(self, rhs: Self) -> Self:
-        let v = seq_fixed_mul(self._value, rhs._value)
+    fn __mul__(self, other: Self) -> Self:
+        let v = seq_fixed_mul(self._value, other._value)
         return Self {_value: v}
 
     # 自定义/
-    fn __truediv__(self, rhs: Self) -> Self:
-        let v = seq_fixed_truediv(self._value, rhs._value)
+    fn __truediv__(self, other: Self) -> Self:
+        let v = seq_fixed_truediv(self._value, other._value)
         return Self {_value: v}
 
     fn __str__(self) -> String:

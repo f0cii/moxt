@@ -8,6 +8,9 @@ struct Far:
 
     fn __init__(inout self):
         self.ptr = seq_far_new()
+    
+    fn __init__(inout self, ptr: c_void_pointer):
+        self.ptr = ptr
 
     fn get_int(self, key: StringLiteral) -> Int:
         return seq_far_get_int(
@@ -53,5 +56,5 @@ struct Far:
             len(value),
         )
 
-    fn release(self):
+    fn free(self):
         seq_far_free(self.ptr)

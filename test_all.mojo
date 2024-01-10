@@ -10,9 +10,8 @@ from base.fixed import Fixed
 from base.ssmap import SSMap
 from base.httpclient import HttpClient, VERB_GET, Headers, QueryParams
 from base.websocket import *
-from fnv1a import fnv1a64
 from stdlib_extensions.time import time_ns
-from stdlib_extensions.builtins import dict, HashableInt, HashableStr
+from stdlib_extensions.builtins import list, dict, HashableInt, HashableStr
 from core.okxconsts import *
 from core.okxclient import *
 from testing import assert_equal, assert_true, assert_false
@@ -110,7 +109,7 @@ fn test_far():
     f.set_str("d", "hello")
     let d = f.get_str("d")
     logi("d: " + d)
-    f.release()
+    f.free()
 
 
 fn test_fixed():
@@ -204,12 +203,10 @@ fn test_ssmap():
     let c = sm["b"]
     print(c)
     print(len(c))
-    sm.release()
 
     var sm1 = SSMap()
     sm1["a"] = "1"
     print(sm1["a"])
-    sm1.release()
 
 
 @value
@@ -237,7 +234,6 @@ fn test_httpclient():
     _ = client.get("/v3/public/time", headers)
     _ = client.do_request("/v3/public/time", VERB_GET, headers, "")
     _ = client.do_request("/v3/public/time", VERB_GET, headers, "")
-    headers.release()
 
 
 fn test_websocket() raises:
@@ -285,7 +281,7 @@ fn test_websocket() raises:
     ws.connect()
     logi("connect done")
     run_forever()
-    _ = ws
+    _ = ws ^
 
 
 fn get_on_message() -> on_message_callback:
@@ -338,7 +334,7 @@ fn test_bybitws() raises:
 
     run_forever()
 
-    _ = ws
+    _ = ws ^
     # except err:
     #     logi("error: " + str(err))
 
@@ -502,7 +498,7 @@ fn test_bybitclient() raises:
         #     logi("item=" + str(item))
 
         let res = client.fetch_orders(category, symbol)
-        for index in range(res.size()):
+        for index in range(len(res)):
             let item = res[index]
             logi("item=" + str(item))
         logi("OK")
@@ -512,11 +508,11 @@ fn test_bybitclient() raises:
     # _ = client
     run_forever()
 
-    _ = client
+    _ = client ^
 
 
 fn test_yyjson():
-    let doc = yyjson_mut_doc()
+    var doc = yyjson_mut_doc()
     doc.add_str("category", "abc")
     doc.add_str("symbol", "ddd")
     doc.add_str("mode", "1")
@@ -579,7 +575,7 @@ fn test_add():
 
 fn test_json() raises:
     let id = seq_nanoid()
-    let yy_doc = yyjson_mut_doc()
+    var yy_doc = yyjson_mut_doc()
     yy_doc.add_str("req_id", id)
     yy_doc.add_str("op", "subscribe")
     var values = list[String]()
@@ -616,7 +612,7 @@ fn main() raises:
     # test_fetch_orders_body_parse()
     # test_httpclient()
     # test_websocket()
-    test_bybitws()
+    # test_bybitws()
     # test_h()
     # test_global_value()
     # test_query_params()

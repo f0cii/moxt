@@ -1,22 +1,33 @@
+from os.atomic import Atomic
 from stdlib_extensions.builtins.string import __str_contains__
 from base.sj_ondemand import *
 from base.sj_dom import *
+from base.thread import *
 from core.bybitclient import BybitClient
 from core.bybitmodel import *
 from core.bybitws import *
 from .config import AppConfig
 from .platform import *
 from .base_strategy import *
+from .grid_strategy import *
 
 
 alias ParserBufferSize = 1000 * 100
 
 
-struct TradeExecutor[T: BaseStrategy]:
+trait Runable:
+    fn run(self):
+        ...
+
+
+struct TradeExecutor[T: BaseStrategy](Movable, Runable):
     var _client: BybitClient
     var _public_ws: BybitWS
     var _private_ws: BybitWS
     var _strategy: T
+    # var _tc_executor: TimedClosureExecutor
+    # var _timer: c_void_pointer
+    var _is_initialized: Atomic[DType.int64]
 
     fn __init__(inout self, config: AppConfig, owned strategy: T) raises:
         self._client = BybitClient(
@@ -45,8 +56,21 @@ struct TradeExecutor[T: BaseStrategy]:
             topics=private_topic,
         )
         self._strategy = strategy ^
+        # self._tc_executor = TimedClosureExecutor()
+        # self._timer = c_void_pointer.get_null()
+        self._is_initialized = Atomic[DType.int64](0)
     
-    fn start(self):
+    fn __moveinit__(inout self, owned existing: Self):
+        print("TradeExecutor.__moveinit__")
+        self._client = existing._client ^
+        self._public_ws = existing._public_ws ^
+        self._private_ws = existing._private_ws ^
+        self._strategy = existing._strategy ^
+        # self._tc_executor = existing._tc_executor ^
+        # self._timer = existing._timer
+        self._is_initialized = Atomic[DType.int64](existing._is_initialized.value)
+
+    fn start(inout self) raises:
         var on_connect_private = self._private_ws.get_on_connect()
         var on_heartbeat_private = self._private_ws.get_on_heartbeat()
         var on_message_private = self.get_private_on_message()
@@ -75,14 +99,40 @@ struct TradeExecutor[T: BaseStrategy]:
             Pointer[on_message_callback].address_of(on_message_public)
         )
 
+        # @parameter
+        # fn _run() raises -> None:
+        #     logi("on_init start")
+        #     self._strategy.on_init()
+        #     logi("on_init end")
+
+        # run_coro(_run)
+
         self._strategy.on_init()
 
         self._private_ws.connect()
         self._public_ws.connect()
 
-    fn stop(self):
-        logi("TradeExecutor.stop")
+        # seq_photon_timer_new(1000 * 50, trade_executor_on_timer, True)
 
+        self._is_initialized = 1
+        logi("TradeExecutor started")
+
+    fn stop_now(self):
+        logi("TradeExecutor.stop")
+        try:
+            self._strategy.on_exit()
+        except err:
+            loge("on_exit error: " + str(err))
+    
+    fn _get_ptr[T: Movable](inout self) -> AnyPointer[T]:
+        # constrained[Self._check[T]() != -1, "not a union element type"]()
+        let ptr = Pointer.address_of(self).address
+        var result = AnyPointer[T]()
+        result.value = __mlir_op.`pop.pointer.bitcast`[
+            _type = __mlir_type[`!kgen.pointer<:`, Movable, ` `, T, `>`]
+        ](ptr)
+        return result
+    
     fn get_private_on_message(self) -> on_message_callback:
         @parameter
         fn wrapper(data: c_char_pointer, data_len: Int):
@@ -99,7 +149,7 @@ struct TradeExecutor[T: BaseStrategy]:
 
     fn on_private_message(self, data: c_char_pointer, data_len: Int):
         let s = c_str_to_string(data, data_len)
-        logi("on_private_message message: " + s)
+        logd("on_private_message message: " + s)
         let parser = OndemandParser(ParserBufferSize)
         var doc = parser.parse(s)
         let topic = doc.get_str("topic")
@@ -118,14 +168,14 @@ struct TradeExecutor[T: BaseStrategy]:
         _ = doc ^
         _ = parser ^
 
-        let msg = s
+        # let msg = s
 
-        self._private_ws.on_message(msg)
+        self._private_ws.on_message(s)
 
     fn on_public_message(self, data: c_char_pointer, data_len: Int):
         try:
             let s = c_str_to_string(data, data_len)
-            logi("on_public_message message: " + s)
+            logd("on_public_message message: " + s)
 
             let parser = DomParser(ParserBufferSize)
             var doc = parser.parse(s)
@@ -141,7 +191,7 @@ struct TradeExecutor[T: BaseStrategy]:
             loge("on_public_message error: " + str(err))
             _ = exit(0)
     
-    fn process_orderbook_message(self, inout doc: DomElement) -> None:
+    fn process_orderbook_message(self, inout doc: DomElement) raises -> None:
         # logd("process_orderbook_message")
         # {"topic":"orderbook.1.BTCUSDT","type":"snapshot","ts":1702645020909,"data":{"s":"BTCUSDT","b":[["42663.50","0.910"]],"a":[["42663.60","11.446"]],"u":2768099,"seq":108881526829},"cts":1702645020906}
         # {"topic":"orderbook.1.BTCUSDT","type":"snapshot","ts":1703834857207,"data":{"s":"BTCUSDT","b":[["42489.90","130.419"]],"a":[["42493.80","132.979"]],"u":326106,"seq":8817548764},"cts":1703834853055}
@@ -188,8 +238,9 @@ struct TradeExecutor[T: BaseStrategy]:
         # logd("asks=" + str(len(asks)) + " bids=" + str(len(bids)))
 
         self._strategy.update_orderbook(type_, asks, bids)
-        let ob = self._strategy.get_orderbook(5)
-        self._strategy.on_orderbook(ob)
+        if self.is_initialized():
+            let ob = self._strategy.get_orderbook(5)
+            self._strategy.on_orderbook(ob)
 
         logd("process_orderbook_message done")
 
@@ -221,6 +272,11 @@ struct TradeExecutor[T: BaseStrategy]:
                         cumExecQty, orderStatus, createdTime, updatedTime,
                         avgPrice, cumExecFee, tif, reduceOnly, orderLinkId)
             logd("order_info: " + str(order_info))
+
+            try:
+                self._strategy.on_order(order_info)
+            except err:
+                loge("on_order error: " + str(err))
 
             iter.step()
 
@@ -270,6 +326,45 @@ struct TradeExecutor[T: BaseStrategy]:
             )
             positions.append(position_info)
             logd("postion_info: " + str(position_info))
+
+            try:
+                self._strategy.on_position(position_info)
+            except err:
+                loge("on_position error: " + str(err))
+
             iter.step()
 
         _ = data ^
+
+    fn is_initialized(self) -> Bool:
+        return self._is_initialized.value == 1
+    
+    fn run(self):
+        while True:
+            # _ = self.on_timer()
+            logd("TradeExecutor.on_timer")
+            try:
+                self._strategy.on_tick()
+            except err:
+                loge("on_tick error: " + str(err))
+            _ = sleep_us(1000* 100)
+    
+    # fn on_timer(self) -> UInt64:
+    #     logi("TradeExecutor.on_timer")
+    #     try:
+    #         self._strategy.on_tick()
+    #     except err:
+    #         loge("on_tick error: " + str(err))
+    #     logi("TradeExecutor.on_timer done")
+    #     return 0
+
+
+alias gloabl_trade_executor_ptr_key = 10000
+
+fn set_gloabl_trade_executor_ptr(ptr: Int):
+    seq_store_object_address(gloabl_trade_executor_ptr_key, ptr)
+
+
+# fn trade_executor_on_timer():
+#     logi("trade_executor_on_timer")
+#     pass

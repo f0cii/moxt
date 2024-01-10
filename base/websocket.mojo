@@ -40,7 +40,7 @@ fn set_on_message(id: Int, ptr: Int) -> None:
 
 
 fn emit_on_connect(id: Int) -> None:
-    logd("emit_on_connect")
+    logd("emit_on_connect id=" + str(id))
     let ptr = seq_retrieve_object_address(id)
     if ptr == 0:
         logd("emit_on_connect nil")
@@ -98,9 +98,9 @@ struct WebSocket:
         port_.free()
         path_.free()
         register_websocket(ptr)
-        logd("ws._ptr=" + str(seq_address_of(ptr)))
+        logd("ws._ptr=" + str(seq_voidptr_to_int(ptr)))
         self._ptr = ptr
-        self._id = seq_address_of(ptr)
+        self._id = seq_voidptr_to_int(ptr)
 
     fn c_ptr(self) -> c_void_pointer:
         return self._ptr
@@ -158,14 +158,14 @@ struct WebSocket:
 
 fn websocket_connect_callback(ws: c_void_pointer) raises -> None:
     # logd("websocket_connect_callback")
-    let id = seq_address_of(ws)
+    let id = seq_voidptr_to_int(ws)
     emit_on_connect(id)
     # logd("websocket_connect_callback done")
 
 
 fn websocket_heartbeat_callback(ws: c_void_pointer) raises -> None:
     # logd("websocket_heartbeat_callback")
-    let id = seq_address_of(ws)
+    let id = seq_voidptr_to_int(ws)
     emit_on_heartbeat(id)
     # logd("websocket_heartbeat_callback done")
 
@@ -174,7 +174,7 @@ fn websocket_message_callback(
     ws: c_void_pointer, data: c_char_pointer, data_len: c_size_t
 ) raises -> None:
     # logd("websocket_message_callback")
-    let id = seq_address_of(ws)
+    let id = seq_voidptr_to_int(ws)
     emit_on_message(id, data, data_len)
 
 

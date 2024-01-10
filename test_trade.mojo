@@ -13,7 +13,6 @@ from base.fixed import Fixed
 from base.ssmap import SSMap
 from base.httpclient import HttpClient, VERB_GET, Headers, QueryParams
 from base.websocket import *
-from fnv1a import fnv1a64
 from stdlib_extensions.time import time_ns
 from stdlib_extensions.builtins import dict, list, HashableInt, HashableStr
 from testing import assert_equal, assert_true, assert_false
@@ -43,6 +42,13 @@ fn test_fixed() raises:
     assert_equal(str(f1), "1")
     let f1_23456 = Fixed("1.23456")
     assert_equal(str(f1_23456), "1.23456")
+
+    assert_true(Fixed(100) == Fixed(100))
+    assert_true(Fixed(100) != Fixed(50))
+    assert_true(Fixed(100) < Fixed(150))
+    assert_true(Fixed(100) <= Fixed(150))
+    assert_true(Fixed(100) > Fixed(80))
+    assert_true(Fixed(100) >= Fixed(100))
 
 
 fn test_hmac_sha256_b64() raises:
@@ -207,8 +213,8 @@ fn test_base() raises:
     while iter.has_value():
         iter.step()
 
-    _ = doc
-    _ = op
+    _ = doc ^
+    _ = op ^
 
 
 fn test_parse_order() raises:
@@ -250,9 +256,9 @@ fn test_parse_order() raises:
 
         iter.step()
 
-    _ = data
-    _ = doc
-    _ = op
+    _ = data ^
+    _ = doc ^
+    _ = op ^
 
     assert_equal(len(orders), 1)
 
@@ -327,9 +333,9 @@ fn test_parse_position() raises:
         # logd("postion_info: " + str(position_info))
         iter.step()
 
-    _ = data
-    _ = doc
-    _ = op
+    _ = data ^
+    _ = doc ^
+    _ = op ^
 
     assert_equal(len(positions), 2)
 
@@ -371,10 +377,10 @@ fn test_parse_orderbook() raises:
         # # logd("price: " + str(price))
         # # logd("qty: " + str(qty))
         orderbook.asks.append(OrderBookLevel(Fixed(price), Fixed(qty)))
-        _ = obj
+        _ = obj ^
         a_iter.step()
 
-    _ = a
+    _ = a ^
 
     let b = data.get_array("b")
     let b_iter = b.iter()
@@ -387,14 +393,14 @@ fn test_parse_orderbook() raises:
         # # logd("price: " + str(price))
         # # logd("qty: " + str(qty))
         orderbook.bids.append(OrderBookLevel(Fixed(price), Fixed(qty)))
-        _ = obj
+        _ = obj ^
         b_iter.step()
 
-    _ = b
-    _ = data
+    _ = b ^
+    _ = data ^
 
-    _ = doc
-    _ = parser
+    _ = doc ^
+    _ = parser ^
 
     assert_equal(len(orderbook.asks), 1)
     assert_equal(len(orderbook.bids), 1)
@@ -533,5 +539,3 @@ fn main() raises:
 
     logi("Done!!!")
     run_forever()
-
-    # ./scripts/mojoc test_trade.mojo -lmoxt -L . -o test_trade

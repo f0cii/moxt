@@ -1,5 +1,6 @@
 from base.c import *
 from base.mo import *
+from core.bybitmodel import *
 from .config import AppConfig
 from .base_strategy import *
 from .platform import *
@@ -21,56 +22,50 @@ struct GridStrategy(BaseStrategy):
         type_: String,
         inout asks: list[OrderBookLevel],
         inout bids: list[OrderBookLevel],
-    ):
+    ) raises:
         self.platform.update_orderbook(type_, asks, bids)
 
-    fn get_orderbook(self, n: Int) -> OrderBookLite:
+    fn get_orderbook(self, n: Int) raises -> OrderBookLite:
         return self.platform.get_orderbook(n)
 
-    fn on_init(self):
+    fn on_init(self) raises:
         logi("GridStrategy.on_init")
         let category = "linear"
         let symbol = "BTCUSDT"
 
-        try:
-            let exchange_info = self.platform.fetch_exchange_info(category, symbol)
-            logi(str(exchange_info))
-        except err:
-            loge("GridStrategy.on_init error: " + str(err))
+        let exchange_info = self.platform.fetch_exchange_info(category, symbol)
+        logi(str(exchange_info))
 
         print("GridStrategy.on_init done")
 
-    fn on_exit(self):
+    fn on_exit(self) raises:
         logi("GridStrategy.on_exit")
 
-    fn on_tick(self):
+    fn on_tick(self) raises:
         logi("GridStrategy.on_tick")
 
-    fn on_orderbook(self, ob: OrderBookLite):
-        try:
-            if len(ob.asks) > 0 and len(ob.bids) > 0:
-                logi(
-                    "GridStrategy.on_orderbook ask="
-                    + str(ob.asks[0].qty)
-                    + "@"
-                    + str(ob.asks[0].price)
-                    + " bid="
-                    + str(ob.bids[0].qty)
-                    + "@"
-                    + str(ob.bids[0].price)
-                )
-            else:
-                logi(
-                    "GridStrategy.on_orderbook len(asks)="
-                    + str(len(ob.asks))
-                    + " len(bids)="
-                    + str(len(ob.bids))
-                )
-        except err:
-            loge("on_orderbook error: " + str(err))
+    fn on_orderbook(self, ob: OrderBookLite) raises:
+        if len(ob.asks) > 0 and len(ob.bids) > 0:
+            logi(
+                "GridStrategy.on_orderbook ask="
+                + str(ob.asks[0].qty)
+                + "@"
+                + str(ob.asks[0].price)
+                + " bid="
+                + str(ob.bids[0].qty)
+                + "@"
+                + str(ob.bids[0].price)
+            )
+        else:
+            logi(
+                "GridStrategy.on_orderbook len(asks)="
+                + str(len(ob.asks))
+                + " len(bids)="
+                + str(len(ob.bids))
+            )
 
-    fn on_order(self, order: OrderInfo):
+    fn on_order(self, order: OrderInfo) raises:
         logi("GridStrategy.on_order")
 
-    fn on_position(self, position: PositionInfo):
+    fn on_position(self, position: PositionInfo) raises:
         logi("GridStrategy.on_position")

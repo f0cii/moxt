@@ -5,7 +5,6 @@ from base.mo import *
 from base.c import *
 from base.sj_dom import *
 from base.sj_ondemand import OndemandParser
-from base.far import Far
 from base.fixed import Fixed
 from base.httpclient import HttpClient, VERB_GET, Headers, QueryParams
 from base.websocket import *
@@ -100,12 +99,18 @@ fn get_on_message() -> on_message_callback:
 
 fn test_binancews() raises:
     logd("test_binancews")
+    let env_dict = load_env()
+
+    let access_key = env_dict["BINANCE_API_KEY"]
+    let secret_key = env_dict["BINANCE_API_SECRET"]
+    logi("access_key=" + access_key)
+    logi("secret_key=" + secret_key)
     let ws = BinanceWS(
-        is_private=False,
+        is_private=True,
         testnet=False,
-        access_key="",
-        secret_key="",
-        topics="btcusdt@depth5",
+        access_key=access_key,
+        secret_key=secret_key,
+        # topics="btcusdt@depth5",
     )
 
     var on_connect = ws.get_on_connect()
@@ -219,7 +224,7 @@ fn test_binanceclient_public_time() raises:
     logi("耗时: " + str(order_end - order_start) + " us")
 
     # 测试下单速度
-    let times = 10
+    let times = 3
     var order_times = list[Int]()  # 记录每次下单耗时
     # var cancel_times = list[Int]()  # 记录每次撤单耗时
 
@@ -247,7 +252,7 @@ fn test_binanceclient_public_time() raises:
 
         order_times.append(int(order_end - order_start))
 
-        _ = seq_photon_thread_sleep_ms(500)
+        _ = seq_photon_thread_sleep_ms(3500)
 
     let end_time = time_us()  # 记录结束时间
 
@@ -365,6 +370,26 @@ fn test_binanceclient() raises:
     _ = client ^
 
 
+fn test_listen_key() raises:
+    let env_dict = load_env()
+
+    let access_key = env_dict["BINANCE_API_KEY"]
+    let secret_key = env_dict["BINANCE_API_SECRET"]
+    logi("access_key=" + access_key)
+    logi("secret_key=" + secret_key)
+    var client = BinanceClient(
+        testnet=False, access_key=access_key, secret_key=secret_key
+    )
+    client.set_verbose(True)
+    # let res = client.generate_listen_key()
+    # logi("res=" + res)
+
+    let res = client.extend_listen_key()
+    logi("res=" + str(res))
+
+    # let listen_key = "rioNZjETMWuZLTPkI3HGBZ6FMjJCerqbL5w8FcdWLWLn9LRFPYg79JIwVLPLXOmp"
+
+
 fn run_forever():
     seq_photon_join_current_vcpu_into_workpool(seq_photon_work_pool())
 
@@ -381,10 +406,13 @@ fn photon_handle_term(sig: c_int) raises -> None:
 
 fn main() raises:
     _ = seq_ct_init()
+    seq_photon_set_log_output(0)
     let ret = seq_photon_init_default()
     seq_init_photon_work_pool(2)
-    seq_init_log(LOG_LEVEL_DBG, "test_binance.log")
+    # seq_init_log(LOG_LEVEL_DBG, "test_binance.log")
+    seq_init_log(LOG_LEVEL_DBG, "")
     # seq_init_log(LOG_LEVEL_OFF, "")
+    # seq_init_net(0)
     seq_init_net(1)
 
     logi("初始化返回: " + str(ret))
@@ -397,10 +425,9 @@ fn main() raises:
     # test_binance_sign()
     # test_parse_order_info()
     # test_binanceclient_public_time()
-    # test_binanceclient()
-    test_binancews()
+    test_binanceclient()
+    # test_binancews()
+    # test_listen_key()
 
     logi("程序已准备就绪，等待事件中...")
     run_forever()
-
-    # ./scripts/mojoc test_binance.mojo -lmoxt -L . -o test_binance

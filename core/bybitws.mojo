@@ -72,11 +72,23 @@ struct BybitWS:
         port_.free()
         path_.free()
         register_websocket(ptr)
-        # logd("ws._ptr=" + str(seq_address_of(ptr)))
+        # logd("ws._ptr=" + str(seq_voidptr_to_int(ptr)))
         self._ptr = ptr
-        self._id = seq_address_of(ptr)
+        self._id = seq_voidptr_to_int(ptr)
         self._heartbeat_time = Pointer[Int64].alloc(1)
         self._heartbeat_time.store(0)
+    
+    fn __moveinit__(inout self, owned existing: Self):
+        print("BybitWS.__moveinit__")
+        self._ptr = existing._ptr
+        self._id = existing._id
+        self._is_private = existing._is_private
+        self._access_key = existing._access_key
+        self._secret_key = existing._secret_key
+        self._category = existing._category
+        self._subscription_topics = existing._subscription_topics
+        self._subscription_topics_str = existing._subscription_topics_str
+        self._heartbeat_time = existing._heartbeat_time
 
     fn __del__(owned self):
         print("BybitWS.__del__")

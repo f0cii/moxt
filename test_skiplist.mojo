@@ -30,5 +30,3 @@ fn main() raises:
 
     seq_skiplist_dump(asks)
     seq_skiplist_free(asks)
-
-    # ./scripts/mojoc test_skiplist.mojo -lmoxt -L . -o test_skillist

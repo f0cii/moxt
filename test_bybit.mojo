@@ -5,7 +5,6 @@ from base.mo import *
 from base.c import *
 from base.sj_dom import *
 from base.sj_ondemand import OndemandParser
-from base.far import Far
 from base.fixed import Fixed
 from base.httpclient import HttpClient, VERB_GET, Headers, QueryParams
 from base.websocket import *
@@ -150,7 +149,7 @@ fn test_bybitclient() raises:
 
     let access_key = env_dict["BYBIT_API_KEY"]
     let secret_key = env_dict["BYBIT_API_SECRET"]
-    var client = BybitClient(
+    let client = BybitClient(
         testnet=False, access_key=access_key, secret_key=secret_key
     )
 
@@ -297,7 +296,8 @@ fn main() raises:
     seq_init_photon_work_pool(2)
     seq_init_log(LOG_LEVEL_DBG, "")
     # seq_init_log(LOG_LEVEL_OFF, "")
-    seq_init_net(1)
+    seq_init_net(0)
+    # seq_init_net(1)
 
     logi("初始化返回: " + str(ret))
 
@@ -310,5 +310,3 @@ fn main() raises:
 
     logi("程序已准备就绪，等待事件中...")
     run_forever()
-
-    # ./scripts/mojoc test_bybit.mojo -lmoxt -L . -o test_bybit

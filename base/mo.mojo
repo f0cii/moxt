@@ -11,8 +11,12 @@ fn seq_ct_init() -> Int:
     return external_call["seq_ct_init", Int]()
 
 
-fn seq_address_of(p: c_void_pointer) -> Int:
-    return external_call["seq_address_of", Int, c_void_pointer](p)
+fn seq_voidptr_to_int(p: c_void_pointer) -> Int:
+    return external_call["seq_voidptr_to_int", Int, c_void_pointer](p)
+
+
+fn seq_int_to_voidptr(i: Int) -> c_void_pointer:
+    return external_call["seq_int_to_voidptr", c_void_pointer, Int](i)
 
 
 # 读取全局对象地址值
@@ -42,6 +46,11 @@ fn seq_photon_thread_create_and_migrate_to_work_pool(
         task_entry,
         c_void_pointer,
     ](entry, arg)
+
+
+# void seq_photon_set_log_output(uint8_t mode)
+fn seq_photon_set_log_output(mode: UInt8) -> None:
+    external_call["seq_photon_set_log_output", NoneType, UInt8](mode)
 
 
 fn seq_photon_init_default() -> Int:

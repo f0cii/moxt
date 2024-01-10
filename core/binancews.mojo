@@ -1,10 +1,11 @@
-from base.websocket import *
-from base.yyjson import yyjson_doc, yyjson_mut_doc
 from stdlib_extensions.builtins import dict, list, HashableInt
 from stdlib_extensions.builtins.string import *
-from core.sign import hmac_sha256_hex
 from stdlib_extensions.time import time_ns
+from base.websocket import *
+from base.yyjson import yyjson_doc, yyjson_mut_doc
 from base.sj_ondemand import OndemandParser
+from .sign import hmac_sha256_hex
+from .binanceclient import BinanceClient
 
 
 alias ParserBufferSize = 1000 * 100
@@ -28,9 +29,9 @@ struct BinanceWS:
     var _is_private: Bool
     var _access_key: String
     var _secret_key: String
-    var _subscription_topics: list[String]
-    var _subscription_topics_str: String
+    var _topics_str: String
     var _heartbeat_time: Pointer[Int64]
+    var _client: BinanceClient
 
     fn __init__(
         inout self,
@@ -43,19 +44,17 @@ struct BinanceWS:
         self._is_private = is_private
         self._access_key = access_key
         self._secret_key = secret_key
-        self._subscription_topics = list[String]()
-        self._subscription_topics_str = topics
+        self._topics_str = topics
+        self._client = BinanceClient(testnet, access_key, secret_key)
 
-        var host: String = ""
-        var port: String = ""
+        let host: String = "stream.binancefuture.com" if testnet else "fstream.binance.com"
+        let port: String = "443"
         var path: String = ""
-        if testnet:
-            host = "stream.binancefuture.com"
-        else:
-            host = "fstream.binance.com"
-        port = "443"
+
         if is_private:
-            path = "/ws"
+            let listen_key = self._client.generate_listen_key()
+            logi("listen_key=" + listen_key)
+            path = "/ws/" + listen_key
         else:
             path = "/stream?streams=" + topics
         logd(
@@ -81,9 +80,8 @@ struct BinanceWS:
         port_.free()
         path_.free()
         register_websocket(ptr)
-        # logd("ws._ptr=" + str(seq_address_of(ptr)))
         self._ptr = ptr
-        self._id = seq_address_of(ptr)
+        self._id = seq_voidptr_to_int(ptr)
         self._heartbeat_time = Pointer[Int64].alloc(1)
         self._heartbeat_time.store(0)
 
@@ -108,33 +106,8 @@ struct BinanceWS:
         let ptr = callback.__as_index()
         set_on_message(id, ptr)
 
-    fn set_subscription(inout self, topics: list[String]) raises:
-        for topic in topics:
-            logd("topic: " + topic)
-            self._subscription_topics.append(topic)
-            logd("len=" + str(len(self._subscription_topics)))
-
     fn subscribe(self):
         logd("BinanceWS.subscribe")
-        # if self._subscription_topics_str == "":
-        #     logd("BinanceWS 没有任何订阅")
-        #     return
-
-        # try:
-        #     let id = seq_nanoid()
-        #     var yy_doc = yyjson_mut_doc()
-        #     yy_doc.add_str("req_id", id)
-        #     yy_doc.add_str("op", "subscribe")
-        #     var values = list[String]()
-        #     let topics = split(self._subscription_topics_str, ",")
-        #     for topic in topics:
-        #         values.append(topic)
-        #     yy_doc.arr_with_str("args", values)
-        #     let body_str = yy_doc.mut_write()
-        #     logd("send: " + body_str)
-        #     self.send(body_str)
-        # except err:
-        #     loge("subscribe err " + str(err))
 
     fn get_on_connect(self) -> on_connect_callback:
         @parameter
@@ -154,71 +127,39 @@ struct BinanceWS:
         logd("BinanceWS.on_connect")
         self._heartbeat_time.store(time_ms())
         if self._is_private:
-            let param = self.generate_auth_payload()
-            # logd("auth: " + param)
-            self.send(param)
+            pass
         else:
             self.subscribe()
-
-    fn generate_auth_payload(self) -> String:
-        try:
-            let expires = str(time_ns() / 1e6 + 5000)
-            let req: String = "GET/realtime" + expires
-            let hex_signature = hmac_sha256_hex(req, self._secret_key)
-
-            # logd("expires=" + expires)
-            # logd("req=" + req)
-            # logd("hex_signature=" + hex_signature)
-
-            let id = seq_nanoid()
-            var yy_doc = yyjson_mut_doc()
-            yy_doc.add_str("req_id", id)
-            yy_doc.add_str("op", "auth")
-            var args = list[String]()
-            args.append(self._access_key)
-            args.append(expires)
-            args.append(hex_signature)
-            yy_doc.arr_with_str("args", args)
-            let body_str = yy_doc.mut_write()
-            return body_str
-        except err:
-            loge("generate_auth_payload error=" + str(err))
-            return ""
 
     fn on_heartbeat(self) -> None:
         # logd("BinanceWS.on_heartbeat")
         let elapsed_time = time_ms() - self._heartbeat_time.load()
-        if elapsed_time <= 5000:
+        if elapsed_time <= 1000 * 60 * 5:
             # logd("BinanceWS.on_heartbeat ignore [" + str(elapsed_time) + "]")
             return
 
-        # let id = seq_nanoid()
-
-        # var yy_doc = yyjson_mut_doc()
-        # yy_doc.add_str("req_id", id)
-        # yy_doc.add_str("op", "ping")
-        # let body_str = yy_doc.mut_write()
-        # # logd("send: " + body_str)
-        # self.send(body_str)
+        # 私有订阅，这里要在60分钟内进行listen_key续订
+        if self._is_private:
+            try:
+                let ret = self._client.extend_listen_key()
+                logi("续订listen_key返回: " + str(ret))
+                self._heartbeat_time.store(time_ms())
+            except err:
+                loge("续订listen_key出错: " + str(err))
 
     fn on_message(self, s: String) -> None:
         logd("BinanceWS::on_message: " + s)
-        
+
+        # 下单后事件
+        # {"e":"ORDER_TRADE_UPDATE","T":1704459987707,"E":1704459987709,"o":{"s":"BTCUSDT","c":"web_w4Sot5R1ym9ChzWfGdAm","S":"BUY","o":"LIMIT","f":"GTC","q":"0.010","p":"20000","ap":"0","sp":"0","x":"NEW","X":"NEW","i":238950797096,"l":"0","z":"0","L":"0","n":"0","N":"USDT","T":1704459987707,"t":0,"b":"200","a":"0","m":false,"R":false,"wt":"CONTRACT_PRICE","ot":"LIMIT","ps":"LONG","cp":false,"rp":"0","pP":false,"si":0,"ss":0,"V":"NONE","pm":"NONE","gtd":0}}
+        # 撤单
+        # {"e":"ORDER_TRADE_UPDATE","T":1704460185744,"E":1704460185746,"o":{"s":"BTCUSDT","c":"web_w4Sot5R1ym9ChzWfGdAm","S":"BUY","o":"LIMIT","f":"GTC","q":"0.010","p":"20000","ap":"0","sp":"0","x":"CANCELED","X":"CANCELED","i":238950797096,"l":"0","z":"0","L":"0","n":"0","N":"USDT","T":1704460185744,"t":0,"b":"0","a":"0","m":false,"R":false,"wt":"CONTRACT_PRICE","ot":"LIMIT","ps":"LONG","cp":false,"rp":"0","pP":false,"si":0,"ss":0,"V":"NONE","pm":"NONE","gtd":0}}
+
         # let parser = OndemandParser(ParserBufferSize)
         # let doc = parser.parse(s)
-        # let op = doc.get_str("op")
-        # if op == "auth":
-        #     let success = doc.get_bool("success")
-        #     if success:
-        #         logi("ws认证成功")
-        #         self.subscribe()
-        #     else:
-        #         logw("ws认证失败")
-        # elif op == "pong":
-        #     pass
 
-        # _ = doc
-        # _ = parser
+        # _ = doc ^
+        # _ = parser ^
 
     fn release(self) -> None:
         seq_websocket_delete(self._ptr)

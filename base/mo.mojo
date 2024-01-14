@@ -1177,6 +1177,10 @@ fn seq_websocket_connect(p: c_void_pointer) -> None:
     external_call["seq_websocket_connect", NoneType, c_void_pointer](p)
 
 
+fn seq_websocket_disconnect(p: c_void_pointer) -> None:
+    external_call["seq_websocket_disconnect", NoneType, c_void_pointer](p)
+
+
 fn seq_websocket_send(p: c_void_pointer, text: c_char_pointer, len: c_size_t) -> None:
     external_call[
         "seq_websocket_send", NoneType, c_void_pointer, c_char_pointer, c_size_t

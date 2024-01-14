@@ -63,7 +63,10 @@ fn emit_on_heartbeat(id: Int) -> None:
 
 
 fn emit_on_message(id: Int, data: c_char_pointer, data_len: c_size_t) -> None:
-    logd("emit_on_message")
+    # logd("emit_on_message")
+    # let s = c_str_to_string(data, data_len)
+    # logd("emit_on_message message: " + s)
+
     let id_ = id + 2
     let ptr = seq_retrieve_object_address(id_)
     if ptr == 0:
@@ -71,7 +74,7 @@ fn emit_on_message(id: Int, data: c_char_pointer, data_len: c_size_t) -> None:
         return
     let wrap = unsafe.bitcast[on_message_callback](ptr).load()
     wrap(data, data_len)
-    logd("emit_on_message done")
+    # logd("emit_on_message done")
 
 
 struct WebSocket:

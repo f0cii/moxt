@@ -63,6 +63,9 @@ struct Fixed(Stringable):
             _value: v_,
         }
 
+    fn copy_from(inout self, other: Self):
+        self._value = other._value
+
     @staticmethod
     fn from_value(value: Int64) -> Self:
         return Self {

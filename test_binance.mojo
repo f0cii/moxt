@@ -17,7 +17,7 @@ from core.sign import hmac_sha256_b64, hmac_sha256_hex
 from base.yyjson import *
 from core.binanceclient import *
 from core.binancews import BinanceWS
-from core.env import load_env
+from core.env import env_load
 
 
 # pip install fastapi uvicorn[standard]
@@ -99,7 +99,7 @@ fn get_on_message() -> on_message_callback:
 
 fn test_binancews() raises:
     logd("test_binancews")
-    let env_dict = load_env()
+    let env_dict = env_load()
 
     let access_key = env_dict["BINANCE_API_KEY"]
     let secret_key = env_dict["BINANCE_API_SECRET"]
@@ -187,7 +187,7 @@ fn test_parse_order_info() raises:
 
 
 fn test_binanceclient_public_time() raises:
-    let env_dict = load_env()
+    let env_dict = env_load()
 
     let access_key = env_dict["BINANCE_API_KEY"]
     let secret_key = env_dict["BINANCE_API_SECRET"]
@@ -270,7 +270,7 @@ fn test_binanceclient_public_time() raises:
 
 
 fn test_binanceclient() raises:
-    let env_dict = load_env()
+    let env_dict = env_load()
 
     let access_key = env_dict["BINANCE_API_KEY"]
     let secret_key = env_dict["BINANCE_API_SECRET"]
@@ -371,7 +371,7 @@ fn test_binanceclient() raises:
 
 
 fn test_listen_key() raises:
-    let env_dict = load_env()
+    let env_dict = env_load()
 
     let access_key = env_dict["BINANCE_API_KEY"]
     let secret_key = env_dict["BINANCE_API_SECRET"]

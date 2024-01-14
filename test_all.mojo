@@ -22,7 +22,7 @@ from base.yyjson import *
 from core.bybitclient import *
 from core.bybitclientjson import *
 from core.bybitws import *
-from core.env import load_env
+from core.env import env_load
 
 
 fn test_ondemand_parser():
@@ -388,7 +388,7 @@ fn test_okx() raises:
     let a = hmac_sha256_b64(String("abc"), String("abb"))
     logi(a)
 
-    let env_dict = load_env()
+    let env_dict = env_load()
 
     let api_key = env_dict["OKEX_API_KEY"]
     let api_secret_key = env_dict["OKEX_API_SECRET"]
@@ -412,7 +412,7 @@ fn test_okx() raises:
 
 
 fn test_bybitclient() raises:
-    let env_dict = load_env()
+    let env_dict = env_load()
 
     let access_key = env_dict["BYBIT_API_KEY"]
     let secret_key = env_dict["BYBIT_API_SECRET"]

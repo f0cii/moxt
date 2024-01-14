@@ -4,6 +4,7 @@ from base.mo import *
 from base.fixed import Fixed
 from core.bybitmodel import *
 from .config import AppConfig
+from .types import *
 
 
 trait DefaultConstructible:
@@ -17,34 +18,37 @@ trait StrategyConstructible:
 
 
 trait BaseStrategy(StrategyConstructible, Movable):
-    fn on_init(self) raises:
+    fn on_init(inout self) raises:
         ...
 
-    fn on_exit(self) raises:
+    fn on_exit(inout self) raises:
         ...
 
     # 临时放到策略类，因为mojo的Pointer还不支持AnyType，目前只支持AnyRegType
-    fn update_orderbook(
-        self,
+    fn on_update_orderbook(
+        inout self,
         type_: String,
         inout asks: list[OrderBookLevel],
         inout bids: list[OrderBookLevel],
     ) raises:
         ...
 
+    fn on_update_order(inout self, order: Order) raises:
+        ...
+
     fn get_orderbook(self, n: Int) raises -> OrderBookLite:
         ...
 
-    fn on_tick(self) raises:
+    fn on_tick(inout self) raises:
         ...
 
-    fn on_orderbook(self, ob: OrderBookLite) raises:
+    fn on_orderbook(inout self, ob: OrderBookLite) raises:
         ...
 
-    fn on_order(self, order: OrderInfo) raises:
+    fn on_order(inout self, order: Order) raises:
         ...
 
-    fn on_position(self, position: PositionInfo) raises:
+    fn on_position(inout self, position: PositionInfo) raises:
         ...
 
 

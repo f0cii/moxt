@@ -78,7 +78,7 @@ struct BybitClient:
         return ServerTime(time_second, time_nano)
 
     fn fetch_exchange_info(
-        self, category: StringLiteral, symbol: StringLiteral
+        self, category: String, symbol: String
     ) raises -> ExchangeInfo:
         var query_values = QueryParams()
         query_values["category"] = category
@@ -117,6 +117,7 @@ struct BybitClient:
             # logd("symbol_: " + symbol_ + " symbol: " + symbol)
             if str(symbol) != symbol_:
                 # logd("not eq")
+                list_iter.step()
                 continue
 
             let priceFilter = obj.get_object("priceFilter")
@@ -140,9 +141,9 @@ struct BybitClient:
 
     fn fetch_kline(
         self,
-        category: StringLiteral,
-        symbol: StringLiteral,
-        interval: StringLiteral,
+        category: String,
+        symbol: String,
+        interval: String,
         limit: Int,
         start: Int,
         end: Int,
@@ -216,7 +217,7 @@ struct BybitClient:
         return res
 
     fn fetch_orderbook(
-        self, category: StringLiteral, symbol: StringLiteral, limit: Int
+        self, category: String, symbol: String, limit: Int
     ) raises -> OrderBook:
         var query_values = QueryParams()
         query_values["category"] = category
@@ -296,7 +297,7 @@ struct BybitClient:
         return OrderBook(asks, bids)
 
     fn switch_position_mode(
-        self, category: StringLiteral, symbol: StringLiteral, mode: StringLiteral
+        self, category: String, symbol: String, mode: String
     ) raises -> Bool:
         """
         切换持仓模式
@@ -338,10 +339,10 @@ struct BybitClient:
 
     fn set_leverage(
         self,
-        category: StringLiteral,
-        symbol: StringLiteral,
-        buy_leverage: StringLiteral,
-        sell_leverage: StringLiteral,
+        category: String,
+        symbol: String,
+        buy_leverage: String,
+        sell_leverage: String,
     ) raises -> Bool:
         """
         设置杠杆倍数
@@ -380,15 +381,15 @@ struct BybitClient:
 
     fn place_order(
         self,
-        category: StringLiteral,
-        symbol: StringLiteral,
-        side: StringLiteral,
-        order_type: StringLiteral,
-        qty: StringLiteral,
-        price: StringLiteral,
-        time_in_force: StringLiteral = "",
+        category: String,
+        symbol: String,
+        side: String,
+        order_type: String,
+        qty: String,
+        price: String,
+        time_in_force: String = "",
         position_idx: Int = 0,
-        order_link_id: StringLiteral = "",
+        order_link_id: String = "",
         reduce_only: Bool = False,
     ) raises -> OrderResponse:
         """
@@ -448,8 +449,8 @@ struct BybitClient:
 
     fn cancel_order(
         self,
-        category: StringLiteral,
-        symbol: StringLiteral,
+        category: String,
+        symbol: String,
         order_id: String = "",
         order_link_id: String = "",
     ) raises -> OrderResponse:
@@ -497,10 +498,10 @@ struct BybitClient:
 
     fn cancel_orders(
         self,
-        category: StringLiteral,
-        symbol: StringLiteral,
-        base_coin: StringLiteral = "",
-        settle_coin: StringLiteral = "",
+        category: String,
+        symbol: String,
+        base_coin: String = "",
+        settle_coin: String = "",
     ) raises -> list[OrderResponse]:
         """
         批量撤单
@@ -554,7 +555,7 @@ struct BybitClient:
         return res
 
     fn fetch_balance(
-        self, account_type: StringLiteral, coin: StringLiteral
+        self, account_type: String, coin: String
     ) raises -> list[BalanceInfo]:
         """
         获取钱包余额
@@ -598,26 +599,27 @@ struct BybitClient:
                 while coin_iter.has_value():
                     let coin_obj = coin_iter.get()
                     let coin_name = coin_obj.get_str("coin")
-                    if coin_name != coin:
-                        continue
-                    # logi("coin_name: " + coin_name)
-                    let equity = strtod(coin_obj.get_str("equity"))
-                    let available_to_withdraw = strtod(
-                        coin_obj.get_str("availableToWithdraw")
-                    )
-                    let wallet_balance = strtod(coin_obj.get_str("walletBalance"))
-                    let total_order_im = strtod(coin_obj.get_str("totalOrderIM"))
-                    let total_position_im = strtod(coin_obj.get_str("totalPositionIM"))
-                    res.append(
-                        BalanceInfo(
-                            coin_name=coin_name,
-                            equity=equity,
-                            available_to_withdraw=available_to_withdraw,
-                            wallet_balance=wallet_balance,
-                            total_order_im=total_order_im,
-                            total_position_im=total_position_im,
+                    if coin_name == coin:
+                        # logi("coin_name: " + coin_name)
+                        let equity = strtod(coin_obj.get_str("equity"))
+                        let available_to_withdraw = strtod(
+                            coin_obj.get_str("availableToWithdraw")
                         )
-                    )
+                        let wallet_balance = strtod(coin_obj.get_str("walletBalance"))
+                        let total_order_im = strtod(coin_obj.get_str("totalOrderIM"))
+                        let total_position_im = strtod(
+                            coin_obj.get_str("totalPositionIM")
+                        )
+                        res.append(
+                            BalanceInfo(
+                                coin_name=coin_name,
+                                equity=equity,
+                                available_to_withdraw=available_to_withdraw,
+                                wallet_balance=wallet_balance,
+                                total_order_im=total_order_im,
+                                total_position_im=total_position_im,
+                            )
+                        )
                     coin_iter.step()
 
                 _ = coin_list ^
@@ -635,11 +637,11 @@ struct BybitClient:
 
     fn fetch_orders(
         self,
-        category: StringLiteral,
-        symbol: StringLiteral,
-        order_link_id: StringLiteral = "",
+        category: String,
+        symbol: String,
+        order_link_id: String = "",
         limit: Int = 0,
-        cursor: StringLiteral = "",
+        cursor: String = "",
     ) raises -> list[OrderInfo]:
         """
         获取当前订单
@@ -728,16 +730,16 @@ struct BybitClient:
 
     fn fetch_history_orders(
         self,
-        category: StringLiteral,
-        symbol: StringLiteral,
-        order_id: StringLiteral,
-        order_link_id: StringLiteral,
-        order_filter: StringLiteral = "",
-        order_status: StringLiteral = "",
+        category: String,
+        symbol: String,
+        order_id: String,
+        order_link_id: String,
+        order_filter: String = "",
+        order_status: String = "",
         start_time_ms: Int = 0,
         end_time_ms: Int = 0,
         limit: Int = 0,
-        cursor: StringLiteral = "",
+        cursor: String = "",
     ) raises -> list[OrderInfo]:
         """
         获取历史订单
@@ -850,7 +852,7 @@ struct BybitClient:
         return res
 
     fn fetch_positions(
-        self, category: StringLiteral, symbol: StringLiteral
+        self, category: String, symbol: String
     ) raises -> list[PositionInfo]:
         var query_values = QueryParams()
         query_values["category"] = category
@@ -863,10 +865,9 @@ struct BybitClient:
 
         # {"retCode":10002,"retMsg":"invalid request, please check your server timestamp or recv_window param. req_timestamp[1696255257619],server_timestamp[1696255255967],recv_window[15000]","result":{},"retExtInfo":{},"time":1696255255967}
 
-        # print(ret.body)
+        # logi(ret.body)
 
-        let res = list[PositionInfo]()
-
+        var res = list[PositionInfo]()
         let parser = DomParser(ParserBufferSize)
         let doc = parser.parse(ret.body)
         let ret_code = doc.get_int("retCode")
@@ -883,6 +884,7 @@ struct BybitClient:
 
             let _symbol = i["symbol"].str()
             if _symbol != symbol:
+                list_iter_a.step()
                 continue
 
             # {
@@ -922,7 +924,7 @@ struct BybitClient:
             let _size = i["size"].str()
             let _avg_price = i["avgPrice"].str()
             let _position_value = i["positionValue"].str()
-            let _leverage = i["leverage"].float()
+            let _leverage = i["leverage"].str()
             let _mark_price = i["markPrice"].str()
             # _liq_price = i["liqPrice"].str()
             # _bust_price = i["bustPrice"].str()
@@ -942,7 +944,7 @@ struct BybitClient:
                 size=_size,
                 avg_price=_avg_price,
                 position_value=_position_value,
-                leverage=_leverage,
+                leverage=strtod(_leverage),
                 mark_price=_mark_price,
                 position_mm=_position_mm,
                 position_im=_position_im,

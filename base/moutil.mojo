@@ -1,4 +1,5 @@
 from memory import unsafe
+import math
 import .c
 from .mo import *
 from stdlib_extensions.time import time_ns
@@ -43,17 +44,21 @@ fn strtod(s: StringLiteral) -> Float64:
 fn strtod(s: String) -> Float64:
     return seq_strtod(s._buffer.data.value, len(s))
 
-
-# fn to_string(data: Pointer[Int8], data_len: Int) -> String:
-#     let ptr = Pointer[Int8]().alloc(data_len)
-
-#     memcpy(ptr, data, data_len)
-
-#     return String(ptr, data_len)
-
-
+def str_to_bool(s: String) -> Bool:
+    if s == 'true':
+        return True
+    elif s == 'false':
+        return False
+    else:
+        return False
 
 
-# fn to_string_ref(i: Int) -> StringRef:
-#     let s = str(i)
-#     return c.to_string_ref(s)
+fn decimal_places(value: Float64) -> Int:
+    """
+    返回小数位: 0.0001 -> 4
+    """
+    if value == 0.0:
+        return 0
+
+    # 取整位数即decimal places
+    return int(math.ceil(math.log10(1.0 / value)))

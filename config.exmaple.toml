@@ -4,4 +4,4 @@ secret_key = ""
 category = "linear"
 symbol = "BTCUSDT"
 depth = 1
-grid_interval = 0.01
+grid_interval = "0.01"

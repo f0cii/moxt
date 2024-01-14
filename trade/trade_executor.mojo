@@ -16,7 +16,7 @@ alias ParserBufferSize = 1000 * 100
 
 
 trait Runable:
-    fn run(self):
+    fn run(inout self):
         ...
 
 
@@ -27,7 +27,10 @@ struct TradeExecutor[T: BaseStrategy](Movable, Runable):
     var _strategy: T
     # var _tc_executor: TimedClosureExecutor
     # var _timer: c_void_pointer
-    var _is_initialized: Atomic[DType.int64]
+    var _is_initialized: AtomicBool
+    var _is_running: AtomicBool  # 表示是否在运行
+    var _stop_requested: AtomicBool  # 表示是否已经接收到停止请求
+    var _is_stopped: AtomicBool  # 表示是否已经停止
 
     fn __init__(inout self, config: AppConfig, owned strategy: T) raises:
         self._client = BybitClient(
@@ -58,8 +61,11 @@ struct TradeExecutor[T: BaseStrategy](Movable, Runable):
         self._strategy = strategy ^
         # self._tc_executor = TimedClosureExecutor()
         # self._timer = c_void_pointer.get_null()
-        self._is_initialized = Atomic[DType.int64](0)
-    
+        self._is_initialized = AtomicBool(False)
+        self._is_running = AtomicBool(False)
+        self._stop_requested = AtomicBool(False)
+        self._is_stopped = AtomicBool(False)
+
     fn __moveinit__(inout self, owned existing: Self):
         print("TradeExecutor.__moveinit__")
         self._client = existing._client ^
@@ -68,7 +74,10 @@ struct TradeExecutor[T: BaseStrategy](Movable, Runable):
         self._strategy = existing._strategy ^
         # self._tc_executor = existing._tc_executor ^
         # self._timer = existing._timer
-        self._is_initialized = Atomic[DType.int64](existing._is_initialized.value)
+        self._is_initialized = AtomicBool(existing._is_initialized.load())
+        self._is_running = AtomicBool(existing._is_running.load())
+        self._stop_requested = AtomicBool(existing._stop_requested.load())
+        self._is_stopped = AtomicBool(existing._is_stopped.load())
 
     fn start(inout self) raises:
         var on_connect_private = self._private_ws.get_on_connect()
@@ -114,16 +123,28 @@ struct TradeExecutor[T: BaseStrategy](Movable, Runable):
 
         # seq_photon_timer_new(1000 * 50, trade_executor_on_timer, True)
 
-        self._is_initialized = 1
+        self._is_initialized.store(True)
+        self._is_running.store(True)
+        self._stop_requested.store(False)
+        self._is_stopped.store(False)
+
         logi("TradeExecutor started")
 
-    fn stop_now(self):
+    fn stop_now(inout self):
         logi("TradeExecutor.stop")
+        # 设置停止标志
+        self._stop_requested.store(True)
+        self._private_ws.disconnect()
+        self._public_ws.disconnect()
+        # _ = sleep_ms(1000)
         try:
             self._strategy.on_exit()
+            # self._private_ws.release()
+            # self._public_ws.release()
         except err:
             loge("on_exit error: " + str(err))
-    
+        logi("TradeExecutor.stop done")
+
     fn _get_ptr[T: Movable](inout self) -> AnyPointer[T]:
         # constrained[Self._check[T]() != -1, "not a union element type"]()
         let ptr = Pointer.address_of(self).address
@@ -132,22 +153,22 @@ struct TradeExecutor[T: BaseStrategy](Movable, Runable):
             _type = __mlir_type[`!kgen.pointer<:`, Movable, ` `, T, `>`]
         ](ptr)
         return result
-    
-    fn get_private_on_message(self) -> on_message_callback:
+
+    fn get_private_on_message(inout self) -> on_message_callback:
         @parameter
         fn wrapper(data: c_char_pointer, data_len: Int):
             self.on_private_message(data, data_len)
 
         return wrapper
 
-    fn get_public_on_message(self) -> on_message_callback:
+    fn get_public_on_message(inout self) -> on_message_callback:
         @parameter
         fn wrapper(data: c_char_pointer, data_len: Int):
             self.on_public_message(data, data_len)
 
         return wrapper
 
-    fn on_private_message(self, data: c_char_pointer, data_len: Int):
+    fn on_private_message(inout self, data: c_char_pointer, data_len: Int):
         let s = c_str_to_string(data, data_len)
         logd("on_private_message message: " + s)
         let parser = OndemandParser(ParserBufferSize)
@@ -172,7 +193,7 @@ struct TradeExecutor[T: BaseStrategy](Movable, Runable):
 
         self._private_ws.on_message(s)
 
-    fn on_public_message(self, data: c_char_pointer, data_len: Int):
+    fn on_public_message(inout self, data: c_char_pointer, data_len: Int):
         try:
             let s = c_str_to_string(data, data_len)
             logd("on_public_message message: " + s)
@@ -190,8 +211,8 @@ struct TradeExecutor[T: BaseStrategy](Movable, Runable):
         except err:
             loge("on_public_message error: " + str(err))
             _ = exit(0)
-    
-    fn process_orderbook_message(self, inout doc: DomElement) raises -> None:
+
+    fn process_orderbook_message(inout self, inout doc: DomElement) raises -> None:
         # logd("process_orderbook_message")
         # {"topic":"orderbook.1.BTCUSDT","type":"snapshot","ts":1702645020909,"data":{"s":"BTCUSDT","b":[["42663.50","0.910"]],"a":[["42663.60","11.446"]],"u":2768099,"seq":108881526829},"cts":1702645020906}
         # {"topic":"orderbook.1.BTCUSDT","type":"snapshot","ts":1703834857207,"data":{"s":"BTCUSDT","b":[["42489.90","130.419"]],"a":[["42493.80","132.979"]],"u":326106,"seq":8817548764},"cts":1703834853055}
@@ -217,7 +238,7 @@ struct TradeExecutor[T: BaseStrategy](Movable, Runable):
             a_iter.step()
 
         _ = a ^
-        
+
         let b = data.get_array("b")
         let b_iter = b.iter()
 
@@ -237,14 +258,14 @@ struct TradeExecutor[T: BaseStrategy](Movable, Runable):
 
         # logd("asks=" + str(len(asks)) + " bids=" + str(len(bids)))
 
-        self._strategy.update_orderbook(type_, asks, bids)
+        self._strategy.on_update_orderbook(type_, asks, bids)
         if self.is_initialized():
             let ob = self._strategy.get_orderbook(5)
             self._strategy.on_orderbook(ob)
 
-        logd("process_orderbook_message done")
+        # logd("process_orderbook_message done")
 
-    fn process_order_message(self, inout doc: OndemandDocument) -> None:
+    fn process_order_message(inout self, inout doc: OndemandDocument) -> None:
         let data = doc.get_array("data")
 
         let iter = data.iter()
@@ -267,22 +288,35 @@ struct TradeExecutor[T: BaseStrategy](Movable, Runable):
             let reduceOnly = item.get_bool("reduceOnly")
             let orderLinkId = item.get_str("orderLinkId")
 
-            let order_info =
-                OrderInfo(posIdx, orderId, sym, side, orderType, price, qty,
-                        cumExecQty, orderStatus, createdTime, updatedTime,
-                        avgPrice, cumExecFee, tif, reduceOnly, orderLinkId)
-            logd("order_info: " + str(order_info))
+            # let order_info =
+            #     OrderInfo(posIdx, orderId, sym, side, orderType, price, qty,
+            #             cumExecQty, orderStatus, createdTime, updatedTime,
+            #             avgPrice, cumExecFee, tif, reduceOnly, orderLinkId)
+            # logd("order_info: " + str(order_info))
+
+            let order = Order(
+                type_=orderType,
+                client_order_id=orderLinkId,
+                order_id=orderId,
+                price=Fixed(price),
+                quantity=Fixed(qty),
+                filled_qty=Fixed(cumExecQty),
+                status=convert_bybit_order_status(orderStatus),
+            )
+
+            logi("order: " + str(order))
 
             try:
-                self._strategy.on_order(order_info)
+                self._strategy.on_update_order(order)
+                self._strategy.on_order(order)
             except err:
                 loge("on_order error: " + str(err))
 
             iter.step()
 
         _ = data ^
-        
-    fn process_position_message(self, inout doc: OndemandDocument) -> None:
+
+    fn process_position_message(inout self, inout doc: OndemandDocument) -> None:
         let data = doc.get_array("data")
 
         var positions = list[PositionInfo]()
@@ -296,7 +330,7 @@ struct TradeExecutor[T: BaseStrategy](Movable, Runable):
             let size = item.get_str("size")
             let avgPrice = item.get_str("entryPrice")
             let positionValue = item.get_str("positionValue")
-            let leverage = item.get_float("leverage")
+            let leverage = item.get_str("leverage")
             let markPrice = item.get_str("markPrice")
             let positionMM = item.get_str("positionMM")
             let positionIM = item.get_str("positionIM")
@@ -313,7 +347,7 @@ struct TradeExecutor[T: BaseStrategy](Movable, Runable):
                 size,
                 avgPrice,
                 positionValue,
-                leverage,
+                strtod(leverage),
                 markPrice,
                 positionMM,
                 positionIM,
@@ -337,18 +371,24 @@ struct TradeExecutor[T: BaseStrategy](Movable, Runable):
         _ = data ^
 
     fn is_initialized(self) -> Bool:
-        return self._is_initialized.value == 1
-    
-    fn run(self):
-        while True:
-            # _ = self.on_timer()
-            logd("TradeExecutor.on_timer")
+        return self._is_initialized.load()
+
+    fn run(inout self):
+        while self._is_running.load():
+            # 检查停止请求
+            if self._stop_requested.load():
+                logi("TradeExecutor stopping...")
+                self._is_running.store(False)
+                self._is_stopped.store(True)
+                logi("TradeExecutor stopped")
+                return
+
             try:
                 self._strategy.on_tick()
             except err:
                 loge("on_tick error: " + str(err))
-            _ = sleep_us(1000* 100)
-    
+            _ = sleep_us(1000 * 100)
+
     # fn on_timer(self) -> UInt64:
     #     logi("TradeExecutor.on_timer")
     #     try:
@@ -361,8 +401,13 @@ struct TradeExecutor[T: BaseStrategy](Movable, Runable):
 
 alias gloabl_trade_executor_ptr_key = 10000
 
+
 fn set_gloabl_trade_executor_ptr(ptr: Int):
     seq_store_object_address(gloabl_trade_executor_ptr_key, ptr)
+
+
+fn get_gloabl_trade_executor_ptr() -> Int:
+    return seq_retrieve_object_address(gloabl_trade_executor_ptr_key)
 
 
 # fn trade_executor_on_timer():

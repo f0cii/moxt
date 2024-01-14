@@ -10,6 +10,64 @@ alias timer_entry_t = fn () raises -> UInt64
 alias timed_closure_entry_t = fn (Int) raises -> UInt64
 
 
+fn seq_atomic_bool_new(
+    b: Bool,
+) -> c_void_pointer:
+    return external_call[
+        "seq_atomic_bool_new",
+        c_void_pointer,
+        Bool,
+    ](b)
+
+
+fn seq_atomic_bool_free(
+    p: c_void_pointer,
+) -> None:
+    external_call["seq_atomic_bool_free", NoneType, c_void_pointer](p)
+
+
+fn seq_atomic_bool_load(
+    p: c_void_pointer,
+) -> Bool:
+    return external_call["seq_atomic_bool_load", Bool, c_void_pointer](p)
+
+
+fn seq_atomic_bool_store(
+    p: c_void_pointer,
+    v: Bool,
+) -> None:
+    external_call["seq_atomic_bool_store", NoneType, c_void_pointer, Bool](p, v)
+
+
+fn seq_atomic_int64_new(
+    i: Int64,
+) -> c_void_pointer:
+    return external_call[
+        "seq_atomic_int64_new",
+        c_void_pointer,
+        Int64,
+    ](i)
+
+
+fn seq_atomic_int64_free(
+    p: c_void_pointer,
+) -> None:
+    external_call["seq_atomic_int64_free", NoneType, c_void_pointer](p)
+
+
+fn seq_atomic_int64_load(
+    p: c_void_pointer,
+) -> Int64:
+    return external_call["seq_atomic_int64_load", Int64, c_void_pointer](p)
+
+
+fn seq_atomic_int64_store(
+    p: c_void_pointer,
+    i: Int64,
+) -> None:
+    external_call["seq_atomic_int64_store", NoneType, c_void_pointer, Int64](p, i)
+
+
 # SEQ_FUNC TimedClosureExecutor *
 # seq_photon_timed_closure_executor_new(uint64_t default_timeout,
 #                                       timed_closure_entry entry,
@@ -266,6 +324,41 @@ fn seq_photon_rwlock_unlock(rwlock: c_void_pointer) -> c_int:
     return external_call["seq_photon_rwlock_unlock", c_int, c_void_pointer](rwlock)
 
 
+@value
+struct AtomicBool:
+    var p: c_void_pointer
+
+    fn __init__(inout self, b: Bool):
+        self.p = seq_atomic_bool_new(b)
+
+    fn __del__(owned self):
+        seq_atomic_bool_free(self.p)
+
+    fn load(self) -> Bool:
+        return seq_atomic_bool_load(self.p)
+
+    fn store(self, b: Bool):
+        seq_atomic_bool_store(self.p, b)
+
+
+@value
+struct AtomicInt64:
+    var p: c_void_pointer
+
+    fn __init__(inout self, i: Int64):
+        self.p = seq_atomic_int64_new(i)
+
+    fn __del__(owned self):
+        seq_atomic_int64_free(self.p)
+
+    fn load(self) -> Int64:
+        return seq_atomic_int64_load(self.p)
+
+    fn store(self, i: Int64):
+        seq_atomic_int64_store(self.p, i)
+
+
+@value
 struct RWLock:
     var ptr: c_void_pointer
 
@@ -537,18 +630,21 @@ fn __co_run(arg: c_void_pointer) raises -> c_void_pointer:
 alias CoroFunction = fn () raises capturing -> None
 
 
-fn start_coro(f: CoroFunction):
-    var value = ArgData()
+fn __co_entry(arg: c_void_pointer) raises -> c_void_pointer:
+    let ptr = seq_voidptr_to_int(arg)
+    unsafe.bitcast[CoroFunction](ptr).load()()
+    return c_void_pointer.get_null()
 
-    @parameter
-    fn co_run(arg: dict[HashableStr, String]) raises -> String:
-        f()
-        return ""
 
-    value.set_run(co_run)
-    let ptr = ArgDataRef.to_ptr(value)
+fn start_coro(fn_ptr: Pointer[CoroFunction]):
+    let index = fn_ptr.__as_index()
+    let ptr = seq_int_to_voidptr(index)
+    seq_photon_thread_create_and_migrate_to_work_pool(__co_entry, ptr)
 
-    seq_photon_thread_create_and_migrate_to_work_pool(__co_run, ptr)
+
+fn start_coro(fn_index: Int):
+    let ptr = seq_int_to_voidptr(fn_index)
+    seq_photon_thread_create_and_migrate_to_work_pool(__co_entry, ptr)
 
 
 fn run_coro(f: CoroFunction):

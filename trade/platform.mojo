@@ -1,10 +1,27 @@
+from stdlib_extensions.builtins import dict, list, HashableInt, HashableStr
 from base.c import *
 from base.mo import *
+from base.thread import RWLock
 from base.fixed import Fixed
 from core.bybitmodel import *
 from core.bybitclient import *
 from .config import AppConfig
-from stdlib_extensions.builtins import dict, list, HashableInt, HashableStr
+from .types import *
+
+
+fn convert_bybit_order_status(status: String) -> OrderStatus:
+    if status == "Created" or status == "New":
+        return OrderStatus.new
+    elif status == "Rejected":
+        return OrderStatus.rejected
+    elif status == "PartiallyFilled":
+        return OrderStatus.partially_filled
+    elif status == "PartiallyFilledCanceled" or status == "Cancelled":
+        return OrderStatus.canceled
+    elif status == "Filled":
+        return OrderStatus.filled
+    else:
+        return OrderStatus.empty
 
 
 struct Platform:
@@ -12,6 +29,8 @@ struct Platform:
     var _bids: Pointer[c_void_pointer]
     var _config: AppConfig
     var _client: BybitClient
+    var _order_cache: dict[HashableStr, Order]  # key: client_order_id
+    var _order_cache_lock: RWLock
 
     fn __init__(inout self, config: AppConfig):
         logd("Platform.__init__")
@@ -21,6 +40,8 @@ struct Platform:
         self._bids.store(0, seq_skiplist_new(False))
         self._config = config
         self._client = BybitClient(config.testnet, config.access_key, config.secret_key)
+        self._order_cache = dict[HashableStr, Order]()
+        self._order_cache_lock = RWLock()
 
     fn __moveinit__(inout self, owned existing: Self):
         logd("Platform.__moveinit__")
@@ -32,6 +53,8 @@ struct Platform:
         self._bids.store(0, bids_ptr)
         self._config = existing._config
         self._client = existing._client ^
+        self._order_cache = existing._order_cache ^
+        self._order_cache_lock = existing._order_cache_lock
         logd("Platform.__moveinit__ done")
 
     fn __del__(owned self):
@@ -47,12 +70,12 @@ struct Platform:
         self._bids.free()
         logd("Platform.__del__ done")
 
-    fn update_orderbook(
+    fn on_update_orderbook(
         self,
         type_: String,
         inout asks: list[OrderBookLevel],
         inout bids: list[OrderBookLevel],
-    ):
+    ) raises:
         # logd("Platform.update_orderbook")
         if type_ == "snapshot":
             seq_skiplist_free(self._asks.load(0))
@@ -60,24 +83,38 @@ struct Platform:
             self._asks.store(seq_skiplist_new(True))
             self._bids.store(seq_skiplist_new(False))
 
-        try:
-            let _asks = self._asks.load(0)
-            for i in asks:
-                # logd("ask price: " + str(i.price) + " qty: " + str(i.qty))
-                if i.qty.is_zero():
-                    _ = seq_skiplist_remove(_asks, i.price.value())
-                else:
-                    _ = seq_skiplist_insert(_asks, i.price.value(), i.qty.value(), True)
+        let _asks = self._asks.load(0)
+        for i in asks:
+            # logd("ask price: " + str(i.price) + " qty: " + str(i.qty))
+            if i.qty.is_zero():
+                _ = seq_skiplist_remove(_asks, i.price.value())
+            else:
+                _ = seq_skiplist_insert(_asks, i.price.value(), i.qty.value(), True)
 
-            let _bids = self._bids.load(0)
-            for i in bids:
-                # logd("bid price: " + str(i.price) + " qty: " + str(i.qty))
-                if i.qty.is_zero():
-                    _ = seq_skiplist_remove(_bids, i.price.value())
-                else:
-                    _ = seq_skiplist_insert(_bids, i.price.value(), i.qty.value(), True)
-        except err:
-            loge("Platform.update error: " + str(err))
+        let _bids = self._bids.load(0)
+        for i in bids:
+            # logd("bid price: " + str(i.price) + " qty: " + str(i.qty))
+            if i.qty.is_zero():
+                _ = seq_skiplist_remove(_bids, i.price.value())
+            else:
+                _ = seq_skiplist_insert(_bids, i.price.value(), i.qty.value(), True)
+
+    fn on_update_order(inout self, order: Order):
+        logi("on_update_order: " + str(order))
+        let key = order.client_order_id
+        self._order_cache_lock.lock()
+        self._order_cache[key] = order
+        self._order_cache_lock.unlock()
+
+    fn get_order(self, cid: String) raises -> Order:
+        self._order_cache_lock.lock()
+        try:
+            let order = self._order_cache[cid]
+            self._order_cache_lock.unlock()
+            return order
+        except e:
+            self._order_cache_lock.unlock()
+            raise e
 
     fn get_orderbook(self, n: Int) -> OrderBookLite:
         var ob = OrderBookLite()
@@ -125,7 +162,161 @@ struct Platform:
 
         return ob
 
+    @always_inline
+    fn generate_order_id(self) -> String:
+        # 基于考虑性能，可以预先生成存池子里面，这里从池子里面直接拿
+        return seq_nanoid()
+
+    @always_inline
     fn fetch_exchange_info(
-        self, category: StringLiteral, symbol: StringLiteral
+        self, category: String, symbol: String
     ) raises -> ExchangeInfo:
         return self._client.fetch_exchange_info(category, symbol)
+
+    @always_inline
+    fn fetch_orderbook(
+        self, category: String, symbol: String, limit: Int
+    ) raises -> OrderBook:
+        return self._client.fetch_orderbook(category, symbol, limit)
+
+    @always_inline
+    fn fetch_orders(
+        self,
+        category: String,
+        symbol: String,
+        order_link_id: String = "",
+        limit: Int = 0,
+        cursor: String = "",
+    ) raises -> list[OrderInfo]:
+        return self._client.fetch_orders(category, symbol, order_link_id, limit, cursor)
+
+    @always_inline
+    fn cancel_orders(
+        self,
+        category: String,
+        symbol: String,
+        base_coin: String = "",
+        settle_coin: String = "",
+    ) raises -> list[OrderResponse]:
+        return self._client.cancel_orders(category, symbol, base_coin, settle_coin)
+
+    @always_inline
+    fn fetch_positions(
+        self, category: String, symbol: String
+    ) raises -> list[PositionInfo]:
+        return self._client.fetch_positions(category, symbol)
+
+    @always_inline
+    fn place_order(
+        inout self,
+        category: String,
+        symbol: String,
+        side: String,
+        order_type: String,
+        qty: String,
+        price: String,
+        time_in_force: String = "",
+        position_idx: Int = 0,
+        client_order_id: String = "",
+        reduce_only: Bool = False,
+    ) raises -> OrderResponse:
+        let new_order = Order(
+            type_=order_type,
+            client_order_id=client_order_id,
+            order_id="",
+            price=Fixed(price),
+            quantity=Fixed(qty),
+            filled_qty=Fixed(0),
+            status=OrderStatus.new,
+        )
+        self.on_update_order(new_order)
+        return self._client.place_order(
+            category,
+            symbol,
+            side,
+            order_type,
+            qty,
+            price,
+            time_in_force,
+            position_idx,
+            client_order_id,
+            reduce_only,
+        )
+
+    fn cancel_orders_enhanced(self, category: String, symbol: String) raises -> Bool:
+        """
+        撤销所有活跃订单
+        """
+        let orders = self.fetch_orders(category, symbol)
+        if len(orders) == 0:
+            logi("没有活跃订单，撤单操作完成")
+            return True
+
+        let res = self.cancel_orders(category, symbol)
+        for i in range(len(res)):
+            logi("撤单返回项目: " + str(res[i]))
+        return True
+
+    fn close_positions_enhanced(
+        inout self, category: String, symbol: String
+    ) raises -> Bool:
+        """
+        平持仓
+        """
+        logi("关闭持仓")
+        let positions = self.fetch_positions(category, symbol)
+        if len(positions) == 0:
+            logi("没有任何持仓，平仓操作完成")
+            return True
+
+        for i in range(len(positions)):
+            # logi(str(positions[i]))
+            let pos = positions[i]
+            let size = Fixed(pos.size)
+            if size.is_zero():
+                continue
+            logi("当前持仓: " + str(pos))
+            # 市价平仓
+            var side = String("")
+            let order_type = String("Market")
+            let qty = str(size)
+            let price = ""
+            let position_idx: Int = pos.position_idx
+            if pos.position_idx == 0:
+                side = "Sell" if size > 0 else "Buy"
+            elif pos.position_idx == 1:
+                side = "Sell"
+            elif pos.position_idx == 2:
+                side = "Buy"
+            let client_order_id = self.generate_order_id()
+            logi(
+                "下单平仓 "
+                + side
+                + " "
+                + qty
+                + "@"
+                + order_type
+                + " client_order_id="
+                + client_order_id
+                + " order_type="
+                + order_type
+                + " position_idx="
+                + str(position_idx)
+            )
+            try:
+                let res = self.place_order(
+                    category,
+                    symbol,
+                    side=side,
+                    order_type=order_type,
+                    qty=qty,
+                    price=price,
+                    position_idx=position_idx,
+                    client_order_id=client_order_id,
+                    reduce_only=True,
+                )
+                logi("下单平仓返回: " + str(res))
+            except e:
+                logw("下单失败 error=" + str(e))
+        logi("关闭持仓完成")
+        return True

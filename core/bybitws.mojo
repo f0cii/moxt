@@ -77,7 +77,7 @@ struct BybitWS:
         self._id = seq_voidptr_to_int(ptr)
         self._heartbeat_time = Pointer[Int64].alloc(1)
         self._heartbeat_time.store(0)
-    
+
     fn __moveinit__(inout self, owned existing: Self):
         print("BybitWS.__moveinit__")
         self._ptr = existing._ptr
@@ -254,7 +254,8 @@ struct BybitWS:
         self.send(body_str)
 
     fn on_message(self, s: String) -> None:
-        logd("BybitWS::on_message: " + s)
+        # logd("BybitWS::on_message: " + s)
+
         # 认证成功
         # {"req_id":"LzIP5BH2aBVLUkmsOzg-q","success":true,"ret_msg":"","op":"auth","conn_id":"cldfn01dcjmj8l28s6sg-ngkux"}
 
@@ -277,8 +278,8 @@ struct BybitWS:
         elif op == "pong":
             pass
 
-        _ = doc
-        _ = parser
+        _ = doc ^
+        _ = parser ^
 
     fn release(self) -> None:
         seq_websocket_delete(self._ptr)
@@ -288,3 +289,6 @@ struct BybitWS:
 
     fn connect(self):
         seq_websocket_connect(self._ptr)
+
+    fn disconnect(self):
+        seq_websocket_disconnect(self._ptr)

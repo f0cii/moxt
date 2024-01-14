@@ -21,7 +21,7 @@ from core.bybitmodel import *
 from core.bybitclient import *
 from core.bybitclientjson import *
 from core.bybitws import *
-from trade.config import AppConfig
+from trade.config import *
 from trade.platform import Platform
 from stdlib_extensions.builtins.string import __str_contains__
 
@@ -37,6 +37,11 @@ fn test_c_str() raises:
     assert_true(c_str != Pointer[c_char].get_null())
 
 
+fn test_decimal_places() raises:
+    let dp = decimal_places(0.003)
+    assert_equal(dp, 3)
+
+
 fn test_fixed() raises:
     let f1 = Fixed("1.0")
     assert_equal(str(f1), "1")
@@ -49,6 +54,10 @@ fn test_fixed() raises:
     assert_true(Fixed(100) <= Fixed(150))
     assert_true(Fixed(100) > Fixed(80))
     assert_true(Fixed(100) >= Fixed(100))
+
+    let f001 = Fixed("0.01")
+    let f00a_copy = f001
+    assert_equal(str(f00a_copy), "0.01")
 
 
 fn test_hmac_sha256_b64() raises:
@@ -413,6 +422,17 @@ fn test_parse_orderbook() raises:
         pass
 
 
+fn test_app_config() raises:
+    let app_config = load_config(".env")
+    assert_equal(app_config.testnet, False)
+    assert_equal(app_config.category, "linear")
+    assert_equal(app_config.symbol, "BTCUSDT")
+    assert_equal(app_config.depth, 1)
+    assert_equal(str(app_config.grid_interval), "0.01")
+    let grid_interval = app_config.grid_interval
+    assert_equal(str(grid_interval), "0.01")
+
+
 fn test_platform() raises:
     let asks_ = seq_skiplist_new(True)
     seq_skiplist_free(asks_)
@@ -518,6 +538,7 @@ fn main() raises:
     for i in range (n):
         test_str()
         test_c_str()
+        test_decimal_places()
         test_fixed()
         test_hmac_sha256_b64()
         test_stringlist()
@@ -533,6 +554,7 @@ fn main() raises:
         test_parse_position()
         test_parse_orderbook()
 
+        test_app_config()
         test_platform()
         test_orderbook()
         test_parse_orderbook_bids()

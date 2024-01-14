@@ -20,7 +20,8 @@ from base.yyjson import *
 from core.bybitclient import *
 from core.bybitclientjson import *
 from core.bybitws import *
-from core.env import load_env
+from core.env import env_load
+from trade.config import load_config
 
 
 # pip install fastapi uvicorn[standard]
@@ -145,7 +146,7 @@ fn sum_int_list(v: list[Int]) raises -> Int:
 
 
 fn test_bybitclient() raises:
-    let env_dict = load_env()
+    let env_dict = env_load()
 
     let access_key = env_dict["BYBIT_API_KEY"]
     let secret_key = env_dict["BYBIT_API_SECRET"]

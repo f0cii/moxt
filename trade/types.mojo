@@ -18,6 +18,16 @@ struct OrderStatus(Stringable):
     alias rejected = OrderStatus(5)  # 订单被拒绝
     alias expired = OrderStatus(6)  # 订单过期
 
+    # 判断订单是否活跃的方法
+    # 活跃订单包括新建、部分成交状态
+    fn is_active(self: Self) -> Bool:
+        return self.value == 1 or self.value == 2
+
+    # 判断订单是否已关闭的方法
+    # 已关闭订单包括全部成交、已撤销、被拒绝、过期状态
+    fn is_closed(self: Self) -> Bool:
+        return self.value == 3 or self.value == 4 or self.value == 5 or self.value == 6
+
     fn __eq__(self: Self, rhs: Self) -> Bool:
         return self.value == rhs.value
 
@@ -43,15 +53,38 @@ struct OrderStatus(Stringable):
             return "--"
 
 
-struct PositionIdx:
-    alias SINGLE_SIDE = 0  # 单向持仓
-    alias BOTH_SIDE_BUY = 1  # 买侧双向持仓
-    alias BOTH_SIDE_SELL = 2  # 卖侧双向持仓
+@value
+@register_passable("trivial")
+struct PositionIdx(Stringable, Intable):
+    var value: UInt8
+    alias single_side = PositionIdx(0)  # 单向持仓
+    alias both_side_buy = PositionIdx(1)  # 买侧双向持仓
+    alias both_side_sell = PositionIdx(2)  # 卖侧双向持仓
+
+    fn __eq__(self: Self, rhs: Self) -> Bool:
+        return self.value == rhs.value
+
+    fn __ne__(self: Self, rhs: Self) -> Bool:
+        return self.value != rhs.value
+
+    fn __int__(self: Self) -> Int:
+        return int(self.value)
+
+    fn __str__(self: Self) -> String:
+        if self.value == 0:
+            return "SingleSide"
+        elif self.value == 1:
+            return "BothSideBuy"
+        elif self.value == 2:
+            return "BothSideSell"
+        else:
+            return "--"
 
 
 @value
 struct Order(CollectionElement, Stringable):
-    var type: String
+    var symbol: String
+    var order_type: String
     var client_order_id: String
     var order_id: String
     var price: Fixed
@@ -60,7 +93,8 @@ struct Order(CollectionElement, Stringable):
     var status: OrderStatus
 
     fn __init__(inout self):
-        self.type = ""
+        self.symbol = ""
+        self.order_type = ""
         self.client_order_id = ""
         self.order_id = ""
         self.price = Fixed(0)
@@ -70,7 +104,8 @@ struct Order(CollectionElement, Stringable):
 
     fn __init__(
         inout self,
-        type_: String,
+        symbol: String,
+        order_type: String,
         client_order_id: String,
         order_id: String,
         price: Fixed,
@@ -78,7 +113,8 @@ struct Order(CollectionElement, Stringable):
         filled_qty: Fixed,
         status: OrderStatus,
     ):
-        self.type = type_
+        self.symbol = symbol
+        self.order_type = order_type
         self.client_order_id = client_order_id
         self.order_id = order_id
         self.price = price
@@ -88,8 +124,10 @@ struct Order(CollectionElement, Stringable):
 
     fn __str__(self: Self) -> String:
         return (
-            "<Order: type="
-            + self.type
+            "<Order: symbol="
+            + self.symbol
+            + ", type="
+            + self.order_type
             + ", client_order_id="
             + self.client_order_id
             + ", order_id="

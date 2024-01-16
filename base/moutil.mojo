@@ -55,10 +55,10 @@ def str_to_bool(s: String) -> Bool:
 
 fn decimal_places(value: Float64) -> Int:
     """
-    ·µ»ØĞ¡ÊıÎ»: 0.0001 -> 4
+    è¿”å›å°æ•°ä½: 0.0001 -> 4
     """
     if value == 0.0:
         return 0
 
-    # È¡ÕûÎ»Êı¼´decimal places
+    # å–æ•´ä½æ•°å³decimal places
     return int(math.ceil(math.log10(1.0 / value)))

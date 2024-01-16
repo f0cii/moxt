@@ -1,7 +1,8 @@
 from stdlib_extensions.builtins import dict, list, HashableInt, HashableStr
+from stdlib_extensions.builtins.string import *
 from base.c import *
 from base.mo import *
-from base.thread import RWLock
+from base.thread import *
 from base.fixed import Fixed
 from core.bybitmodel import *
 from core.bybitclient import *
@@ -24,66 +25,97 @@ fn convert_bybit_order_status(status: String) -> OrderStatus:
         return OrderStatus.empty
 
 
+fn safe_split(
+    input_string: String, sep: String = " ", owned maxsplit: Int = -1
+) -> list[String]:
+    try:
+        return split(input_string, sep, maxsplit)
+    except e:
+        return list[String]()
+
+
 struct Platform:
-    var _asks: Pointer[c_void_pointer]
-    var _bids: Pointer[c_void_pointer]
     var _config: AppConfig
     var _client: BybitClient
+    var _symbols: list[String]
+    var _asks: Pointer[c_void_pointer]
+    var _bids: Pointer[c_void_pointer]
+    var _symbol_index_dict: dict[HashableStr, Int]
     var _order_cache: dict[HashableStr, Order]  # key: client_order_id
     var _order_cache_lock: RWLock
 
     fn __init__(inout self, config: AppConfig):
         logd("Platform.__init__")
-        self._asks = Pointer[c_void_pointer].alloc(1)
-        self._bids = Pointer[c_void_pointer].alloc(1)
-        self._asks.store(0, seq_skiplist_new(True))
-        self._bids.store(0, seq_skiplist_new(False))
         self._config = config
         self._client = BybitClient(config.testnet, config.access_key, config.secret_key)
+        self._symbols = safe_split(config.symbols, ",")
+        let symbol_count = len(self._symbols)
+        self._asks = Pointer[c_void_pointer].alloc(symbol_count)
+        self._bids = Pointer[c_void_pointer].alloc(symbol_count)
+        self._symbol_index_dict = dict[HashableStr, Int]()
         self._order_cache = dict[HashableStr, Order]()
         self._order_cache_lock = RWLock()
+        logd("Platform.__init__ done")
 
     fn __moveinit__(inout self, owned existing: Self):
         logd("Platform.__moveinit__")
-        self._asks = Pointer[c_void_pointer].alloc(1)
-        self._bids = Pointer[c_void_pointer].alloc(1)
-        let asks_ptr = existing._asks.load(0)
-        let bids_ptr = existing._bids.load(0)
-        self._asks.store(0, asks_ptr)
-        self._bids.store(0, bids_ptr)
         self._config = existing._config
+        self._symbols = existing._symbols
         self._client = existing._client ^
+
+        let symbol_count = len(self._symbols)
+        self._asks = Pointer[c_void_pointer].alloc(symbol_count)
+        # let asks_ptr = existing._asks.load(0)
+        # self._asks.store(0, asks_ptr)
+
+        self._bids = Pointer[c_void_pointer].alloc(symbol_count)
+        # let bids_ptr = existing._bids.load(0)
+        # self._bids.store(0, bids_ptr)
+
+        self._symbol_index_dict = existing._symbol_index_dict
         self._order_cache = existing._order_cache ^
         self._order_cache_lock = existing._order_cache_lock
         logd("Platform.__moveinit__ done")
 
     fn __del__(owned self):
         logd("Platform.__del__")
-        let NULL = c_void_pointer.get_null()
-        let asks_ptr = self._asks.load(0)
-        if asks_ptr != NULL:
-            seq_skiplist_free(asks_ptr)
-        let bids_ptr = self._bids.load(0)
-        if bids_ptr != NULL:
-            seq_skiplist_free(bids_ptr)
+        # let NULL = c_void_pointer.get_null()
+        # let asks_ptr = self._asks.load(0)
+        # if asks_ptr != NULL:
+        #     seq_skiplist_free(asks_ptr)
+        # let bids_ptr = self._bids.load(0)
+        # if bids_ptr != NULL:
+        #     seq_skiplist_free(bids_ptr)
         self._asks.free()
         self._bids.free()
         logd("Platform.__del__ done")
 
+    fn setup(inout self) raises:
+        logi("Platform.setup")
+        for i in range(len(self._symbols)):
+            let sym = self._symbols[i]
+            logi("sym=" + sym + " i=" + str(i))
+            self._symbol_index_dict[sym] = i
+            self._asks.store(i, seq_skiplist_new(True))
+            self._bids.store(i, seq_skiplist_new(False))
+        logi("Platform.setup done")
+
     fn on_update_orderbook(
         self,
+        symbol: String,
         type_: String,
         inout asks: list[OrderBookLevel],
         inout bids: list[OrderBookLevel],
     ) raises:
+        let index = self._symbol_index_dict[symbol]
         # logd("Platform.update_orderbook")
         if type_ == "snapshot":
-            seq_skiplist_free(self._asks.load(0))
-            seq_skiplist_free(self._bids.load(0))
+            seq_skiplist_free(self._asks.load(index))
+            seq_skiplist_free(self._bids.load(index))
             self._asks.store(seq_skiplist_new(True))
             self._bids.store(seq_skiplist_new(False))
 
-        let _asks = self._asks.load(0)
+        let _asks = self._asks.load(index)
         for i in asks:
             # logd("ask price: " + str(i.price) + " qty: " + str(i.qty))
             if i.qty.is_zero():
@@ -91,7 +123,7 @@ struct Platform:
             else:
                 _ = seq_skiplist_insert(_asks, i.price.value(), i.qty.value(), True)
 
-        let _bids = self._bids.load(0)
+        let _bids = self._bids.load(index)
         for i in bids:
             # logd("bid price: " + str(i.price) + " qty: " + str(i.qty))
             if i.qty.is_zero():
@@ -116,11 +148,12 @@ struct Platform:
             self._order_cache_lock.unlock()
             raise e
 
-    fn get_orderbook(self, n: Int) -> OrderBookLite:
-        var ob = OrderBookLite()
+    fn get_orderbook(self, symbol: String, n: Int) raises -> OrderBookLite:
+        let index: Int = self._symbol_index_dict[symbol]
+        var ob = OrderBookLite(symbol=symbol)
 
-        let _asks = self._asks.load()
-        let _bids = self._bids.load()
+        let _asks = self._asks.load(index)
+        let _bids = self._bids.load(index)
 
         var a_node = seq_skiplist_begin(_asks)
         let a_end = seq_skiplist_end(_asks)
@@ -221,7 +254,8 @@ struct Platform:
         reduce_only: Bool = False,
     ) raises -> OrderResponse:
         let new_order = Order(
-            type_=order_type,
+            symbol=symbol,
+            order_type=order_type,
             client_order_id=client_order_id,
             order_id="",
             price=Fixed(price),

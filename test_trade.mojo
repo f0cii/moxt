@@ -437,15 +437,17 @@ fn test_platform() raises:
     let asks_ = seq_skiplist_new(True)
     seq_skiplist_free(asks_)
 
-    let platform = Platform(AppConfig())
-    let platform_ = platform ^
+    var app_config = AppConfig()
+    app_config.symbol = "BTCUSDT"
+    var platform = Platform(app_config)
+    var platform_ = platform ^
     var asks = list[OrderBookLevel]()
     var bids = list[OrderBookLevel]()
     # {"topic":"orderbook.1.BTCUSDT","type":"snapshot","ts":1704262157072,"data":{"s":"BTCUSDT","b":[["45195.00","7.794"]],"a":[["45195.10","3.567"]],"u":11104722,"seq":114545691619},"cts":1704262157070}
     asks.append(OrderBookLevel(Fixed("45195.10"), Fixed("3.567")))
     bids.append(OrderBookLevel(Fixed("45195.00"), Fixed("7.794")))
     for i in range(100):
-        platform_.update_orderbook("snapshot", asks, bids)
+        platform_.on_update_orderbook("BTCUSDT", "snapshot", asks, bids)
 
 
 fn test_orderbook() raises:
@@ -476,7 +478,7 @@ fn test_parse_orderbook_bids() raises:
     let a = data.get_array("a")
     let a_iter = a.iter()
 
-    var orderbook = OrderBookLite()
+    var orderbook = OrderBookLite("BTCUSDT")
 
     while a_iter.has_element():
         let obj = a_iter.get()

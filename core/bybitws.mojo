@@ -238,7 +238,7 @@ struct BybitWS:
             return ""
 
     fn on_heartbeat(self) -> None:
-        logd("BybitWS.on_heartbeat")
+        # logd("BybitWS.on_heartbeat")
         let elapsed_time = time_ms() - self._heartbeat_time.load()
         if elapsed_time <= 5000:
             # logd("BybitWS.on_heartbeat ignore [" + str(elapsed_time) + "]")

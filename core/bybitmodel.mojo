@@ -450,9 +450,11 @@ struct OrderBookLevel(CollectionElement):
 
 @value
 struct OrderBookLite:
+    var symbol: String
     var asks: list[OrderBookLevel]
     var bids: list[OrderBookLevel]
 
-    fn __init__(inout self):
+    fn __init__(inout self, symbol: String = ""):
+        self.symbol = symbol
         self.asks = list[OrderBookLevel]()
         self.bids = list[OrderBookLevel]()

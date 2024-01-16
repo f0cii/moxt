@@ -8,16 +8,19 @@ from .types import *
 
 
 trait DefaultConstructible:
-    fn __init__(inout self):
+    fn __init__(inout self) raises:
         ...
 
 
 trait StrategyConstructible:
-    fn __init__(inout self, config: AppConfig):
+    fn __init__(inout self, config: AppConfig) raises:
         ...
 
 
 trait BaseStrategy(StrategyConstructible, Movable):
+    fn setup(inout self) raises:
+        ...
+
     fn on_init(inout self) raises:
         ...
 
@@ -27,6 +30,7 @@ trait BaseStrategy(StrategyConstructible, Movable):
     # 临时放到策略类，因为mojo的Pointer还不支持AnyType，目前只支持AnyRegType
     fn on_update_orderbook(
         inout self,
+        symbol: String,
         type_: String,
         inout asks: list[OrderBookLevel],
         inout bids: list[OrderBookLevel],
@@ -36,7 +40,7 @@ trait BaseStrategy(StrategyConstructible, Movable):
     fn on_update_order(inout self, order: Order) raises:
         ...
 
-    fn get_orderbook(self, n: Int) raises -> OrderBookLite:
+    fn get_orderbook(self, symbol: String, n: Int) raises -> OrderBookLite:
         ...
 
     fn on_tick(inout self) raises:
@@ -52,5 +56,5 @@ trait BaseStrategy(StrategyConstructible, Movable):
         ...
 
 
-fn create_strategy[T: BaseStrategy](config: AppConfig) -> T:
+fn create_strategy[T: BaseStrategy](config: AppConfig) raises -> T:
     return T(config)

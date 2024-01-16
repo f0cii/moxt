@@ -12,18 +12,20 @@ struct GridStrategy(BaseStrategy):
     var platform: Platform
     var grid: GridInfo
     var category: String
+    var symbols: list[String]
     var symbol: String
     var tick_size: Fixed
     var step_size: Fixed
     var config: AppConfig
     var rwlock: RWLock
 
-    fn __init__(inout self, config: AppConfig):
+    fn __init__(inout self, config: AppConfig) raises:
         logi("GridStrategy.__init__")
         self.platform = Platform(config)
         self.grid = GridInfo()
         self.category = config.category
-        self.symbol = config.symbol
+        self.symbols = safe_split(config.symbols, ",")
+        self.symbol = self.symbols[0]
         self.tick_size = Fixed(0)
         self.step_size = Fixed(0)
         self.config = config
@@ -34,44 +36,42 @@ struct GridStrategy(BaseStrategy):
         self.platform = existing.platform ^
         self.grid = existing.grid ^
         self.category = existing.category
+        self.symbols = existing.symbols
         self.symbol = existing.symbol
         self.tick_size = existing.tick_size
         self.step_size = existing.step_size
         self.config = existing.config
         self.rwlock = existing.rwlock
 
+    fn setup(inout self) raises:
+        self.platform.setup()
+
     fn on_update_orderbook(
         inout self,
+        symbol: String,
         type_: String,
         inout asks: list[OrderBookLevel],
         inout bids: list[OrderBookLevel],
     ) raises:
-        self.platform.on_update_orderbook(type_, asks, bids)
+        self.platform.on_update_orderbook(symbol, type_, asks, bids)
 
     fn on_update_order(inout self, order: Order) raises:
         self.platform.on_update_order(order)
 
-    fn get_orderbook(self, n: Int) raises -> OrderBookLite:
-        return self.platform.get_orderbook(n)
+    fn get_orderbook(self, symbol: String, n: Int) raises -> OrderBookLite:
+        return self.platform.get_orderbook(symbol, n)
 
     fn on_init(inout self) raises:
         logi("GridStrategy.on_init")
-        # let category = "linear"
-        # let symbol = "BTCUSDT"
-        # self.category = category
-        # self.symbol = symbol
 
-        # ³·Ïú¶©µ¥
-        logi("100")
+        # æ’¤é”€è®¢å•
         _ = self.platform.cancel_orders_enhanced(self.category, self.symbol)
-        logi("101")
+        # å…¨éƒ¨å¹³ä»“
         _ = self.platform.close_positions_enhanced(self.category, self.symbol)
-        logi("102")
 
         let exchange_info = self.platform.fetch_exchange_info(
             self.category, self.symbol
         )
-        logi("103")
         logi(str(exchange_info))
 
         let tick_size = Fixed(exchange_info.tick_size)
@@ -84,10 +84,10 @@ struct GridStrategy(BaseStrategy):
         self.step_size = step_size
         let dp = decimal_places(tick_size.to_float())
 
-        # »ñÈ¡ÅÌ¿Ú¼Û¸ñ
+        # è·å–ç›˜å£ä»·æ ¼
         let ob = self.platform.fetch_orderbook(self.category, self.symbol, 5)
         if len(ob.asks) == 0 or len(ob.bids) == 0:
-            raise Error("»ñÈ¡ÅÌ¿ÚÊı¾İÊ§°Ü")
+            raise Error("è·å–ç›˜å£æ•°æ®å¤±è´¥")
 
         let ask = Fixed(ob.asks[0].price)
         let bid = Fixed(ob.bids[0].price)
@@ -110,12 +110,17 @@ struct GridStrategy(BaseStrategy):
 
     fn on_exit(inout self) raises:
         logi("GridStrategy.on_exit")
+        # æ’¤é”€è®¢å•
+        _ = self.platform.cancel_orders_enhanced(self.category, self.symbol)
+        # å…¨éƒ¨å¹³ä»“
+        _ = self.platform.close_positions_enhanced(self.category, self.symbol)
+        logi("GridStrategy.on_exit done")
 
     fn on_tick(inout self) raises:
         # logd("GridStrategy.on_tick")
-        let ob = self.platform.get_orderbook(5)
+        let ob = self.platform.get_orderbook(self.symbol, 5)
         if len(ob.asks) == 0 or len(ob.bids) == 0:
-            logw("¶©µ¥±¡È±ÉÙÂòÂôµ¥")
+            logw("è®¢å•è–„ç¼ºå°‘ä¹°å–å•")
             return
 
         let ask = ob.asks[0]
@@ -134,12 +139,15 @@ struct GridStrategy(BaseStrategy):
             if self.is_within_buy_range(cell.level, current_cell_level):
                 self.place_buy_order(index, cell)
 
-    # ÅĞ¶ÏÍø¸ñµ¥ÔªÊÇ·ñÔÚÂòµ¥·¶Î§ÄÚ
+    # åˆ¤æ–­ç½‘æ ¼å•å…ƒæ˜¯å¦åœ¨ä¹°å•èŒƒå›´å†…
     fn is_within_buy_range(self, cell_level: Int, current_cell_level: Int) -> Bool:
-        let buy_range = 3  # ¶¨ÒåÂòµ¥µÄ·¶Î§£¬¿ÉÒÔ¸ù¾İÊµ¼ÊÇé¿öµ÷Õû
+        let buy_range = 3  # å®šä¹‰ä¹°å•çš„èŒƒå›´ï¼Œå¯ä»¥æ ¹æ®å®é™…æƒ…å†µè°ƒæ•´
         return current_cell_level - buy_range <= cell_level <= current_cell_level
 
     fn place_buy_order(inout self, index: Int, cell: GridCell) raises:
+        """
+        ä¸‹å¼€ä»“å•
+        """
         if cell.long_open_status != OrderStatus.empty:
             return
 
@@ -147,10 +155,10 @@ struct GridStrategy(BaseStrategy):
         let order_type = String("Limit")
         let qty = str(self.config.order_qty)
         let price = str(cell.price)
-        let position_idx: Int = PositionIdx.BOTH_SIDE_BUY
+        let position_idx: Int = int(PositionIdx.both_side_buy)
         let client_order_id = self.platform.generate_order_id()
         logi(
-            "ÏÂµ¥ "
+            "ä¸‹å• "
             + side
             + " "
             + qty
@@ -172,10 +180,34 @@ struct GridStrategy(BaseStrategy):
             position_idx=position_idx,
             client_order_id=client_order_id,
         )
-        logi("ÏÂµ¥·µ»Ø: " + str(res))
+        logi("ä¸‹å•è¿”å›: " + str(res))
         self.grid.cells[index].set_long_open_cid(client_order_id)
         self.grid.cells[index].set_long_open_status(OrderStatus.new)
-        logi("¸üĞÂ¶©µ¥ºÅ")
+        logi("æ›´æ–°è®¢å•å·")
+
+    fn place_tp_orders(inout self) raises:
+        """
+        ä¸‹æ­¢ç›ˆå•
+        """
+        for index in range(len(self.grid.cells)):
+            let cell = self.grid.cells[index]
+            if cell.long_open_status == OrderStatus.filled:
+                if cell.long_tp_cid == "":
+                    logi("ä¸‹æ­¢ç›ˆå•")
+                    self.place_tp_order(index, cell)
+                elif cell.long_tp_status.is_closed():
+                    self.reset_cell(index, PositionIdx.both_side_buy)
+            # if self.is_within_buy_range(cell.level, current_cell_level):
+            #     self.place_buy_order(index, cell)
+
+    fn place_tp_order(inout self, index: Int, cell: GridCell) raises:
+        pass
+
+    fn reset_cell(inout self, index: Int, position_idx: PositionIdx) raises:
+        if position_idx == PositionIdx.both_side_buy:
+            self.grid.cells[index].reset_long_side()
+        elif position_idx == PositionIdx.both_side_sell:
+            self.grid.cells[index].reset_short_side()
 
     fn on_orderbook(inout self, ob: OrderBookLite) raises:
         if len(ob.asks) > 0 and len(ob.bids) > 0:

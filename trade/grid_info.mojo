@@ -10,13 +10,13 @@ struct GridCell(CollectionElement, Stringable):
     var level: Int
     var price: Fixed
 
-    var long_open_cid: String  # ¶©µ¥Client Id
-    var long_open_status: OrderStatus  # ¶©µ¥×´Ì¬
-    var long_open_quantity: Fixed  # ¼ÇÂ¼¹Òµ¥ÊıÁ¿
-    var long_tp_cid: String  # Ö¹Ó¯µ¥Client Id
-    var long_tp_status: OrderStatus  # Ö¹Ó¯µ¥×´Ì¬
-    var long_sl_cid: String  # Ö¹Ëğµ¥Client Id
-    var long_sl_status: OrderStatus  # Ö¹Ëğµ¥×´Ì¬
+    var long_open_cid: String  # è®¢å•Client Id
+    var long_open_status: OrderStatus  # è®¢å•çŠ¶æ€
+    var long_open_quantity: Fixed  # è®°å½•æŒ‚å•æ•°é‡
+    var long_tp_cid: String  # æ­¢ç›ˆå•Client Id
+    var long_tp_status: OrderStatus  # æ­¢ç›ˆå•çŠ¶æ€
+    var long_sl_cid: String  # æ­¢æŸå•Client Id
+    var long_sl_status: OrderStatus  # æ­¢æŸå•çŠ¶æ€
 
     var short_open_cid: String
     var short_open_status: OrderStatus
@@ -45,6 +45,12 @@ struct GridCell(CollectionElement, Stringable):
         self.short_tp_status = OrderStatus.empty
         self.short_sl_cid = ""
         self.short_sl_status = OrderStatus.empty
+
+    fn reset_long_side(inout self):
+        pass
+
+    fn reset_short_side(inout self):
+        pass
 
     fn set_long_open_cid(inout self, cid: String):
         self.long_open_cid = cid

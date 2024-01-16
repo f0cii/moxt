@@ -38,16 +38,19 @@ struct TradeExecutor[T: BaseStrategy](Movable, Runable):
             access_key=config.access_key,
             secret_key=config.secret_key,
         )
-        let public_topic: String = "orderbook." + str(
-            config.depth
-        ) + "." + config.symbol
+        let symbols = safe_split(config.symbols, ",")
+        var public_topics = String("")
+        for sym in symbols:
+            if public_topics != "":
+                public_topics += ","
+            public_topics += "orderbook." + str(config.depth) + "." + sym
         self._public_ws = BybitWS(
             is_private=False,
             testnet=config.testnet,
             access_key="",
             secret_key="",
             category=config.category,
-            topics=public_topic,  # "orderbook.1.BTCUSDT",
+            topics=public_topics,  # "orderbook.1.BTCUSDT",
         )
         let private_topic = "position,execution,order,wallet"
         self._private_ws = BybitWS(
@@ -116,6 +119,8 @@ struct TradeExecutor[T: BaseStrategy](Movable, Runable):
 
         # run_coro(_run)
 
+        self._strategy.setup()
+
         self._strategy.on_init()
 
         self._private_ws.connect()
@@ -170,14 +175,16 @@ struct TradeExecutor[T: BaseStrategy](Movable, Runable):
 
     fn on_private_message(inout self, data: c_char_pointer, data_len: Int):
         let s = c_str_to_string(data, data_len)
-        logd("on_private_message message: " + s)
+        # logd("on_private_message message: " + s)
         let parser = OndemandParser(ParserBufferSize)
         var doc = parser.parse(s)
         let topic = doc.get_str("topic")
 
         if topic == "order":
+            logi("order message: " + s)
             self.process_order_message(doc)
         elif topic == "position":
+            logi("position message: " + s)
             self.process_position_message(doc)
         elif topic == "execution":
             pass
@@ -196,7 +203,7 @@ struct TradeExecutor[T: BaseStrategy](Movable, Runable):
     fn on_public_message(inout self, data: c_char_pointer, data_len: Int):
         try:
             let s = c_str_to_string(data, data_len)
-            logd("on_public_message message: " + s)
+            # logd("on_public_message message: " + s)
 
             let parser = DomParser(ParserBufferSize)
             var doc = parser.parse(s)
@@ -219,6 +226,7 @@ struct TradeExecutor[T: BaseStrategy](Movable, Runable):
         let type_ = doc.get_str("type")
         let data = doc.get_object("data")
         # logd("type_: " + type_) # snapshot,delta
+        let symbol = data.get_str("s")
 
         let a = data.get_array("a")
         let a_iter = a.iter()
@@ -258,9 +266,9 @@ struct TradeExecutor[T: BaseStrategy](Movable, Runable):
 
         # logd("asks=" + str(len(asks)) + " bids=" + str(len(bids)))
 
-        self._strategy.on_update_orderbook(type_, asks, bids)
+        self._strategy.on_update_orderbook(symbol, type_, asks, bids)
         if self.is_initialized():
-            let ob = self._strategy.get_orderbook(5)
+            let ob = self._strategy.get_orderbook(symbol, 5)
             self._strategy.on_orderbook(ob)
 
         # logd("process_orderbook_message done")
@@ -273,7 +281,7 @@ struct TradeExecutor[T: BaseStrategy](Movable, Runable):
             let item = iter.get_object()
             let posIdx = item.get_int("positionIdx")
             let orderId = item.get_str("orderId")
-            let sym = item.get_str("symbol")
+            let symbol = item.get_str("symbol")
             let side = item.get_str("side")
             let orderType = item.get_str("orderType")
             let price = strtod(item.get_str("price"))
@@ -295,7 +303,8 @@ struct TradeExecutor[T: BaseStrategy](Movable, Runable):
             # logd("order_info: " + str(order_info))
 
             let order = Order(
-                type_=orderType,
+                symbol=symbol,
+                order_type=orderType,
                 client_order_id=orderLinkId,
                 order_id=orderId,
                 price=Fixed(price),

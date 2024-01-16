@@ -11,7 +11,7 @@ struct AppConfig(Stringable):
     var access_key: String
     var secret_key: String
     var category: String
-    var symbol: String
+    var symbols: String
     var depth: Int
     var grid_interval: Fixed
     var order_qty: Fixed
@@ -21,7 +21,7 @@ struct AppConfig(Stringable):
         self.access_key = ""
         self.secret_key = ""
         self.category = ""
-        self.symbol = ""
+        self.symbols = ""
         self.depth = 1
         self.grid_interval = Fixed("0.01")
         self.order_qty = Fixed("0.0")
@@ -36,8 +36,8 @@ struct AppConfig(Stringable):
             + self.secret_key
             + ", category="
             + self.category
-            + ", symbol="
-            + self.symbol
+            + ", symbols="
+            + self.symbols
             + ", depth="
             + str(self.depth)
             + ", grid_interval="
@@ -63,7 +63,7 @@ fn load_config(filename: String) raises -> AppConfig:
     config.access_key = dict["access_key"]
     config.secret_key = dict["secret_key"]
     config.category = dict["category"]
-    config.symbol = dict["symbol"]
+    config.symbols = dict["symbols"]
     config.depth = strtoi(dict["depth"])
     config.grid_interval = Fixed(dict["grid_interval"])
     config.order_qty = Fixed(dict["order_qty"])

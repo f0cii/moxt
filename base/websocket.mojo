@@ -51,7 +51,7 @@ fn emit_on_connect(id: Int) -> None:
 
 
 fn emit_on_heartbeat(id: Int) -> None:
-    logd("emit_on_heartbeat")
+    # logd("emit_on_heartbeat")
     let id_ = id + 1
     let ptr = seq_retrieve_object_address(id_)
     if ptr == 0:
@@ -59,7 +59,7 @@ fn emit_on_heartbeat(id: Int) -> None:
         return
     let wrap = unsafe.bitcast[on_heartbeat_callback](ptr).load()
     wrap()
-    logd("emit_on_heartbeat done")
+    # logd("emit_on_heartbeat done")
 
 
 fn emit_on_message(id: Int, data: c_char_pointer, data_len: c_size_t) -> None:

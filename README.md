@@ -17,8 +17,11 @@ moxt 是一个基于 Mojo 编程语言的量化交易库，旨在提供简单而
 确保你的环境中已经安装了 Mojo 编程语言(v0.6.1)。在项目目录下运行以下命令安装依赖：
 
 ```bash
-其他步骤省略，请参考官方文档
-modular install mojo
+请参考mojo官方文档安装
+
+或者使用mojo容器
+docker build -t mojo -f mojo.Dockerfile .
+docker run -it mojo
 ```
 
 ## 快速开始

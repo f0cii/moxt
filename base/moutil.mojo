@@ -44,10 +44,11 @@ fn strtod(s: StringLiteral) -> Float64:
 fn strtod(s: String) -> Float64:
     return seq_strtod(s._buffer.data.value, len(s))
 
+
 def str_to_bool(s: String) -> Bool:
-    if s == 'true':
+    if s == 'true' or s == "True":
         return True
-    elif s == 'false':
+    elif s == 'false' or s == "False":
         return False
     else:
         return False

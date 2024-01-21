@@ -325,6 +325,52 @@ fn seq_photon_rwlock_unlock(rwlock: c_void_pointer) -> c_int:
 
 
 @value
+@register_passable("trivial")
+struct iovec:
+    var iov_base: c_void_pointer  # Pointer to data.
+    var iov_len: c_size_t  # Length of data.
+
+    fn __init__() -> Self:
+        return Self {iov_base: c_void_pointer.get_null(), iov_len: 0}
+
+    fn __init__(base: c_void_pointer, len: c_size_t) -> Self:
+        return Self {iov_base: base, iov_len: len}
+
+    fn __init__(data: (DTypePointer[DType.uint8], Int)) -> Self:
+        let ptr = data.get[0, DTypePointer[DType.uint8]]()
+        let data_len = data.get[1, Int]()
+        let c_ptr = rebind[c_void_pointer, DTypePointer[DType.uint8]](ptr)
+        return Self {iov_base: c_ptr, iov_len: data_len}
+
+    fn to_data(self) -> (DTypePointer[DType.uint8], Int):
+        let ptr = rebind[DTypePointer[DType.uint8]](self.iov_base)
+        return (ptr, self.iov_len)
+
+
+# 创建队列
+fn seq_lockfree_queue_new() -> c_void_pointer:
+    return external_call["seq_lockfree_queue_new", c_void_pointer]()
+
+
+# 销毁队列
+fn seq_lockfree_queue_free(q: c_void_pointer) -> None:
+    external_call["seq_lockfree_queue_free", NoneType, c_void_pointer](q)
+
+
+# 入队操作
+fn seq_lockfree_queue_push(q: c_void_pointer, data: Pointer[iovec]) -> Bool:
+    return external_call[
+        "seq_lockfree_queue_push", Bool, c_void_pointer, Pointer[iovec]
+    ](q, data)
+
+
+# 出队操作
+fn seq_lockfree_queue_pop(q: c_void_pointer, data: Pointer[iovec]) -> Bool:
+    return external_call[
+        "seq_lockfree_queue_pop", Bool, c_void_pointer, Pointer[iovec]
+    ](q, data)
+
+
 struct AtomicBool:
     var p: c_void_pointer
 
@@ -341,7 +387,6 @@ struct AtomicBool:
         seq_atomic_bool_store(self.p, b)
 
 
-@value
 struct AtomicInt64:
     var p: c_void_pointer
 
@@ -668,3 +713,24 @@ fn run_coro(f: CoroFunction):
 
     _ = sem.wait(1)
     sem.free()
+
+
+struct LockfreeQueue:
+    var ptr: c_void_pointer
+
+    fn __init__(inout self):
+        self.ptr = seq_lockfree_queue_new()
+
+    fn __moveinit__(inout self, owned existing: Self):
+        self.ptr = existing.ptr
+        existing.ptr = c_void_pointer.get_null()
+
+    fn __del__(owned self):
+        if self.ptr != c_void_pointer.get_null():
+            seq_lockfree_queue_free(self.ptr)
+
+    fn push(self, data: Pointer[iovec]) -> Bool:
+        return seq_lockfree_queue_push(self.ptr, data)
+
+    fn pop(self, data: Pointer[iovec]) -> Bool:
+        return seq_lockfree_queue_pop(self.ptr, data)

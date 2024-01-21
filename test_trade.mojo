@@ -1,5 +1,11 @@
 import time
 from memory import unsafe
+from testing import assert_equal, assert_true, assert_false
+from stdlib_extensions.time import time_ns
+from stdlib_extensions.builtins import dict, list, HashableInt, HashableStr
+from stdlib_extensions.builtins.string import __str_contains__
+from flx import *
+
 from base.mo import *
 from base.c import *
 from base.str import Str
@@ -13,17 +19,14 @@ from base.fixed import Fixed
 from base.ssmap import SSMap
 from base.httpclient import HttpClient, VERB_GET, Headers, QueryParams
 from base.websocket import *
-from stdlib_extensions.time import time_ns
-from stdlib_extensions.builtins import dict, list, HashableInt, HashableStr
-from testing import assert_equal, assert_true, assert_false
 from base.moutil import *
+from base.thread import *
 from core.bybitmodel import *
 from core.bybitclient import *
 from core.bybitclientjson import *
 from core.bybitws import *
 from trade.config import *
 from trade.platform import Platform
-from stdlib_extensions.builtins.string import __str_contains__
 
 
 fn test_str() raises:
@@ -67,36 +70,34 @@ fn test_hmac_sha256_b64() raises:
     assert_equal(b, "02895cf3008ae095e5eb890183187700d205bba8d7082e9b6df298a6557867e0")
 
 
-# @value
-# struct StringSlice(CollectionElement, Stringable):
-#     """
-#     Represents a view of some string, with basic access primitives. 
-#     Since it's a @value, it also automatically implements @CollectionElement 
-#     which is nice - no extra boilerplate needed.
-#     """
-#     var ptr: DTypePointer[DType.int8]
-#     var size: Int
+fn test_lockfree_queue() raises:
+    let df_cb = FlxMap().add("a", 7).add("b", 8).add("c", "hello").finish()
 
-#     fn get(self) -> StringRef:
-#         return StringRef(self.ptr, self.size)
+    let ptr = df_cb.get[0, DTypePointer[DType.uint8]]()
+    
+    var v = iovec(df_cb)
 
-#     fn find(self, what: Int8, start: Int = 0) -> Int:
-#         for i in range(start, self.size):
-#             if self.ptr[i] == what:
-#                 return i
-#         return -1
+    let q = LockfreeQueue()
+    let v_ptr = Pointer[iovec].address_of(v)
+    let ok = q.push(v_ptr)
+    # logi("ok=" + str(ok))
+    var v2 = iovec()
+    let ok2 = q.pop(Pointer[iovec].address_of(v2))
+    # logi("ok2=" + str(ok2))
+    if v.iov_base != v2.iov_base:
+        assert_true(False)
+    if v.iov_len != v2.iov_len:
+        assert_true(False)
 
-#     fn __str__(self) -> String:
-#         return String(self.get())
+    let df_cb1 = v2.to_data()
+    
+    let value = FlxValue(df_cb1)
+    let a = value["a"].int()
+    let c = value["c"].string()
+    assert_equal(a, 7)
+    assert_equal(c, "hello")
 
-#     fn __getitem__(self, idx: Int) -> Int8:
-#         return self.ptr[idx]
-
-#     fn __getitem__(self, idxs: slice) -> StringSlice:
-#         var end = idxs.end
-#         if end > self.size:
-#             end = self.size
-#         return StringSlice(self.ptr.offset(idxs.start), end - idxs.start)
+    ptr.free()
 
 
 fn test_stringlist() raises:
@@ -423,14 +424,11 @@ fn test_parse_orderbook() raises:
 
 
 fn test_app_config() raises:
-    let app_config = load_config(".env")
-    assert_equal(app_config.testnet, False)
+    let app_config = load_config("config.example.toml")
+    assert_equal(app_config.testnet, True)
     assert_equal(app_config.category, "linear")
-    assert_equal(app_config.symbol, "BTCUSDT")
+    assert_equal(app_config.symbols, "BTCUSDT")
     assert_equal(app_config.depth, 1)
-    assert_equal(str(app_config.grid_interval), "0.01")
-    let grid_interval = app_config.grid_interval
-    assert_equal(str(grid_interval), "0.01")
 
 
 fn test_platform() raises:
@@ -438,16 +436,19 @@ fn test_platform() raises:
     seq_skiplist_free(asks_)
 
     var app_config = AppConfig()
-    app_config.symbol = "BTCUSDT"
+    app_config.symbols = "BTCUSDT"
     var platform = Platform(app_config)
-    var platform_ = platform ^
+    # var platform_ = platform ^
+    platform.setup()
     var asks = list[OrderBookLevel]()
     var bids = list[OrderBookLevel]()
     # {"topic":"orderbook.1.BTCUSDT","type":"snapshot","ts":1704262157072,"data":{"s":"BTCUSDT","b":[["45195.00","7.794"]],"a":[["45195.10","3.567"]],"u":11104722,"seq":114545691619},"cts":1704262157070}
     asks.append(OrderBookLevel(Fixed("45195.10"), Fixed("3.567")))
     bids.append(OrderBookLevel(Fixed("45195.00"), Fixed("7.794")))
     for i in range(100):
-        platform_.on_update_orderbook("BTCUSDT", "snapshot", asks, bids)
+        platform.on_update_orderbook("BTCUSDT", "snapshot", asks, bids)
+    
+    platform.free()
 
 
 fn test_orderbook() raises:
@@ -537,12 +538,17 @@ fn main() raises:
     # seq_test_sonic_cpp_wrap()
     # logi("seq_test_sonic_cpp_wrap done")
 
+    test_platform()
+    # test_lockfree_queue()
+
     for i in range (n):
         test_str()
         test_c_str()
         test_decimal_places()
         test_fixed()
         test_hmac_sha256_b64()
+        test_lockfree_queue()
+
         test_stringlist()
         test_str_cache()
         test_query_values()
@@ -555,9 +561,7 @@ fn main() raises:
         test_parse_order()
         test_parse_position()
         test_parse_orderbook()
-
         test_app_config()
-        test_platform()
         test_orderbook()
         test_parse_orderbook_bids()
 

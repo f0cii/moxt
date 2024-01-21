@@ -9,7 +9,6 @@ from core.bybitws import *
 from .config import AppConfig
 from .platform import *
 from .base_strategy import *
-from .grid_strategy import *
 
 
 alias ParserBufferSize = 1000 * 100
@@ -20,13 +19,25 @@ trait Runable:
         ...
 
 
-struct TradeExecutor[T: BaseStrategy](Movable, Runable):
+trait IExecutor:
+    fn start(inout self) raises:
+        ...
+    
+    fn stop_now(inout self):
+        ...
+    
+    fn run(inout self):
+        ...
+
+    fn perform_tasks(inout self):
+        ...
+
+
+struct Executor[T: BaseStrategy](Movable, Runable, IExecutor):
     var _client: BybitClient
     var _public_ws: BybitWS
     var _private_ws: BybitWS
     var _strategy: T
-    # var _tc_executor: TimedClosureExecutor
-    # var _timer: c_void_pointer
     var _is_initialized: AtomicBool
     var _is_running: AtomicBool  # 表示是否在运行
     var _stop_requested: AtomicBool  # 表示是否已经接收到停止请求
@@ -70,7 +81,7 @@ struct TradeExecutor[T: BaseStrategy](Movable, Runable):
         self._is_stopped = AtomicBool(False)
 
     fn __moveinit__(inout self, owned existing: Self):
-        print("TradeExecutor.__moveinit__")
+        print("Executor.__moveinit__")
         self._client = existing._client ^
         self._public_ws = existing._public_ws ^
         self._private_ws = existing._private_ws ^
@@ -111,14 +122,6 @@ struct TradeExecutor[T: BaseStrategy](Movable, Runable):
             Pointer[on_message_callback].address_of(on_message_public)
         )
 
-        # @parameter
-        # fn _run() raises -> None:
-        #     logi("on_init start")
-        #     self._strategy.on_init()
-        #     logi("on_init end")
-
-        # run_coro(_run)
-
         self._strategy.setup()
 
         self._strategy.on_init()
@@ -133,10 +136,10 @@ struct TradeExecutor[T: BaseStrategy](Movable, Runable):
         self._stop_requested.store(False)
         self._is_stopped.store(False)
 
-        logi("TradeExecutor started")
+        logi("Executor started")
 
     fn stop_now(inout self):
-        logi("TradeExecutor.stop")
+        logi("Executor.stop")
         # 设置停止标志
         self._stop_requested.store(True)
         self._private_ws.disconnect()
@@ -148,7 +151,7 @@ struct TradeExecutor[T: BaseStrategy](Movable, Runable):
             # self._public_ws.release()
         except err:
             loge("on_exit error: " + str(err))
-        logi("TradeExecutor.stop done")
+        logi("Executor.stop done")
 
     fn _get_ptr[T: Movable](inout self) -> AnyPointer[T]:
         # constrained[Self._check[T]() != -1, "not a union element type"]()
@@ -386,10 +389,10 @@ struct TradeExecutor[T: BaseStrategy](Movable, Runable):
         while self._is_running.load():
             # 检查停止请求
             if self._stop_requested.load():
-                logi("TradeExecutor stopping...")
+                logi("Executor stopping...")
                 self._is_running.store(False)
                 self._is_stopped.store(True)
-                logi("TradeExecutor stopped")
+                logi("Executor stopped")
                 return
 
             try:
@@ -398,27 +401,10 @@ struct TradeExecutor[T: BaseStrategy](Movable, Runable):
                 loge("on_tick error: " + str(err))
             _ = sleep_us(1000 * 100)
 
-    # fn on_timer(self) -> UInt64:
-    #     logi("TradeExecutor.on_timer")
-    #     try:
-    #         self._strategy.on_tick()
-    #     except err:
-    #         loge("on_tick error: " + str(err))
-    #     logi("TradeExecutor.on_timer done")
-    #     return 0
-
-
-alias gloabl_trade_executor_ptr_key = 10000
-
-
-fn set_gloabl_trade_executor_ptr(ptr: Int):
-    seq_store_object_address(gloabl_trade_executor_ptr_key, ptr)
-
-
-fn get_gloabl_trade_executor_ptr() -> Int:
-    return seq_retrieve_object_address(gloabl_trade_executor_ptr_key)
-
-
-# fn trade_executor_on_timer():
-#     logi("trade_executor_on_timer")
-#     pass
+    fn perform_tasks(inout self):
+        """
+        执行一些定期清理
+        """
+        while self._is_running.load():
+            logi("perform_tasks")
+            _ = sleep(1)

@@ -1,4 +1,4 @@
-# from python import Python as py
+from python import Python
 from stdlib_extensions.pathlib import Path
 from base.fixed import Fixed
 from base.moutil import *
@@ -13,8 +13,8 @@ struct AppConfig(Stringable):
     var category: String
     var symbols: String
     var depth: Int
-    var grid_interval: Fixed
-    var order_qty: Fixed
+    var strategy: String
+    var params: dict[HashableStr, String]
 
     fn __init__(inout self):
         self.testnet = False
@@ -23,10 +23,15 @@ struct AppConfig(Stringable):
         self.category = ""
         self.symbols = ""
         self.depth = 1
-        self.grid_interval = Fixed("0.01")
-        self.order_qty = Fixed("0.0")
+        self.strategy = ""
+        self.params = dict[HashableStr, String]()
 
     fn __str__(self) -> String:
+        var params_str = String("")
+        for key_value in self.params.items():
+            if params_str != "":
+                params_str += ", "
+            params_str += str(key_value.key) + "=" + key_value.value
         return (
             "<AppConfig: testnet="
             + str(self.testnet)
@@ -40,23 +45,42 @@ struct AppConfig(Stringable):
             + self.symbols
             + ", depth="
             + str(self.depth)
-            + ", grid_interval="
-            + str(self.grid_interval)
-            + ", order_qty="
-            + str(self.order_qty)
-            + ">"
+            + ", strategy="
+            + self.strategy
+            + ", params=["
+            + params_str
+            + "]>"
         )
 
 
-fn load_toml_config(filename: String) raises -> AppConfig:
-    # let tomllib = py.import_module("tomllib")
-    # let tmp_file = Path(filename)
-    # let s = tmp_file.read_text()
-    # let j = tomllib.loads(s)
-    return AppConfig()
-
-
 fn load_config(filename: String) raises -> AppConfig:
+    let py = Python.import_module("builtins")
+    let tomli = Python.import_module("tomli")
+    let tmp_file = Path(filename)
+    let s = tmp_file.read_text()
+    let dict = tomli.loads(s)
+    var config = AppConfig()
+    config.testnet = str_to_bool(str(dict["testnet"]))
+    config.access_key = str(dict["access_key"])
+    config.secret_key = str(dict["secret_key"])
+    config.category = str(dict["category"])
+    config.symbols = str(dict["symbols"])
+    config.depth = strtoi(str(dict["depth"]))
+    config.strategy = str(dict["strategy"]["name"])
+    let params = dict["params"]
+    let iterator = py.iter(params)
+    var index = 0
+    let count = int(params.__len__())
+    while index < count:
+        let name = py.next(iterator)
+        let value = params[name]
+        # print(name, value)
+        config.params[str(name)] = str(value)
+        index += 1
+    return config
+
+
+fn load_env_config(filename: String) raises -> AppConfig:
     let dict = env_load(filename)
     var config = AppConfig()
     config.testnet = str_to_bool(dict["testnet"])
@@ -65,6 +89,4 @@ fn load_config(filename: String) raises -> AppConfig:
     config.category = dict["category"]
     config.symbols = dict["symbols"]
     config.depth = strtoi(dict["depth"])
-    config.grid_interval = Fixed(dict["grid_interval"])
-    config.order_qty = Fixed(dict["order_qty"])
     return config

@@ -125,19 +125,35 @@ struct Fixed(Stringable):
     fn __add__(self, other: Self) -> Self:
         return Self {_value: self._value + other._value}
 
+    # 自定义+=
+    fn __iadd__(inout self, other: Self):
+        self._value += other._value
+
     # 自定义-
     fn __sub__(self, other: Self) -> Self:
         return Self {_value: self._value - other._value}
+
+    # 自定义-=
+    fn __isub__(inout self, other: Self):
+        self._value -= other._value
 
     # 自定义*
     fn __mul__(self, other: Self) -> Self:
         let v = seq_fixed_mul(self._value, other._value)
         return Self {_value: v}
 
+    # 自定义*=
+    fn __imul__(inout self, other: Self):
+        self._value = seq_fixed_mul(self._value, other._value)
+
     # 自定义/
     fn __truediv__(self, other: Self) -> Self:
         let v = seq_fixed_truediv(self._value, other._value)
         return Self {_value: v}
+
+    # 自定义/=
+    fn __itruediv__(inout self, other: Self):
+        self._value = seq_fixed_truediv(self._value, other._value)
 
     fn __str__(self) -> String:
         return self.to_string()

@@ -36,6 +36,8 @@ chmod +x ./build.sh
 ./build.sh main.mojo -o moxt
 # 设置环境变量
 source setup.sh
+# 安装python依赖库
+pip install tomli
 # 运行
 ./moxt
 

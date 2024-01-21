@@ -8,30 +8,7 @@ from core.bybitmodel import *
 from core.bybitclient import *
 from .config import AppConfig
 from .types import *
-
-
-fn convert_bybit_order_status(status: String) -> OrderStatus:
-    if status == "Created" or status == "New":
-        return OrderStatus.new
-    elif status == "Rejected":
-        return OrderStatus.rejected
-    elif status == "PartiallyFilled":
-        return OrderStatus.partially_filled
-    elif status == "PartiallyFilledCanceled" or status == "Cancelled":
-        return OrderStatus.canceled
-    elif status == "Filled":
-        return OrderStatus.filled
-    else:
-        return OrderStatus.empty
-
-
-fn safe_split(
-    input_string: String, sep: String = " ", owned maxsplit: Int = -1
-) -> list[String]:
-    try:
-        return split(input_string, sep, maxsplit)
-    except e:
-        return list[String]()
+from .helpers import *
 
 
 struct Platform:
@@ -91,14 +68,34 @@ struct Platform:
         logd("Platform.__del__ done")
 
     fn setup(inout self) raises:
-        logi("Platform.setup")
+        # logi("Platform.setup")
         for i in range(len(self._symbols)):
             let sym = self._symbols[i]
-            logi("sym=" + sym + " i=" + str(i))
+            # logi("sym=" + sym + " i=" + str(i))
             self._symbol_index_dict[sym] = i
             self._asks.store(i, seq_skiplist_new(True))
             self._bids.store(i, seq_skiplist_new(False))
-        logi("Platform.setup done")
+        # logi("Platform.setup done")
+
+    fn free(inout self) raises:
+        for i in range(len(self._symbols)):
+            let asks_ptr = self._asks.load(i)
+            seq_skiplist_free(asks_ptr)
+            let bids_ptr = self._bids.load(i)
+            seq_skiplist_free(bids_ptr)
+
+    fn delete_orders_from_cache(inout self, cids: list[String]) raises:
+        if len(cids) == 0:
+            return
+
+        self._order_cache_lock.lock()
+        for cid in cids:
+            try:
+                logi("移除订单: " + cid)
+                self._order_cache.pop(cid)
+            except e:
+                logw("清理订单时出错: " + str(e))
+        self._order_cache_lock.unlock()
 
     fn on_update_orderbook(
         self,
@@ -222,6 +219,16 @@ struct Platform:
         cursor: String = "",
     ) raises -> list[OrderInfo]:
         return self._client.fetch_orders(category, symbol, order_link_id, limit, cursor)
+
+    @always_inline
+    fn cancel_order(
+        self,
+        category: String,
+        symbol: String,
+        order_id: String = "",
+        order_link_id: String = "",
+    ) raises -> OrderResponse:
+        return self._client.cancel_order(category, symbol, order_id, order_link_id)
 
     @always_inline
     fn cancel_orders(

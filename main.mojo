@@ -2,28 +2,48 @@ import time
 from base.c import *
 from base.mo import *
 from base.thread import *
-from trade.config import load_config
-from trade.trade_executor import *
+from trade.config import *
 from trade.base_strategy import *
-from trade.grid_strategy import GridStrategy
+from trade.executor import *
+from trade.globals import *
+from trading_strategies.dynamic_grid_strategy import DynamicGridStrategy
+from trading_strategies.smart_grid_strategy import SmartGridStrategy
 
-alias MyExecutor = TradeExecutor[GridStrategy]
-alias UseTradeExecutorFunction = fn (executor: MyExecutor) -> None
+# 当前策略的名称
+var CURRENT_STRATEGY = AnyPointer[String]()
+
+# 运行操作
+alias ACTION_RUN = 1000
+
+# 停止操作
+alias ACTION_STOP_NOW = 1001
+
+# 执行任务操作
+alias ACTION_PERFORM_TASKS = 1002
+
+
+fn execute_executor_action(action: Int, c_ptr: Int):
+    let strategy = __get_address_as_lvalue(CURRENT_STRATEGY.value)
+    if strategy == "DynamicGridStrategy":
+        __execute_executor_action[DynamicGridStrategy](c_ptr, action)
+    elif strategy == "SmartGridStrategy":
+        __execute_executor_action[SmartGridStrategy](c_ptr, action)
+
+
+fn run(app_config: AppConfig) raises:
+    let strategy = __get_address_as_lvalue(CURRENT_STRATEGY.value)
+    if strategy == "DynamicGridStrategy":
+        __run[DynamicGridStrategy](app_config)
+    elif strategy == "SmartGridStrategy":
+        __run[SmartGridStrategy](app_config)
 
 
 fn run_forever():
     seq_photon_join_current_vcpu_into_workpool(seq_photon_work_pool())
 
 
-# fn __co_trade_executor_exit(executor: MyExecutor):
-#     logd("__co_trade_executor_exit")
-#     executor.stop_now()
-
-
 fn handle_exit():
-    let executor_ptr_index = get_gloabl_trade_executor_ptr()
-    let executor_ptr = AnyPointer[MyExecutor].__from_index(executor_ptr_index)
-    __get_address_as_lvalue(executor_ptr.value).stop_now()
+    execute_executor_action(ACTION_STOP_NOW)
     time.sleep(3)
     logi("exit...")
     _ = exit(0)
@@ -39,17 +59,55 @@ fn photon_handle_term(sig: c_int) raises -> None:
     handle_exit()
 
 
-fn use_gloabl_trade_executor[use: UseTradeExecutorFunction]():
-    let ptr = seq_retrieve_object_address(gloabl_trade_executor_ptr_key)
-    let p = AnyPointer[MyExecutor].__from_index(ptr)
-    use(__get_address_as_lvalue(p.value))
+fn __execute_executor_action[T: BaseStrategy](c_ptr: Int, action: Int):
+    let executor_ptr = AnyPointer[Executor[T]].__from_index(c_ptr)
+    if action == ACTION_RUN:
+        __get_address_as_lvalue(executor_ptr.value).run()
+    elif action == ACTION_STOP_NOW:
+        __get_address_as_lvalue(executor_ptr.value).stop_now()
+    elif action == ACTION_PERFORM_TASKS:
+        __get_address_as_lvalue(executor_ptr.value).perform_tasks()
 
 
-fn __timer_entry(arg: c_void_pointer) raises -> c_void_pointer:
+fn execute_executor_action(action: Int):
+    let c_ptr = get_gloabl_trade_executor_ptr()
+    execute_executor_action(action, c_ptr)
+
+
+fn __executor_run_entry(arg: c_void_pointer) raises -> c_void_pointer:
     let ptr = seq_voidptr_to_int(arg)
-    let executor_ptr = AnyPointer[MyExecutor].__from_index(ptr)
-    __get_address_as_lvalue(executor_ptr.value).run()
+    execute_executor_action(ACTION_RUN, ptr)
     return c_void_pointer.get_null()
+
+
+fn __executor_perform_tasks_entry(arg: c_void_pointer) raises -> c_void_pointer:
+    let ptr = seq_voidptr_to_int(arg)
+    execute_executor_action(ACTION_PERFORM_TASKS, ptr)
+    return c_void_pointer.get_null()
+
+
+fn __run[T: BaseStrategy](app_config: AppConfig) raises:
+    let strategy = create_strategy[T](app_config)
+    var executor = Executor[T](app_config, strategy ^)
+
+    executor.start()
+
+    let executor_ptr = executor._get_ptr[Executor[T]]()
+    let executor_ptr_index = executor_ptr.__as_index()
+    set_gloabl_trade_executor_ptr(executor_ptr_index)
+
+    let ptr = seq_int_to_voidptr(executor_ptr_index)
+    seq_photon_thread_create_and_migrate_to_work_pool(__executor_run_entry, ptr)
+    seq_photon_thread_create_and_migrate_to_work_pool(
+        __executor_perform_tasks_entry, ptr
+    )
+
+    logi("程序已准备就绪，等待事件中...")
+    run_forever()
+
+    logi("Done!!!")
+
+    _ = executor ^
 
 
 fn main() raises:
@@ -67,23 +125,14 @@ fn main() raises:
     seq_init_signal(handle_term)
     seq_init_photon_signal(photon_handle_term)
 
-    let app_config = load_config(".env")
+    let app_config = load_config("config.toml")
+
+    __get_address_as_lvalue(CURRENT_STRATEGY.value) = app_config.strategy
 
     logi("加载配置信息: " + str(app_config))
-    # var strategy = GridStrategy(app_config)
-    let strategy = create_strategy[GridStrategy](app_config)
-    var executor = TradeExecutor[GridStrategy](app_config, strategy ^)
-    executor.start()
-    let executor_ptr = executor._get_ptr[MyExecutor]()
-    let executor_ptr_index = executor_ptr.__as_index()
-    set_gloabl_trade_executor_ptr(executor_ptr_index)
 
-    let ptr = seq_int_to_voidptr(executor_ptr_index)
-    seq_photon_thread_create_and_migrate_to_work_pool(__timer_entry, ptr)
+    # for key_value in app_config.params.items():
+    #     logi(str(key_value.key))
+    #     logi(key_value.value)
 
-    logi("程序已准备就绪，等待事件中...")
-    run_forever()
-
-    logi("Done!!!")
-
-    _ = executor ^
+    run(app_config)

@@ -1,0 +1,17 @@
+testnet = true
+access_key = ""
+secret_key = ""
+category = "linear"
+symbols = "BTCUSDT"
+depth = 1
+
+[strategy]
+name = "SmartGridStrategy"
+
+[params]
+grid_interval = 0.01
+order_qty = 0.001
+# 设置总体止损百分比
+total_sl_percent = -0.1
+# 设置单个格子止损百分比
+cell_sl_percent = -0.05

@@ -1,16 +1,15 @@
 import time
+from base.containers import ObjectContainer
 from base.c import *
 from base.mo import *
+from base.globals import *
 from base.thread import *
+from base.websocket import OnConnectWrapper, OnHeartbeatWrapper, OnMessageWrapper
 from trade.config import *
 from trade.base_strategy import *
 from trade.executor import *
-from trade.globals import *
 from trading_strategies.dynamic_grid_strategy import DynamicGridStrategy
 from trading_strategies.smart_grid_strategy import SmartGridStrategy
-
-# 当前策略的名称
-var CURRENT_STRATEGY = AnyPointer[String]()
 
 # 运行操作
 alias ACTION_RUN = 1000
@@ -23,7 +22,7 @@ alias ACTION_PERFORM_TASKS = 1002
 
 
 fn execute_executor_action(action: Int, c_ptr: Int):
-    let strategy = __get_address_as_lvalue(CURRENT_STRATEGY.value)
+    let strategy = seq_get_global_string(CURRENT_STRATEGY_KEY)
     if strategy == "DynamicGridStrategy":
         __execute_executor_action[DynamicGridStrategy](c_ptr, action)
     elif strategy == "SmartGridStrategy":
@@ -31,7 +30,7 @@ fn execute_executor_action(action: Int, c_ptr: Int):
 
 
 fn run(app_config: AppConfig) raises:
-    let strategy = __get_address_as_lvalue(CURRENT_STRATEGY.value)
+    let strategy = seq_get_global_string(CURRENT_STRATEGY_KEY)
     if strategy == "DynamicGridStrategy":
         __run[DynamicGridStrategy](app_config)
     elif strategy == "SmartGridStrategy":
@@ -70,7 +69,7 @@ fn __execute_executor_action[T: BaseStrategy](c_ptr: Int, action: Int):
 
 
 fn execute_executor_action(action: Int):
-    let c_ptr = get_gloabl_trade_executor_ptr()
+    let c_ptr = get_global_pointer(TRADE_EXECUTOR_PTR_KEY)
     execute_executor_action(action, c_ptr)
 
 
@@ -92,9 +91,11 @@ fn __run[T: BaseStrategy](app_config: AppConfig) raises:
 
     executor.start()
 
-    let executor_ptr = executor._get_ptr[Executor[T]]()
+    # let executor_ptr = executor._get_ptr[Executor[T]]()
+    # let executor_ptr_index = executor_ptr.__as_index()
+    let executor_ptr = Reference(executor).get_unsafe_pointer()
     let executor_ptr_index = executor_ptr.__as_index()
-    set_gloabl_trade_executor_ptr(executor_ptr_index)
+    set_global_pointer(TRADE_EXECUTOR_PTR_KEY, executor_ptr_index)
 
     let ptr = seq_int_to_voidptr(executor_ptr_index)
     seq_photon_thread_create_and_migrate_to_work_pool(__executor_run_entry, ptr)
@@ -125,14 +126,30 @@ fn main() raises:
     seq_init_signal(handle_term)
     seq_init_photon_signal(photon_handle_term)
 
+    var coc = ObjectContainer[OnConnectWrapper]()
+    var hoc = ObjectContainer[OnHeartbeatWrapper]()
+    var moc = ObjectContainer[OnMessageWrapper]()
+
+    let coc_ref = Reference(coc).get_unsafe_pointer()
+    let hoc_ref = Reference(hoc).get_unsafe_pointer()
+    let moc_ref = Reference(moc).get_unsafe_pointer()
+
+    set_global_pointer(WS_ON_CONNECT_WRAPPER_PTR_KEY, coc_ref.__as_index())
+    set_global_pointer(WS_ON_HEARTBEAT_WRAPPER_PTR_KEY, hoc_ref.__as_index())
+    set_global_pointer(WS_ON_MESSAGE_WRAPPER_PTR_KEY, moc_ref.__as_index())
+
     let app_config = load_config("config.toml")
 
-    __get_address_as_lvalue(CURRENT_STRATEGY.value) = app_config.strategy
-
     logi("加载配置信息: " + str(app_config))
+
+    seq_set_global_string(CURRENT_STRATEGY_KEY, app_config.strategy)
 
     # for key_value in app_config.params.items():
     #     logi(str(key_value.key))
     #     logi(key_value.value)
 
     run(app_config)
+
+    _ = coc ^
+    _ = hoc ^
+    _ = moc ^

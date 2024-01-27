@@ -2,7 +2,7 @@ import time
 from memory import unsafe
 from testing import assert_equal, assert_true, assert_false
 from stdlib_extensions.time import time_ns
-from stdlib_extensions.builtins import dict, list, HashableInt, HashableStr
+from stdlib_extensions.builtins import dict, list, HashableInt, HashableStr, list_to_str
 from stdlib_extensions.builtins.string import __str_contains__
 from flx import *
 
@@ -21,6 +21,7 @@ from base.httpclient import HttpClient, VERB_GET, Headers, QueryParams
 from base.websocket import *
 from base.moutil import *
 from base.thread import *
+from base.ti import *
 from core.bybitmodel import *
 from core.bybitclient import *
 from core.bybitclientjson import *
@@ -515,6 +516,203 @@ fn test_parse_orderbook_bids() raises:
     for i in orderbook.asks:
         logd("price: " + str(i.price) + " qty: " + str(i.qty))
 
+    
+fn test_ti() raises:
+    var info = seq_ti_get_first_indicator()
+    while True:
+        let is_valided = seq_ti_is_valid_indicator(info)
+        if not is_valided:
+            break
+        
+        # let info_ = __get_address_as_owned_value(info.value)
+        let info_ = info.take_value()
+        let input_names = info_.input_names()
+        let input_names_str = list_to_str(input_names)
+        logi("input_names_str=" + input_names_str)
+        let option_names = info_.option_names()
+        let option_names_str = list_to_str(option_names)
+        logi("option_names_str=" + option_names_str)
+        let output_names = info_.output_names()
+        let output_names_str = list_to_str(output_names)
+        logi("output_names_str=" + output_names_str)
+        info = seq_ti_get_next_indicator(info)
+
+
+fn test_ti3() raises:
+    let data_in = Pointer[Float64].alloc(10)
+    # 5, 8, 12, 11, 9, 8, 7, 10, 11, 13
+    data_in.store(0, 5)
+    data_in.store(1, 8)
+    data_in.store(2, 12)
+    data_in.store(3, 11)
+    data_in.store(4, 9)
+    data_in.store(5, 8)
+    data_in.store(6, 7)
+    data_in.store(7, 10)
+    data_in.store(8, 11)
+    data_in.store(9, 13)
+    let options = Pointer[Float64].alloc(1)
+    options.store(0, 3)
+    let data_out = Pointer[Float64].alloc(10)
+    let inputs = Pointer[Pointer[Float64]].alloc(1)
+    inputs.store(0, data_in)
+    let outputs = Pointer[Pointer[Float64]].alloc(1)
+    outputs.store(0, data_out)
+    seq_test_ti3(inputs, 10, options, outputs)
+
+    data_in.free()
+    data_out.free()
+    options.free()
+    inputs.free()
+    outputs.free()
+
+
+fn test_ti_call() raises:
+    let s = StringRef("sma")
+    let info = seq_ti_find_indicator(s.data._as_scalar_pointer())
+    assert_equal(seq_ti_is_valid_indicator(info), True)
+
+    let input_length: c_int = 10
+
+    let data_in = Pointer[Float64].alloc(int(input_length))
+    data_in.store(0, 5)
+    data_in.store(1, 8)
+    data_in.store(2, 12)
+    data_in.store(3, 11)
+    data_in.store(4, 9)
+    data_in.store(5, 8)
+    data_in.store(6, 7)
+    data_in.store(7, 10)
+    data_in.store(8, 11)
+    data_in.store(9, 13)
+    let options = Pointer[Float64].alloc(1)
+    options.store(0, 3)
+    
+    let inputs = Pointer[Pointer[Float64]].alloc(1)
+    inputs.store(0, data_in)
+    
+    let start = seq_ti_indicator_start(info, options)
+    let output_length = input_length - start
+
+    let outputs = Pointer[Pointer[Float64]].alloc(1)
+    let data_out = Pointer[Float64].alloc(int(output_length))
+    outputs.store(0, data_out)
+    let ok = seq_ti_indicator_run(info, input_length, inputs, options, outputs)
+    assert_equal(ok, True)
+
+    data_in.free()
+    data_out.free()
+    options.free()
+    inputs.free()
+    outputs.free()
+
+
+fn test_ti_call_at_index() raises:
+    let info = seq_ti_indicator_at_index(72)
+    assert_equal(seq_ti_is_valid_indicator(info), True)
+
+    let input_length: c_int = 10
+
+    let data_in = Pointer[Float64].alloc(int(input_length))
+    data_in.store(0, 5)
+    data_in.store(1, 8)
+    data_in.store(2, 12)
+    data_in.store(3, 11)
+    data_in.store(4, 9)
+    data_in.store(5, 8)
+    data_in.store(6, 7)
+    data_in.store(7, 10)
+    data_in.store(8, 11)
+    data_in.store(9, 13)
+    let options = Pointer[Float64].alloc(1)
+    options.store(0, 3)
+    
+    let inputs = Pointer[Pointer[Float64]].alloc(1)
+    inputs.store(0, data_in)
+    
+    let start = seq_ti_indicator_start(info, options)
+    let output_length = input_length - start
+
+    let outputs = Pointer[Pointer[Float64]].alloc(1)
+    let data_out = Pointer[Float64].alloc(int(output_length))
+    outputs.store(0, data_out)
+    let ok = seq_ti_indicator_run(info, input_length, inputs, options, outputs)
+    assert_equal(ok, True)
+
+    data_in.free()
+    data_out.free()
+    options.free()
+    inputs.free()
+    outputs.free()
+
+
+fn test_ti_call_at_index2() raises:
+    let info = seq_ti_indicator_at_index(72)
+    assert_equal(seq_ti_is_valid_indicator(info), True)
+
+    let input_length: c_int = 10
+
+    var data_in = DynamicVector[Float64](int(input_length))
+    data_in.append(5)
+    data_in.append(8)
+    data_in.append(12)
+    data_in.append(11)
+    data_in.append(9)
+    data_in.append(8)
+    data_in.append(7)
+    data_in.append(10)
+    data_in.append(11)
+    data_in.append(13)
+
+    var options = DynamicVector[Float64](1)
+    options.append(3)
+    assert_equal(len(options), 1)
+    
+    let inputs = Pointer[AnyPointer[Float64]].alloc(1)
+    inputs.store(0, data_in.data)
+    
+    let start = seq_ti_indicator_start(info, options.data)
+    let output_length = int(input_length - start)
+
+    let outputs = Pointer[AnyPointer[Float64]].alloc(1)
+    var data_out = DynamicVector[Float64](output_length)
+    data_out.resize(output_length, 0.0)
+    outputs.store(0, data_out.data)
+    let ok = seq_ti_indicator_run(info, input_length, inputs, options.data, outputs)
+    assert_equal(ok, True)
+
+    for i in range (output_length):
+        let f: Float64 = data_out[i]
+        # logi("i=" + str(i))
+        # logi("i=" + str(i) + " x=" + str(f))
+
+    inputs.free()
+    # options.free()
+    outputs.free()
+    _ = options ^
+
+
+fn test_ti_indicator() raises:
+    let indi = Indicator(72)
+    let input_length = 10
+    let data_in = Pointer[Float64].alloc(input_length)
+    data_in.store(0, 5)
+    data_in.store(1, 8)
+    data_in.store(2, 12)
+    data_in.store(3, 11)
+    data_in.store(4, 9)
+    data_in.store(5, 8)
+    data_in.store(6, 7)
+    data_in.store(7, 10)
+    data_in.store(8, 11)
+    data_in.store(9, 13)
+    let options = Pointer[Float64].alloc(1)
+    options.store(0, 3)
+    _ = indi.run(input_length, data_in, options)
+    data_in.free()
+    options.free()
+
+
 
 fn run_forever():
     seq_photon_join_current_vcpu_into_workpool(seq_photon_work_pool())
@@ -527,7 +725,7 @@ fn main() raises:
 
     var n = 1
     n = 1
-    # n = 1000000000000
+    n = 1000000000000
     if n == 1:
         seq_init_log(LOG_LEVEL_DBG, "")
     else:
@@ -540,30 +738,43 @@ fn main() raises:
 
     test_platform()
     # test_lockfree_queue()
+    # seq_test_ti()
+    # seq_test_ti1()
+    
+    # test_ti()
+    # test_ti3()
+    # test_ti_call()
+    # test_ti_call_at_index()
+    # test_ti_call_at_index2()
 
     for i in range (n):
-        test_str()
-        test_c_str()
-        test_decimal_places()
-        test_fixed()
-        test_hmac_sha256_b64()
-        test_lockfree_queue()
+        # test_str()
+        # test_c_str()
+        # test_decimal_places()
+        # test_fixed()
+        # test_hmac_sha256_b64()
+        # test_lockfree_queue()
 
-        test_stringlist()
-        test_str_cache()
-        test_query_values()
-        test_sonic_raw()
-        test_sonic()
-        test_subscribe_message()
-        test_base()
-        test_order_info()
+        # test_stringlist()
+        # test_str_cache()
+        # test_query_values()
+        # test_sonic_raw()
+        # test_sonic()
+        # test_subscribe_message()
+        # test_base()
+        # test_order_info()
 
-        test_parse_order()
-        test_parse_position()
-        test_parse_orderbook()
-        test_app_config()
-        test_orderbook()
-        test_parse_orderbook_bids()
+        # test_parse_order()
+        # test_parse_position()
+        # test_parse_orderbook()
+        # test_app_config()
+        # test_orderbook()
+        # test_parse_orderbook_bids()
+        # # test_ti()
+        # test_ti_call()
+        # test_ti_call_at_index()
+        test_ti_call_at_index2()
+        # test_ti_indicator()
 
     logi("Done!!!")
-    run_forever()
+    # run_forever()

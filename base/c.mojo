@@ -1,5 +1,6 @@
 from sys.info import sizeof
-from sys.intrinsics import external_call, _mlirtype_is_eq
+# from sys.intrinsics import external_call, _mlirtype_is_eq
+from sys.intrinsics import _mlirtype_is_eq
 from memory import memcpy, memset_zero
 
 # Types aliases
@@ -270,6 +271,19 @@ fn strlen(s: Pointer[c_char]) -> c_size_t:
     .
     """
     return external_call["strlen", c_size_t, Pointer[c_char]](s)
+
+
+fn strlen(s: Pointer[c_schar]) -> c_size_t:
+    """
+    :strlen libc POSIX `strlen` function
+    Reference: https://man7.org/linux/man-pages/man3/strlen.3p.html
+    Fn signature: size_t strlen(const char *s).
+    Args:
+    s
+    Returns:
+    .
+    """
+    return external_call["strlen", c_size_t, Pointer[c_schar]](s)
 
 
 fn to_char_ptr(s: String) -> Pointer[c_char]:

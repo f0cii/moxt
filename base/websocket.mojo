@@ -9,18 +9,51 @@ alias TLS1_2_VERSION = 0x0303
 alias TLS1_3_VERSION = 0x0304
 
 
-alias on_connect_callback = fn () capturing -> None
-alias on_heartbeat_callback = fn () capturing -> None
+alias on_connect_callback = fn () escaping -> None
+alias on_heartbeat_callback = fn () escaping -> None
 alias on_message_callback = fn (
     data: c_char_pointer, data_len: c_size_t
-) capturing -> None
+) escaping -> None
+
+
+@value
+struct OnConnectWrapper(CollectionElement):
+    var _callback: on_connect_callback
+
+    fn __init__(inout self, owned callback: on_connect_callback):
+        self._callback = callback ^
+
+    fn __call__(self):
+        self._callback()
+
+
+@value
+struct OnHeartbeatWrapper(CollectionElement):
+    var _callback: on_heartbeat_callback
+
+    fn __init__(inout self, owned callback: on_heartbeat_callback):
+        self._callback = callback ^
+
+    fn __call__(self):
+        self._callback()
+
+
+@value
+struct OnMessageWrapper(CollectionElement):
+    var _callback: on_message_callback
+
+    fn __init__(inout self, owned callback: on_message_callback):
+        self._callback = callback ^
+
+    fn __call__(self, data: c_char_pointer, data_len: c_size_t):
+        self._callback(data, data_len)
 
 
 fn set_on_connect(id: Int, ptr: Int) -> None:
     if id == 0:
         return
     logd("set_on_connect id=" + str(id) + ", ptr=" + str(ptr))
-    seq_store_object_address(id, ptr)
+    seq_set_global_int(id, ptr)
 
 
 fn set_on_heartbeat(id: Int, ptr: Int) -> None:
@@ -28,7 +61,7 @@ fn set_on_heartbeat(id: Int, ptr: Int) -> None:
         return
     let id_ = id + 1
     logd("set_on_heartbeat id=" + str(id_) + ", ptr=" + str(ptr))
-    seq_store_object_address(id_, ptr)
+    seq_set_global_int(id_, ptr)
 
 
 fn set_on_message(id: Int, ptr: Int) -> None:
@@ -36,45 +69,37 @@ fn set_on_message(id: Int, ptr: Int) -> None:
         return
     let id_ = id + 2
     logd("set_on_message id=" + str(id_) + ", ptr=" + str(ptr))
-    seq_store_object_address(id_, ptr)
+    seq_set_global_int(id_, ptr)
 
 
 fn emit_on_connect(id: Int) -> None:
-    logd("emit_on_connect id=" + str(id))
-    let ptr = seq_retrieve_object_address(id)
+    let ptr = seq_get_global_int(id)
     if ptr == 0:
         logd("emit_on_connect nil")
         return
-    let wrap = unsafe.bitcast[on_connect_callback](ptr).load()
-    wrap()
-    logd("emit_on_connect done")
+    let pointer = AnyPointer[OnConnectWrapper].__from_index(ptr)
+    __get_address_as_lvalue(pointer.value)()
 
 
 fn emit_on_heartbeat(id: Int) -> None:
-    # logd("emit_on_heartbeat")
     let id_ = id + 1
-    let ptr = seq_retrieve_object_address(id_)
+    let ptr = seq_get_global_int(id_)
     if ptr == 0:
         logd("emit_on_heartbeat nil")
         return
-    let wrap = unsafe.bitcast[on_heartbeat_callback](ptr).load()
-    wrap()
-    # logd("emit_on_heartbeat done")
+    let pointer = AnyPointer[OnHeartbeatWrapper].__from_index(ptr)
+    __get_address_as_lvalue(pointer.value)()
 
 
 fn emit_on_message(id: Int, data: c_char_pointer, data_len: c_size_t) -> None:
-    # logd("emit_on_message")
     # let s = c_str_to_string(data, data_len)
-    # logd("emit_on_message message: " + s)
-
     let id_ = id + 2
-    let ptr = seq_retrieve_object_address(id_)
+    let ptr = seq_get_global_int(id_)
     if ptr == 0:
         logd("emit_on_message nil")
         return
-    let wrap = unsafe.bitcast[on_message_callback](ptr).load()
-    wrap(data, data_len)
-    # logd("emit_on_message done")
+    let pointer = AnyPointer[OnMessageWrapper].__from_index(ptr)
+    __get_address_as_lvalue(pointer.value)(data, data_len)
 
 
 struct WebSocket:
@@ -112,23 +137,26 @@ struct WebSocket:
         return self._id
 
     fn get_on_connect(self) -> on_connect_callback:
-        @parameter
+        let self_ptr = Reference(self).get_unsafe_pointer()
+
         fn wrapper():
-            self.on_connect()
+            __get_address_as_lvalue(self_ptr.address).on_connect()
 
         return wrapper
 
     fn get_on_heartbeat(self) -> on_heartbeat_callback:
-        @parameter
+        let self_ptr = Reference(self).get_unsafe_pointer()
+
         fn wrapper():
-            self.on_heartbeat()
+            __get_address_as_lvalue(self_ptr.address).on_heartbeat()
 
         return wrapper
 
     fn get_on_message(self) -> on_message_callback:
-        @parameter
+        let self_ptr = Reference(self).get_unsafe_pointer()
+
         fn wrapper(data: c_char_pointer, data_len: Int):
-            self.on_message(data, data_len)
+            __get_address_as_lvalue(self_ptr.address).on_message(data, data_len)
 
         return wrapper
 

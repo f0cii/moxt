@@ -547,7 +547,7 @@ struct ConditionVariable:
         seq_photon_condition_variable_free(self.ptr)
 
 
-alias CoRunFunction = fn (dict[HashableStr, String]) raises capturing -> String
+alias CoRunFunction = fn (dict[HashableStr, String]) raises escaping -> String
 
 
 struct ArgData:
@@ -558,7 +558,6 @@ struct ArgData:
         # print("__init__")
         self._data = dict[HashableStr, String]()
 
-        @parameter
         fn default_run(arg: dict[HashableStr, String]) raises -> String:
             return ""
 
@@ -697,7 +696,7 @@ fn run_coro(f: CoroFunction):
     var value = ArgData()
     value["sem_ptr"] = sem.ptr_to_int()
 
-    @parameter
+    # @parameter
     fn co_run(arg: dict[HashableStr, String]) raises -> String:
         let p = arg["sem_ptr"]
         let ptr = strtoi(p)

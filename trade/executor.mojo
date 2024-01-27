@@ -22,10 +22,10 @@ trait Runable:
 trait IExecutor:
     fn start(inout self) raises:
         ...
-    
+
     fn stop_now(inout self):
         ...
-    
+
     fn run(inout self):
         ...
 
@@ -98,29 +98,17 @@ struct Executor[T: BaseStrategy](Movable, Runable, IExecutor):
         var on_heartbeat_private = self._private_ws.get_on_heartbeat()
         var on_message_private = self.get_private_on_message()
 
-        self._private_ws.set_on_connect(
-            Pointer[on_connect_callback].address_of(on_connect_private)
-        )
-        self._private_ws.set_on_heartbeat(
-            Pointer[on_heartbeat_callback].address_of(on_heartbeat_private)
-        )
-        self._private_ws.set_on_message(
-            Pointer[on_message_callback].address_of(on_message_private)
-        )
+        self._private_ws.set_on_connect(on_connect_private)
+        self._private_ws.set_on_heartbeat(on_heartbeat_private)
+        self._private_ws.set_on_message(on_message_private)
 
         var on_connect_public = self._public_ws.get_on_connect()
         var on_heartbeat_public = self._public_ws.get_on_heartbeat()
         var on_message_public = self.get_public_on_message()
 
-        self._public_ws.set_on_connect(
-            Pointer[on_connect_callback].address_of(on_connect_public)
-        )
-        self._public_ws.set_on_heartbeat(
-            Pointer[on_heartbeat_callback].address_of(on_heartbeat_public)
-        )
-        self._public_ws.set_on_message(
-            Pointer[on_message_callback].address_of(on_message_public)
-        )
+        self._public_ws.set_on_connect(on_connect_public)
+        self._public_ws.set_on_heartbeat(on_heartbeat_public)
+        self._public_ws.set_on_message(on_message_public)
 
         self._strategy.setup()
 
@@ -163,16 +151,20 @@ struct Executor[T: BaseStrategy](Movable, Runable, IExecutor):
         return result
 
     fn get_private_on_message(inout self) -> on_message_callback:
-        @parameter
+        let self_ptr = Reference(self).get_unsafe_pointer()
+
         fn wrapper(data: c_char_pointer, data_len: Int):
-            self.on_private_message(data, data_len)
+            __get_address_as_lvalue(self_ptr.address).on_private_message(data, data_len)
 
         return wrapper
 
     fn get_public_on_message(inout self) -> on_message_callback:
-        @parameter
+        let self_ptr = Reference(self).get_unsafe_pointer()
+
         fn wrapper(data: c_char_pointer, data_len: Int):
-            self.on_public_message(data, data_len)
+            __get_address_as_lvalue(self_ptr.address).on_public_message(data, data_len)
+            # let s = c_str_to_string(data, data_len)
+            # logd("get_public_on_message message: " + s)
 
         return wrapper
 
@@ -198,8 +190,6 @@ struct Executor[T: BaseStrategy](Movable, Runable, IExecutor):
 
         _ = doc ^
         _ = parser ^
-
-        # let msg = s
 
         self._private_ws.on_message(s)
 

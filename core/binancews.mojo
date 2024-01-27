@@ -1,9 +1,12 @@
 from stdlib_extensions.builtins import dict, list, HashableInt
 from stdlib_extensions.builtins.string import *
 from stdlib_extensions.time import time_ns
+from base.globals import *
 from base.websocket import *
 from base.yyjson import yyjson_doc, yyjson_mut_doc
 from base.sj_ondemand import OndemandParser
+from base.containers import ObjectContainer
+from base.websocket import OnConnectWrapper, OnHeartbeatWrapper, OnMessageWrapper
 from .sign import hmac_sha256_hex
 from .binanceclient import BinanceClient
 
@@ -91,35 +94,51 @@ struct BinanceWS:
     fn get_id(self) -> Int:
         return self._id
 
-    fn set_on_connect(self, callback: Pointer[on_connect_callback]):
+    fn set_on_connect(self, owned wrapper: OnConnectWrapper):
         let id = self.get_id()
-        let ptr = callback.__as_index()
-        set_on_connect(id, ptr)
+        let coc_ptr = get_global_pointer(WS_ON_CONNECT_WRAPPER_PTR_KEY)
+        let coc_any_ptr = AnyPointer[ObjectContainer[OnConnectWrapper]].__from_index(
+            coc_ptr
+        )
+        let wrapper_ptr = __get_address_as_lvalue(coc_any_ptr.value).emplace(wrapper)
+        seq_set_global_int(id, wrapper_ptr)
 
-    fn set_on_heartbeat(self, callback: Pointer[on_heartbeat_callback]):
+    fn set_on_heartbeat(self, owned wrapper: OnHeartbeatWrapper):
         let id = self.get_id()
-        let ptr = callback.__as_index()
-        set_on_heartbeat(id, ptr)
+        let coc_ptr = get_global_pointer(WS_ON_HEARTBEAT_WRAPPER_PTR_KEY)
+        let coc_any_ptr = AnyPointer[ObjectContainer[OnHeartbeatWrapper]].__from_index(
+            coc_ptr
+        )
+        let wrapper_ptr = __get_address_as_lvalue(coc_any_ptr.value).emplace(wrapper)
+        seq_set_global_int(id, wrapper_ptr)
 
-    fn set_on_message(self, callback: Pointer[on_message_callback]):
+    fn set_on_message(self, owned wrapper: OnMessageWrapper):
         let id = self.get_id()
-        let ptr = callback.__as_index()
-        set_on_message(id, ptr)
+        let coc_ptr = get_global_pointer(WS_ON_MESSAGE_WRAPPER_PTR_KEY)
+        let coc_any_ptr = AnyPointer[ObjectContainer[OnMessageWrapper]].__from_index(
+            coc_ptr
+        )
+        let wrapper_ptr = __get_address_as_lvalue(coc_any_ptr.value).emplace(wrapper)
+        seq_set_global_int(id, wrapper_ptr)
 
     fn subscribe(self):
         logd("BinanceWS.subscribe")
 
     fn get_on_connect(self) -> on_connect_callback:
-        @parameter
+        # let self_ptr = Reference(self).get_unsafe_pointer()
+
         fn wrapper():
-            self.on_connect()
+            # __get_address_as_lvalue(self_ptr.address).on_connect()
+            pass
 
         return wrapper
 
     fn get_on_heartbeat(self) -> on_heartbeat_callback:
-        @parameter
+        # let self_ptr = Reference(self).get_unsafe_pointer()
+
         fn wrapper():
-            self.on_heartbeat()
+            # __get_address_as_lvalue(self_ptr.address).on_heartbeat()
+            pass
 
         return wrapper
 

@@ -93,7 +93,7 @@ fn test_websocket() raises:
 
 
 fn get_on_message() -> on_message_callback:
-    @parameter
+    # @parameter
     fn wrapper(data: c_char_pointer, data_len: Int):
         let s = c_str_to_string(data, data_len)
         logi("get_on_message=" + s)
@@ -122,13 +122,13 @@ fn test_bybitws() raises:
     # let on_message_ptr = Pointer[on_message_callback].address_of(on_message).__as_index()
 
     # ws.set_on_connect(on_connect_ptr)
-    ws.set_on_connect(Pointer[on_connect_callback].address_of(on_connect))
-    ws.set_on_heartbeat(Pointer[on_heartbeat_callback].address_of(on_heartbeat))
-    ws.set_on_message(Pointer[on_message_callback].address_of(on_message))
+    ws.set_on_connect(on_connect)
+    ws.set_on_heartbeat(on_heartbeat)
+    ws.set_on_message(on_message)
 
-    var topics = list[String]()
-    topics.append("orderbook.1.BTCUSDT")
-    ws.set_subscription(topics)
+    # var topics = list[String]()
+    # topics.append("orderbook.1.BTCUSDT")
+    # ws.set_subscription(topics)
     ws.connect()
 
     logd("start")
@@ -305,9 +305,26 @@ fn main() raises:
     seq_init_signal(handle_term)
     seq_init_photon_signal(photon_handle_term)
 
+    var coc = ObjectContainer[OnConnectWrapper]()
+    var hoc = ObjectContainer[OnHeartbeatWrapper]()
+    var moc = ObjectContainer[OnMessageWrapper]()
+
+    let coc_ref = Reference(coc).get_unsafe_pointer()
+    let hoc_ref = Reference(hoc).get_unsafe_pointer()
+    let moc_ref = Reference(moc).get_unsafe_pointer()
+
+    set_global_pointer(WS_ON_CONNECT_WRAPPER_PTR_KEY, coc_ref.__as_index())
+    set_global_pointer(WS_ON_HEARTBEAT_WRAPPER_PTR_KEY, hoc_ref.__as_index())
+    set_global_pointer(WS_ON_MESSAGE_WRAPPER_PTR_KEY, moc_ref.__as_index())
+
     # while True:
     # test_httpclient_perf()
-    test_bybitclient()
+    # test_bybitclient()
+    test_bybitws()
 
     logi("程序已准备就绪，等待事件中...")
     run_forever()
+
+    _ = coc ^
+    _ = hoc ^
+    _ = moc ^

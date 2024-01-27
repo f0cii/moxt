@@ -19,14 +19,30 @@ fn seq_int_to_voidptr(i: Int) -> c_void_pointer:
     return external_call["seq_int_to_voidptr", c_void_pointer, Int](i)
 
 
-# 读取全局对象地址值
-fn seq_store_object_address(id: Int, ptr: Int) -> None:
-    return external_call["seq_store_object_address", NoneType, Int, Int](id, ptr)
+# 存储全局Int值
+fn seq_set_global_int(id: Int, i: Int) -> None:
+    external_call["seq_set_global_int", NoneType, Int, Int](id, i)
 
 
-# 存储全局对象地址值
-fn seq_retrieve_object_address(id: Int) -> Int:
-    return external_call["seq_retrieve_object_address", Int, Int](id)
+# 读取全局Int值
+fn seq_get_global_int(id: Int) -> Int:
+    return external_call["seq_get_global_int", Int, Int](id)
+
+
+# 存储全局String值
+fn seq_set_global_string(id: Int, s: String) -> None:
+    external_call["seq_set_global_string", NoneType, Int, c_char_pointer, c_size_t](
+        id, s._buffer.data.value, len(s)
+    )
+
+
+# 读取全局String值
+fn seq_get_global_string(id: Int) -> String:
+    var s_len: c_size_t = 0
+    let s = external_call[
+        "seq_get_global_string", c_char_pointer, Int, Pointer[c_size_t]
+    ](id, Pointer.address_of(s_len))
+    return c_str_to_string(s, s_len)
 
 
 fn seq_init_photon_work_pool(pool_size: Int) -> None:
@@ -63,11 +79,16 @@ fn seq_nanoid() -> String:
     return c_str_to_string(result, n)
 
 
-let LOG_LEVEL_DBG: UInt8 = 0
-let LOG_LEVEL_INF: UInt8 = 1
-let LOG_LEVEL_WRN: UInt8 = 2
-let LOG_LEVEL_ERR: UInt8 = 3
-let LOG_LEVEL_OFF: UInt8 = 4
+# let LOG_LEVEL_DBG: UInt8 = 0
+# let LOG_LEVEL_INF: UInt8 = 1
+# let LOG_LEVEL_WRN: UInt8 = 2
+# let LOG_LEVEL_ERR: UInt8 = 3
+# let LOG_LEVEL_OFF: UInt8 = 4
+alias LOG_LEVEL_DBG = 0
+alias LOG_LEVEL_INF = 1
+alias LOG_LEVEL_WRN = 2
+alias LOG_LEVEL_ERR = 3
+alias LOG_LEVEL_OFF = 4
 
 
 # 初始化日志

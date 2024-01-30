@@ -124,28 +124,28 @@ struct BinanceClient:
             raise Error("error code=" + str(code) + ", msg=" + msg)
 
         let _order_id = doc.get_int("orderId")
-        let _client_order_id = doc.get_str("clientOrderId")
+        let _order_client_id = doc.get_str("clientOrderId")
 
         _ = doc ^
         _ = parser ^
 
         var order_info = OrderInfo()
         order_info.order_id = _order_id
-        order_info.client_order_id = _client_order_id
+        order_info.order_client_id = _order_client_id
         return order_info
 
     fn cancel_order(
         self,
         symbol: String,
         order_id: String = "",
-        client_order_id: String = "",
+        order_client_id: String = "",
     ) raises -> OrderInfo:
         var query_values = QueryParams()
         query_values["symbol"] = symbol
         if order_id != "":
             query_values["orderId"] = order_id
-        if client_order_id != "":
-            query_values["origClientOrderId"] = client_order_id
+        if order_client_id != "":
+            query_values["origClientOrderId"] = order_client_id
         let query_str = query_values.to_string()
         # logd(query_str)
 
@@ -166,14 +166,14 @@ struct BinanceClient:
             raise Error("error code=" + str(code) + ", msg=" + msg)
 
         let _order_id = doc.get_int("orderId")
-        let _client_order_id = doc.get_str("clientOrderId")
+        let _order_client_id = doc.get_str("clientOrderId")
 
         _ = doc ^
         _ = parser ^
 
         var order_info = OrderInfo()
         order_info.order_id = _order_id
-        order_info.client_order_id = _client_order_id
+        order_info.order_client_id = _order_client_id
         return order_info
     
     fn generate_listen_key(

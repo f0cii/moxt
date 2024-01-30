@@ -1,3 +1,4 @@
+from python import Python
 import time
 from base.containers import ObjectContainer
 from base.c import *
@@ -10,6 +11,7 @@ from trade.base_strategy import *
 from trade.executor import *
 from trading_strategies.dynamic_grid_strategy import DynamicGridStrategy
 from trading_strategies.smart_grid_strategy import SmartGridStrategy
+from trading_strategies.yl_smart_grid_strategy import YlYlSmartGridStrategy
 
 # 运行操作
 alias ACTION_RUN = 1000
@@ -91,8 +93,6 @@ fn __run[T: BaseStrategy](app_config: AppConfig) raises:
 
     executor.start()
 
-    # let executor_ptr = executor._get_ptr[Executor[T]]()
-    # let executor_ptr_index = executor_ptr.__as_index()
     let executor_ptr = Reference(executor).get_unsafe_pointer()
     let executor_ptr_index = executor_ptr.__as_index()
     set_global_pointer(TRADE_EXECUTOR_PTR_KEY, executor_ptr_index)
@@ -112,12 +112,39 @@ fn __run[T: BaseStrategy](app_config: AppConfig) raises:
 
 
 fn main() raises:
+    let argparse = Python.import_module("argparse")
+    let parser = argparse.ArgumentParser()
+    parser.description = "MOXT"
+
+    let log_level_arg = parser.add_argument("--log-level", "--log_level")
+    log_level_arg.request = True
+    log_level_arg.default = "INF"
+    log_level_arg.help = "Set the logging level (default: INFO)"
+
+    let log_file_arg = parser.add_argument("--log-file", "--log_file")
+    log_file_arg.request = True
+    log_file_arg.default = ""
+    log_file_arg.help = "Set the log file name (default: app.log)"
+
+    let config_arg = parser.add_argument("--config", "--config_file")
+    config_arg.request = True
+    config_arg.default = "config.toml"
+    config_arg.help = "Set the configuration file name (default: config.toml)"
+
+    let args = parser.parse_args()
+
+    let log_level: String = args.log_level
+    let log_file: String = args.log_file
+    let config_file: String = args.config_file
+
+    # print("log_level=" + log_level)
+    # print(config_file)
+
     _ = seq_ct_init()
     let ret = seq_photon_init_default()
     seq_init_photon_work_pool(2)
-    seq_init_log(LOG_LEVEL_DBG, "")
-    # seq_init_log(LOG_LEVEL_INF, "")
-    # seq_init_log(LOG_LEVEL_OFF, "")
+
+    init_log(log_level, log_file)
     seq_init_net(0)
     # seq_init_net(1)
 
@@ -126,6 +153,7 @@ fn main() raises:
     seq_init_signal(handle_term)
     seq_init_photon_signal(photon_handle_term)
 
+    # 定义全局对象
     var coc = ObjectContainer[OnConnectWrapper]()
     var hoc = ObjectContainer[OnHeartbeatWrapper]()
     var moc = ObjectContainer[OnMessageWrapper]()
@@ -138,15 +166,11 @@ fn main() raises:
     set_global_pointer(WS_ON_HEARTBEAT_WRAPPER_PTR_KEY, hoc_ref.__as_index())
     set_global_pointer(WS_ON_MESSAGE_WRAPPER_PTR_KEY, moc_ref.__as_index())
 
-    let app_config = load_config("config.toml")
+    let app_config = load_config(config_file)
 
     logi("加载配置信息: " + str(app_config))
 
     seq_set_global_string(CURRENT_STRATEGY_KEY, app_config.strategy)
-
-    # for key_value in app_config.params.items():
-    #     logi(str(key_value.key))
-    #     logi(key_value.value)
 
     run(app_config)
 

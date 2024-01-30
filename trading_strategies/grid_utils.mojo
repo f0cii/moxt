@@ -1,5 +1,6 @@
 import math
 from stdlib_extensions.builtins import dict, list, HashableInt, HashableStr
+from ylstdlib import *
 from base.fixed import Fixed
 from base.mo import *
 from trade.types import *
@@ -12,7 +13,7 @@ fn append_string_to_list_if_not_empty(inout l: list[String], s: String):
 
 
 @value
-struct GridCellInfo(CollectionElement, Stringable):
+struct GridCellInfo(ListElement):
     var level: Int
     var price: Fixed
 
@@ -20,6 +21,7 @@ struct GridCellInfo(CollectionElement, Stringable):
     var long_open_status: OrderStatus  # 订单状态
     var long_open_quantity: Fixed  # 挂单数量
     var long_entry_price: Fixed  # 入场价格记录
+    var long_filled_qty: Fixed  # 成交数量
     var long_tp_cid: String  # 止盈单Client Id
     var long_tp_status: OrderStatus  # 止盈单状态
     var long_sl_cid: String  # 止损单Client Id
@@ -29,6 +31,7 @@ struct GridCellInfo(CollectionElement, Stringable):
     var short_open_status: OrderStatus
     var short_open_quantity: Fixed
     var short_entry_price: Fixed
+    var short_filled_qty: Fixed
     var short_tp_cid: String
     var short_tp_status: OrderStatus
     var short_sl_cid: String
@@ -40,8 +43,9 @@ struct GridCellInfo(CollectionElement, Stringable):
 
         self.long_open_cid = ""
         self.long_open_status = OrderStatus.empty
-        self.long_open_quantity = Fixed(0)
-        self.long_entry_price = Fixed(0)
+        self.long_open_quantity = Fixed.zero
+        self.long_entry_price = Fixed.zero
+        self.long_filled_qty = Fixed.zero
         self.long_tp_cid = ""
         self.long_tp_status = OrderStatus.empty
         self.long_sl_cid = ""
@@ -49,8 +53,9 @@ struct GridCellInfo(CollectionElement, Stringable):
 
         self.short_open_cid = ""
         self.short_open_status = OrderStatus.empty
-        self.short_open_quantity = Fixed(0)
-        self.short_entry_price = Fixed(0)
+        self.short_open_quantity = Fixed.zero
+        self.short_entry_price = Fixed.zero
+        self.short_filled_qty = Fixed.zero
         self.short_tp_cid = ""
         self.short_tp_status = OrderStatus.empty
         self.short_sl_cid = ""
@@ -65,8 +70,9 @@ struct GridCellInfo(CollectionElement, Stringable):
 
         self.long_open_cid = ""
         self.long_open_status = OrderStatus.empty
-        self.long_open_quantity = Fixed(0)
-        self.long_entry_price = Fixed(0)
+        self.long_open_quantity = Fixed.zero
+        self.long_entry_price = Fixed.zero
+        self.long_filled_qty = Fixed.zero
         self.long_tp_cid = ""
         self.long_tp_status = OrderStatus.empty
         self.long_sl_cid = ""
@@ -83,8 +89,9 @@ struct GridCellInfo(CollectionElement, Stringable):
 
         self.short_open_cid = ""
         self.short_open_status = OrderStatus.empty
-        self.short_open_quantity = Fixed(0)
-        self.short_entry_price = Fixed(0)
+        self.short_open_quantity = Fixed.zero
+        self.short_entry_price = Fixed.zero
+        self.short_filled_qty = Fixed.zero
         self.short_tp_cid = ""
         self.short_tp_status = OrderStatus.empty
         self.short_sl_cid = ""
@@ -103,6 +110,9 @@ struct GridCellInfo(CollectionElement, Stringable):
 
     fn set_long_entry_price(inout self, price: Fixed):
         self.long_entry_price = price
+    
+    fn set_long_filled_qty(inout self, qty: Fixed):
+        self.long_filled_qty = qty
 
     fn set_long_tp_cid(inout self, cid: String):
         self.long_tp_cid = cid
@@ -127,6 +137,9 @@ struct GridCellInfo(CollectionElement, Stringable):
 
     fn set_short_entry_price(inout self, price: Fixed):
         self.short_entry_price = price
+    
+    fn set_short_filled_qty(inout self, qty: Fixed):
+        self.short_filled_qty = qty
 
     fn set_short_tp_cid(inout self, cid: String):
         self.short_tp_cid = cid
@@ -147,8 +160,8 @@ struct GridCellInfo(CollectionElement, Stringable):
         计算盈利率
         """
         # 使用入场价格计算浮动盈利
-        var entry_price = Fixed(0)
-        var entry_quantity = Fixed(0)
+        var entry_price = Fixed.zero
+        var entry_quantity = Fixed.zero
         var profit = Float64(0.0)
         if position_idx == PositionIdx.both_side_buy:
             entry_price = self.long_entry_price
@@ -179,8 +192,8 @@ struct GridCellInfo(CollectionElement, Stringable):
         计算盈利额
         """
         # 使用入场价格计算浮动盈利
-        var entry_price = Fixed(0)
-        var entry_quantity = Fixed(0)
+        var entry_price = Fixed.zero
+        var entry_quantity = Fixed.zero
         var profit = Float64(0.0)
         if position_idx == PositionIdx.both_side_buy:
             entry_price = self.long_entry_price
@@ -244,15 +257,15 @@ struct GridInfo(Stringable):
     var tick_size: Fixed
     var base_price: Fixed
     var precision: Int
-    var cells: list[GridCellInfo]
+    var cells: List[GridCellInfo]
 
     fn __init__(inout self):
-        self.grid_interval = Fixed(0)
-        self.price_range = Fixed(0)
-        self.tick_size = Fixed(0)
-        self.base_price = Fixed(0)
+        self.grid_interval = Fixed.zero
+        self.price_range = Fixed.zero
+        self.tick_size = Fixed.zero
+        self.base_price = Fixed.zero
         self.precision = 0
-        self.cells = list[GridCellInfo]()
+        self.cells = List[GridCellInfo]()
 
     fn setup(
         inout self,

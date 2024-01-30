@@ -1,6 +1,7 @@
 from stdlib_extensions.builtins import dict, list, HashableInt, HashableStr
 from stdlib_extensions.builtins.string import *
 from .types import *
+from core.bybitmodel import OrderInfo
 
 
 fn safe_split(
@@ -25,3 +26,17 @@ fn convert_bybit_order_status(status: String) -> OrderStatus:
         return OrderStatus.filled
     else:
         return OrderStatus.empty
+
+
+fn convert_bybit_order(order: OrderInfo) -> Order:
+    let order_ = Order(
+        symbol=order.symbol,
+        order_type=order.type_,
+        order_client_id=order.order_link_id,
+        order_id=order.order_id,
+        price=Fixed(order.price),
+        quantity=Fixed(order.qty),
+        filled_qty=Fixed(order.cum_exec_qty),
+        status=convert_bybit_order_status(order.status),
+    )
+    return order_

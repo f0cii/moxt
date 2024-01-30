@@ -22,5 +22,6 @@ struct ObjectContainer[T: CollectionElement]:
         let index = (self.data + self.offset).__as_index()
         self.offset += 1
         return index
-
-
+    
+    fn take(inout self, index: Int) -> T:
+        return (self.data + index).take_value()

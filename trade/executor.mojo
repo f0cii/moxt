@@ -298,7 +298,7 @@ struct Executor[T: BaseStrategy](Movable, Runable, IExecutor):
             let order = Order(
                 symbol=symbol,
                 order_type=orderType,
-                client_order_id=orderLinkId,
+                order_client_id=orderLinkId,
                 order_id=orderId,
                 price=Fixed(price),
                 quantity=Fixed(qty),
@@ -396,5 +396,5 @@ struct Executor[T: BaseStrategy](Movable, Runable, IExecutor):
         执行一些定期清理
         """
         while self._is_running.load():
-            logi("perform_tasks")
+            # logi("perform_tasks")
             _ = sleep(1)

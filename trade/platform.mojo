@@ -18,7 +18,7 @@ struct Platform:
     var _asks: Pointer[c_void_pointer]
     var _bids: Pointer[c_void_pointer]
     var _symbol_index_dict: dict[HashableStr, Int]
-    var _order_cache: dict[HashableStr, Order]  # key: client_order_id
+    var _order_cache: dict[HashableStr, Order]  # key: order_client_id
     var _order_cache_lock: RWLock
 
     fn __init__(inout self, config: AppConfig):
@@ -128,12 +128,14 @@ struct Platform:
             else:
                 _ = seq_skiplist_insert(_bids, i.price.value(), i.qty.value(), True)
 
-    fn on_update_order(inout self, order: Order):
+    fn on_update_order(inout self, order: Order) -> Bool:
         logi("on_update_order: " + str(order))
-        let key = order.client_order_id
+        let key = order.order_client_id
         self._order_cache_lock.lock()
+        # TODO: 需要比较订单版本，如果版本较旧，返回false
         self._order_cache[key] = order
         self._order_cache_lock.unlock()
+        return True
 
     fn get_order(self, cid: String) raises -> Order:
         self._order_cache_lock.lock()
@@ -208,17 +210,26 @@ struct Platform:
         self, category: String, symbol: String, limit: Int
     ) raises -> OrderBook:
         return self._client.fetch_orderbook(category, symbol, limit)
+    
+    @always_inline
+    fn fetch_order(inout self, category: String, symbol: String, order_client_id: String) raises -> Order:
+        let res = self._client.fetch_orders(category, symbol, order_link_id=order_client_id)
+        if len(res) == 0:
+            return Order()
+        let order = convert_bybit_order(res[0])
+        _ = self.on_update_order(order)
+        return order
 
     @always_inline
     fn fetch_orders(
         self,
         category: String,
         symbol: String,
-        order_link_id: String = "",
+        order_client_id: String = "",
         limit: Int = 0,
         cursor: String = "",
     ) raises -> list[OrderInfo]:
-        return self._client.fetch_orders(category, symbol, order_link_id, limit, cursor)
+        return self._client.fetch_orders(category, symbol, order_client_id, limit, cursor)
 
     @always_inline
     fn cancel_order(
@@ -226,9 +237,10 @@ struct Platform:
         category: String,
         symbol: String,
         order_id: String = "",
-        order_link_id: String = "",
-    ) raises -> OrderResponse:
-        return self._client.cancel_order(category, symbol, order_id, order_link_id)
+        order_client_id: String = "",
+    ) raises -> CancelOrderResult:
+        let res = self._client.cancel_order(category, symbol, order_id, order_client_id)
+        return CancelOrderResult(res.order_id, res.order_link_id)
 
     @always_inline
     fn cancel_orders(
@@ -237,8 +249,15 @@ struct Platform:
         symbol: String,
         base_coin: String = "",
         settle_coin: String = "",
-    ) raises -> list[OrderResponse]:
-        return self._client.cancel_orders(category, symbol, base_coin, settle_coin)
+    ) raises -> BatchCancelResult:
+        let res = self._client.cancel_orders(category, symbol, base_coin, settle_coin)
+        var cancelled_orders = list[CancelOrderResult]()
+        for i in range(len(res)):
+            let item = res[i]
+            cancelled_orders.append(
+                CancelOrderResult(item.order_id, item.order_link_id)
+            )
+        return BatchCancelResult(cancelled_orders)
 
     @always_inline
     fn fetch_positions(
@@ -257,20 +276,20 @@ struct Platform:
         price: String,
         time_in_force: String = "",
         position_idx: Int = 0,
-        client_order_id: String = "",
+        order_client_id: String = "",
         reduce_only: Bool = False,
     ) raises -> OrderResponse:
         let new_order = Order(
             symbol=symbol,
             order_type=order_type,
-            client_order_id=client_order_id,
+            order_client_id=order_client_id,
             order_id="",
             price=Fixed(price),
             quantity=Fixed(qty),
-            filled_qty=Fixed(0),
+            filled_qty=Fixed.zero,
             status=OrderStatus.new,
         )
-        self.on_update_order(new_order)
+        _ = self.on_update_order(new_order)
         return self._client.place_order(
             category,
             symbol,
@@ -280,7 +299,7 @@ struct Platform:
             price,
             time_in_force,
             position_idx,
-            client_order_id,
+            order_client_id,
             reduce_only,
         )
 
@@ -294,8 +313,8 @@ struct Platform:
             return True
 
         let res = self.cancel_orders(category, symbol)
-        for i in range(len(res)):
-            logi("撤单返回项目: " + str(res[i]))
+        for i in range(len(res.cancelled_orders)):
+            logi("撤单返回项目: " + str(res.cancelled_orders[i]))
         return True
 
     fn close_positions_enhanced(
@@ -329,7 +348,7 @@ struct Platform:
                 side = "Sell"
             elif pos.position_idx == 2:
                 side = "Buy"
-            let client_order_id = self.generate_order_id()
+            let order_client_id = self.generate_order_id()
             logi(
                 "下单平仓 "
                 + side
@@ -337,8 +356,8 @@ struct Platform:
                 + qty
                 + "@"
                 + order_type
-                + " client_order_id="
-                + client_order_id
+                + " order_client_id="
+                + order_client_id
                 + " order_type="
                 + order_type
                 + " position_idx="
@@ -353,7 +372,7 @@ struct Platform:
                     qty=qty,
                     price=price,
                     position_idx=position_idx,
-                    client_order_id=client_order_id,
+                    order_client_id=order_client_id,
                     reduce_only=True,
                 )
                 logi("下单平仓返回: " + str(res))

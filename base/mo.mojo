@@ -91,6 +91,21 @@ alias LOG_LEVEL_ERR = 3
 alias LOG_LEVEL_OFF = 4
 
 
+fn init_log(level: String, filename: String) -> None:
+    var level_ = LOG_LEVEL_INF
+    if level == "DBG":
+        level_ = LOG_LEVEL_DBG
+    elif level == "INF":
+        level_ = LOG_LEVEL_INF
+    elif level == "WRN":
+        level_ = LOG_LEVEL_WRN
+    elif level == "ERR":
+        level_ = LOG_LEVEL_ERR
+    elif level == "OFF":
+        level_ = LOG_LEVEL_OFF
+    seq_init_log(level_, filename)
+
+
 # 初始化日志
 fn seq_init_log(level: UInt8, filename: String) -> None:
     external_call["seq_init_log", NoneType, UInt8, Pointer[c_schar], c_int](

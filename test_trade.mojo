@@ -63,6 +63,8 @@ fn test_fixed() raises:
     let f00a_copy = f001
     assert_equal(str(f00a_copy), "0.01")
 
+    assert_equal(str(Fixed.zero), "0")
+
 
 fn test_hmac_sha256_b64() raises:
     let a = hmac_sha256_b64(String("abc"), String("abb"))
@@ -538,33 +540,33 @@ fn test_ti() raises:
         info = seq_ti_get_next_indicator(info)
 
 
-fn test_ti3() raises:
-    let data_in = Pointer[Float64].alloc(10)
-    # 5, 8, 12, 11, 9, 8, 7, 10, 11, 13
-    data_in.store(0, 5)
-    data_in.store(1, 8)
-    data_in.store(2, 12)
-    data_in.store(3, 11)
-    data_in.store(4, 9)
-    data_in.store(5, 8)
-    data_in.store(6, 7)
-    data_in.store(7, 10)
-    data_in.store(8, 11)
-    data_in.store(9, 13)
-    let options = Pointer[Float64].alloc(1)
-    options.store(0, 3)
-    let data_out = Pointer[Float64].alloc(10)
-    let inputs = Pointer[Pointer[Float64]].alloc(1)
-    inputs.store(0, data_in)
-    let outputs = Pointer[Pointer[Float64]].alloc(1)
-    outputs.store(0, data_out)
-    seq_test_ti3(inputs, 10, options, outputs)
+# fn test_ti3() raises:
+#     let data_in = Pointer[Float64].alloc(10)
+#     # 5, 8, 12, 11, 9, 8, 7, 10, 11, 13
+#     data_in.store(0, 5)
+#     data_in.store(1, 8)
+#     data_in.store(2, 12)
+#     data_in.store(3, 11)
+#     data_in.store(4, 9)
+#     data_in.store(5, 8)
+#     data_in.store(6, 7)
+#     data_in.store(7, 10)
+#     data_in.store(8, 11)
+#     data_in.store(9, 13)
+#     let options = Pointer[Float64].alloc(1)
+#     options.store(0, 3)
+#     let data_out = Pointer[Float64].alloc(10)
+#     let inputs = Pointer[Pointer[Float64]].alloc(1)
+#     inputs.store(0, data_in)
+#     let outputs = Pointer[Pointer[Float64]].alloc(1)
+#     outputs.store(0, data_out)
+#     seq_test_ti3(inputs, 10, options, outputs)
 
-    data_in.free()
-    data_out.free()
-    options.free()
-    inputs.free()
-    outputs.free()
+#     data_in.free()
+#     data_out.free()
+#     options.free()
+#     inputs.free()
+#     outputs.free()
 
 
 fn test_ti_call() raises:
@@ -692,26 +694,24 @@ fn test_ti_call_at_index2() raises:
     _ = options ^
 
 
-fn test_ti_indicator() raises:
-    let indi = Indicator(72)
+fn test_sma() raises:
     let input_length = 10
-    let data_in = Pointer[Float64].alloc(input_length)
-    data_in.store(0, 5)
-    data_in.store(1, 8)
-    data_in.store(2, 12)
-    data_in.store(3, 11)
-    data_in.store(4, 9)
-    data_in.store(5, 8)
-    data_in.store(6, 7)
-    data_in.store(7, 10)
-    data_in.store(8, 11)
-    data_in.store(9, 13)
-    let options = Pointer[Float64].alloc(1)
-    options.store(0, 3)
-    _ = indi.run(input_length, data_in, options)
-    data_in.free()
-    options.free()
-
+    var real = Series(input_length)
+    real.append(5)
+    real.append(8)
+    real.append(12)
+    real.append(11)
+    real.append(9)
+    real.append(8)
+    real.append(7)
+    real.append(10)
+    real.append(11)
+    real.append(13)
+    var outputs = Outputs()
+    ti_sma(input_length, real, outputs, 3)
+    let result = outputs[0]
+    for i in range (len(result)):
+        print(i, result[i])
 
 
 fn run_forever():
@@ -736,7 +736,7 @@ fn main() raises:
     # seq_test_sonic_cpp_wrap()
     # logi("seq_test_sonic_cpp_wrap done")
 
-    test_platform()
+    # test_platform()
     # test_lockfree_queue()
     # seq_test_ti()
     # seq_test_ti1()
@@ -746,6 +746,7 @@ fn main() raises:
     # test_ti_call()
     # test_ti_call_at_index()
     # test_ti_call_at_index2()
+    
 
     for i in range (n):
         # test_str()
@@ -773,8 +774,9 @@ fn main() raises:
         # # test_ti()
         # test_ti_call()
         # test_ti_call_at_index()
-        test_ti_call_at_index2()
+        # test_ti_call_at_index2()
         # test_ti_indicator()
+        test_sma()
 
     logi("Done!!!")
     # run_forever()

@@ -39,6 +39,18 @@ fn seq_fixed_round(a: Int64, decimalPlaces: Int) -> Int64:
 @value
 @register_passable
 struct Fixed(Stringable):
+    alias zero = Fixed(0)
+    alias one = Fixed(1)
+    alias two = Fixed(2)
+    alias three = Fixed(3)
+    alias four = Fixed(4)
+    alias five = Fixed(5)
+    alias six = Fixed(6)
+    alias seven = Fixed(7)
+    alias eight = Fixed(8)
+    alias nine = Fixed(9)
+    alias ten = Fixed(10)
+
     var _value: Int64
 
     fn __init__() -> Self:

@@ -168,7 +168,7 @@ fn test_parse_order_info() raises:
 
     let _order_id = doc.get_int("orderId")
     let _order_id2 = doc.get_uint("orderId")
-    let _client_order_id = doc.get_str("clientOrderId")
+    let _order_client_id = doc.get_str("clientOrderId")
 
     assert_equal(_order_id, 237740210409)
     assert_equal(_order_id2, 237740210409)
@@ -178,12 +178,12 @@ fn test_parse_order_info() raises:
 
     var order_info = OrderInfo()
     order_info.order_id = _order_id
-    order_info.client_order_id = _client_order_id
+    order_info.order_client_id = _order_client_id
 
     # logi("order_id: " + str(order_info.order_id))
 
     assert_equal(order_info.order_id, 237740210409)
-    assert_equal(order_info.client_order_id, "62ayQ4MjyVIaCkvDX00dhh")
+    assert_equal(order_info.order_client_id, "62ayQ4MjyVIaCkvDX00dhh")
 
 
 fn test_binanceclient_public_time() raises:

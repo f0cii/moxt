@@ -50,7 +50,7 @@ struct OrderInfo(Stringable, CollectionElement):
     var order_id: Int  # orderId
     var symbol: String  # BTCUSDT
     var status: String  # orderStatus
-    var client_order_id: String  # clientOrderId
+    var order_client_id: String  # clientOrderId
     var price: String  # price
     var avg_price: String  # avgPrice
     var orig_qty: String  # origQty
@@ -76,7 +76,7 @@ struct OrderInfo(Stringable, CollectionElement):
         self.order_id = 0
         self.symbol = ""
         self.status = ""
-        self.client_order_id = ""
+        self.order_client_id = ""
         self.price = ""
         self.avg_price = ""
         self.orig_qty = ""
@@ -106,8 +106,8 @@ struct OrderInfo(Stringable, CollectionElement):
             + str(self.symbol)
             + ", status="
             + str(self.status)
-            + ", client_order_id="
-            + str(self.client_order_id)
+            + ", order_client_id="
+            + str(self.order_client_id)
             + ", price="
             + str(self.price)
             + ", avg_price="

@@ -28,8 +28,8 @@ struct DynamicGridStrategy(BaseStrategy):
         self.category = config.category
         self.symbols = safe_split(config.symbols, ",")
         self.symbol = self.symbols[0]
-        self.tick_size = Fixed(0)
-        self.step_size = Fixed(0)
+        self.tick_size = Fixed.zero
+        self.step_size = Fixed.zero
         self.config = config
         self.grid_interval = config.params["grid_interval"]
         self.order_qty = config.params["order_qty"]
@@ -63,7 +63,7 @@ struct DynamicGridStrategy(BaseStrategy):
         self.platform.on_update_orderbook(symbol, type_, asks, bids)
 
     fn on_update_order(inout self, order: Order) raises:
-        self.platform.on_update_order(order)
+        _ = self.platform.on_update_order(order)
 
     fn get_orderbook(self, symbol: String, n: Int) raises -> OrderBookLite:
         return self.platform.get_orderbook(symbol, n)
@@ -164,15 +164,15 @@ struct DynamicGridStrategy(BaseStrategy):
         let qty = self.order_qty
         let price = str(cell.price)
         let position_idx: Int = int(PositionIdx.both_side_buy)
-        let client_order_id = self.platform.generate_order_id()
+        let order_client_id = self.platform.generate_order_id()
         logi(
             "下单 "
             + side
             + " "
             + qty
             + "@0"
-            + " client_order_id="
-            + client_order_id
+            + " order_client_id="
+            + order_client_id
             + " order_type="
             + order_type
             + " position_idx="
@@ -186,10 +186,10 @@ struct DynamicGridStrategy(BaseStrategy):
             qty=qty,
             price=price,
             position_idx=position_idx,
-            client_order_id=client_order_id,
+            order_client_id=order_client_id,
         )
         logi("下单返回: " + str(res))
-        self.grid.cells[index].set_long_open_cid(client_order_id)
+        self.grid.cells[index].set_long_open_cid(order_client_id)
         self.grid.cells[index].set_long_open_status(OrderStatus.new)
         logi("更新订单号")
 
@@ -214,15 +214,15 @@ struct DynamicGridStrategy(BaseStrategy):
         let price = str(self.grid.get_price_by_level(cell.level + 1))
         logi("下止盈单: " + str(cell.price) + ">" + price)
         let position_idx: Int = int(PositionIdx.both_side_buy)
-        let client_order_id = self.platform.generate_order_id()
+        let order_client_id = self.platform.generate_order_id()
         logi(
             "下止盈单 "
             + side
             + " "
             + qty
             + "@0"
-            + " client_order_id="
-            + client_order_id
+            + " order_client_id="
+            + order_client_id
             + " order_type="
             + order_type
             + " position_idx="
@@ -236,10 +236,10 @@ struct DynamicGridStrategy(BaseStrategy):
             qty=qty,
             price=price,
             position_idx=position_idx,
-            client_order_id=client_order_id,
+            order_client_id=order_client_id,
         )
         logi("下平仓单返回: " + str(res))
-        self.grid.cells[index].set_long_tp_cid(client_order_id)
+        self.grid.cells[index].set_long_tp_cid(order_client_id)
         self.grid.cells[index].set_long_tp_status(OrderStatus.new)
         logi("更新订单号")
 
@@ -279,23 +279,23 @@ struct DynamicGridStrategy(BaseStrategy):
 
         for i in range(len(self.grid.cells)):
             let cell = self.grid.cells[i]
-            let client_order_id = order.client_order_id
-            if cell.long_open_cid == client_order_id:
+            let order_client_id = order.order_client_id
+            if cell.long_open_cid == order_client_id:
                 self.grid.cells[i].long_open_status = order.status
                 break
-            elif cell.long_tp_cid == client_order_id:
+            elif cell.long_tp_cid == order_client_id:
                 self.grid.cells[i].long_tp_status = order.status
                 break
-            elif cell.long_sl_cid == client_order_id:
+            elif cell.long_sl_cid == order_client_id:
                 self.grid.cells[i].long_sl_status = order.status
                 break
-            elif cell.short_open_cid == client_order_id:
+            elif cell.short_open_cid == order_client_id:
                 self.grid.cells[i].short_open_status = order.status
                 break
-            elif cell.short_tp_cid == client_order_id:
+            elif cell.short_tp_cid == order_client_id:
                 self.grid.cells[i].short_tp_status = order.status
                 break
-            elif cell.short_sl_cid == client_order_id:
+            elif cell.short_sl_cid == order_client_id:
                 self.grid.cells[i].short_sl_status = order.status
                 break
 

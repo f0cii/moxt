@@ -11,7 +11,6 @@ from trade.base_strategy import *
 from trade.executor import *
 from trading_strategies.dynamic_grid_strategy import DynamicGridStrategy
 from trading_strategies.smart_grid_strategy import SmartGridStrategy
-from trading_strategies.yl_smart_grid_strategy import YlYlSmartGridStrategy
 
 # 运行操作
 alias ACTION_RUN = 1000

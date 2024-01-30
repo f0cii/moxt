@@ -32,8 +32,8 @@ struct SmartGridStrategy(BaseStrategy):
         self.category = config.category
         self.symbols = safe_split(config.symbols, ",")
         self.symbol = self.symbols[0]
-        self.tick_size = Fixed(0)
-        self.step_size = Fixed(0)
+        self.tick_size = Fixed.zero
+        self.step_size = Fixed.zero
         self.config = config
         self.grid_interval = config.params["grid_interval"]
         self.order_qty = config.params["order_qty"]
@@ -71,7 +71,7 @@ struct SmartGridStrategy(BaseStrategy):
         self.platform.on_update_orderbook(symbol, type_, asks, bids)
 
     fn on_update_order(inout self, order: Order) raises:
-        self.platform.on_update_order(order)
+        _ = self.platform.on_update_order(order)
 
     fn get_orderbook(self, symbol: String, n: Int) raises -> OrderBookLite:
         return self.platform.get_orderbook(symbol, n)
@@ -149,7 +149,7 @@ struct SmartGridStrategy(BaseStrategy):
             let item = cell_profits[index]
             let level = item.get[0, Int]()
             let profit = item.get[1, Float64]()
-            if profit <= self.cell_sl_percent.to_float():
+            if profit <= -self.cell_sl_percent.to_float():
                 logi("触发单个格子止损，停止格子 {level} 的交易")
                 self.stop_cell_trading(level)
 
@@ -167,9 +167,9 @@ struct SmartGridStrategy(BaseStrategy):
     ) raises -> Float64:
         # 计算总体浮亏
         var total_profit: Float64 = 0
-        for cell in self.grid.cells:
+        for cell_ptr in self.grid.cells:
             # 计算每个格子的浮亏并累加
-            total_profit += cell.calculate_profit_amount(ask, bid, position_idx)
+            total_profit += __get_address_as_lvalue(cell_ptr.value).calculate_profit_amount(ask, bid, position_idx)
         return total_profit
 
     fn calculate_cell_profits(
@@ -200,23 +200,24 @@ struct SmartGridStrategy(BaseStrategy):
         # 撤销止盈单
         if cell.long_tp_cid != "":
             let res = self.platform.cancel_order(
-                self.category, self.symbol, order_link_id=cell.long_tp_cid
+                self.category, self.symbol, order_client_id=cell.long_tp_cid
             )
             logi("撤销止盈单返回: " + str(res))
         self.reset_cell(index, PositionIdx.both_side_buy)
 
     fn place_buy_orders(inout self, current_cell_level: Int) raises:
         for index in range(len(self.grid.cells)):
-            let cell = self.grid.cells[index]
-            if self.is_within_buy_range(cell.level, current_cell_level):
-                self.place_buy_order(index, cell)
+            # let cell = self.grid.cells[index]
+            let cell_ptr = self.grid.cells.unsafe_get(index)
+            if self.is_within_buy_range(__get_address_as_lvalue(cell_ptr.value), current_cell_level):
+                self.place_buy_order(index, __get_address_as_lvalue(cell_ptr.value) )
 
     # 判断网格单元是否在买单范围内
-    fn is_within_buy_range(self, cell_level: Int, current_cell_level: Int) -> Bool:
+    fn is_within_buy_range(self, inout cell: GridCellInfo, current_cell_level: Int) -> Bool:
         let buy_range = 3  # 定义买单的范围，可以根据实际情况调整
-        return current_cell_level - buy_range <= cell_level <= current_cell_level
+        return current_cell_level - buy_range <= cell.level <= current_cell_level
 
-    fn place_buy_order(inout self, index: Int, cell: GridCellInfo) raises:
+    fn place_buy_order(inout self, index: Int, inout cell: GridCellInfo) raises:
         """
         下开仓单
         """
@@ -228,15 +229,15 @@ struct SmartGridStrategy(BaseStrategy):
         let qty = self.order_qty
         let price = str(cell.price)
         let position_idx: Int = int(PositionIdx.both_side_buy)
-        let client_order_id = self.platform.generate_order_id()
+        let order_client_id = self.platform.generate_order_id()
         logi(
             "下单 "
             + side
             + " "
             + qty
             + "@0"
-            + " client_order_id="
-            + client_order_id
+            + " order_client_id="
+            + order_client_id
             + " order_type="
             + order_type
             + " position_idx="
@@ -250,11 +251,11 @@ struct SmartGridStrategy(BaseStrategy):
             qty=qty,
             price=price,
             position_idx=position_idx,
-            client_order_id=client_order_id,
+            order_client_id=order_client_id,
         )
         logi("下单返回: " + str(res))
-        self.grid.cells[index].set_long_open_cid(client_order_id)
-        self.grid.cells[index].set_long_open_status(OrderStatus.new)
+        cell.long_open_cid = order_client_id
+        cell.long_open_status = OrderStatus.new
         logi("更新订单号")
 
     fn place_tp_orders(inout self) raises:
@@ -278,15 +279,15 @@ struct SmartGridStrategy(BaseStrategy):
         let price = str(self.grid.get_price_by_level(cell.level + 1))
         logi("下止盈单: " + str(cell.price) + ">" + price)
         let position_idx: Int = int(PositionIdx.both_side_buy)
-        let client_order_id = self.platform.generate_order_id()
+        let order_client_id = self.platform.generate_order_id()
         logi(
             "下止盈单 "
             + side
             + " "
             + qty
             + "@0"
-            + " client_order_id="
-            + client_order_id
+            + " order_client_id="
+            + order_client_id
             + " order_type="
             + order_type
             + " position_idx="
@@ -300,10 +301,10 @@ struct SmartGridStrategy(BaseStrategy):
             qty=qty,
             price=price,
             position_idx=position_idx,
-            client_order_id=client_order_id,
+            order_client_id=order_client_id,
         )
         logi("下平仓单返回: " + str(res))
-        self.grid.cells[index].set_long_tp_cid(client_order_id)
+        self.grid.cells[index].set_long_tp_cid(order_client_id)
         self.grid.cells[index].set_long_tp_status(OrderStatus.new)
         logi("更新订单号")
 
@@ -343,23 +344,23 @@ struct SmartGridStrategy(BaseStrategy):
 
         for i in range(len(self.grid.cells)):
             let cell = self.grid.cells[i]
-            let client_order_id = order.client_order_id
-            if cell.long_open_cid == client_order_id:
+            let order_client_id = order.order_client_id
+            if cell.long_open_cid == order_client_id:
                 self.grid.cells[i].long_open_status = order.status
                 break
-            elif cell.long_tp_cid == client_order_id:
+            elif cell.long_tp_cid == order_client_id:
                 self.grid.cells[i].long_tp_status = order.status
                 break
-            elif cell.long_sl_cid == client_order_id:
+            elif cell.long_sl_cid == order_client_id:
                 self.grid.cells[i].long_sl_status = order.status
                 break
-            elif cell.short_open_cid == client_order_id:
+            elif cell.short_open_cid == order_client_id:
                 self.grid.cells[i].short_open_status = order.status
                 break
-            elif cell.short_tp_cid == client_order_id:
+            elif cell.short_tp_cid == order_client_id:
                 self.grid.cells[i].short_tp_status = order.status
                 break
-            elif cell.short_sl_cid == client_order_id:
+            elif cell.short_sl_cid == order_client_id:
                 self.grid.cells[i].short_sl_status = order.status
                 break
 

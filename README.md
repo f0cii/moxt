@@ -1,6 +1,6 @@
 # MOXT: 开源量化交易库
 
-**MOXT**是一款领先的开源量化交易库，专为提高量化交易效率和效果而设计。它不仅具备简洁高效的语法、多交易所集成、丰富的技术指标支持，还提供高性能的协程支持、低延迟的HTTP客户端组件以及高效的WebSocket模块。特别是，MOXT集成了[Photon](https://github.com/alibaba/PhotonLibOS)协程库和[simdjson](https://github.com/simdjson/simdjson)解析库，确保了数据处理的极致性能，使得MoXT成为量化交易者的理想选择。
+**MOXT**是一款领先的开源量化交易库，专为提高量化交易效率和效果而设计。它不仅具备简洁高效的语法、多交易所集成、丰富的技术指标支持，还提供高性能的协程支持、低延迟的HTTP客户端组件以及高效的WebSocket模块。特别是，MOXT集成了[Photon](https://github.com/alibaba/PhotonLibOS)协程库和[simdjson](https://github.com/simdjson/simdjson)解析库，确保了数据处理的极致性能，使得MOXT成为量化交易者的理想选择。
 
 编译 libmoxt.so，请移步 [moxt-cpp](https://github.com/f0cii/moxt-cpp)
 

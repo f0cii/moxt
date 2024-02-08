@@ -1,82 +1,89 @@
-# MOXT: 开源量化交易库
+<h4 align="center">
+    <p>
+        <b>English</b> |
+        <a href="https://github.com/f0cii/moxt/blob/main/README_zh.md">简体中文</a>
+    </p>
+</h4>
 
-**MOXT**是一款领先的开源量化交易库，专为提高量化交易效率和效果而设计。它不仅具备简洁高效的语法、多交易所集成、丰富的技术指标支持，还提供高性能的协程支持、低延迟的HTTP客户端组件以及高效的WebSocket模块。特别是，MOXT集成了[Photon](https://github.com/alibaba/PhotonLibOS)协程库和[simdjson](https://github.com/simdjson/simdjson)解析库，确保了数据处理的极致性能，使得MOXT成为量化交易者的理想选择。
+# MOXT: Open Source Quantitative Trading Library
 
-编译 libmoxt.so，请移步 [moxt-cpp](https://github.com/f0cii/moxt-cpp)
+**MOXT** is a leading open-source quantitative trading library designed to enhance the efficiency and effectiveness of quantitative trading. It features a simple and efficient syntax, integration with multiple exchanges, extensive support for technical indicators, and provides high-performance coroutine support, low-latency HTTP client components, and an efficient WebSocket module. Notably, MOXT integrates the [Photon](https://github.com/alibaba/PhotonLibOS) coroutine library and the [simdjson](https://github.com/simdjson/simdjson) parsing library, ensuring ultimate performance in data processing, making MOXT an ideal choice for quantitative traders.
 
-注意: 编译后，请将编译后的 libmoxt.so 文件拷贝到本项目目录
+To compile libmoxt.so, please visit [moxt-cpp](https://github.com/f0cii/moxt-cpp)
 
-## 特点
+Note: After compiling, please copy the compiled libmoxt.so file to this project directory.
 
-1. **简洁高效的语法**
-   - **Mojo语法**：借鉴Python的易用性，同时提供相当于C/C++/Rust的高性能。
+## Features
+
+1. **Simple and Efficient Syntax**
+   - **Mojo Syntax**: Borrowing the usability of Python while providing the high performance of C/C++/Rust.
    
-2. **多交易所集成**
-   - **广泛支持**：轻松集成主流交易所，如OKX、Bybit、Binance等。
+2. **Integration with Multiple Exchanges**
+   - **Broad Support**: Easily integrate with mainstream exchanges, such as OKX, Bybit, Binance, etc.
    
-3. **丰富的技术指标支持**
-   - **[TulipIndicators](https://tulipindicators.org/)**：集成超过104种技术指标，为市场分析和策略开发提供强大工具。
+3. **Extensive Support for Technical Indicators**
+   - **[TulipIndicators](https://tulipindicators.org/)**: Integrates over 104 technical indicators, offering powerful tools for market analysis and strategy development.
    
-4. **多策略支持**
-   - **灵活运用**：同时运行和管理多个交易策略，提高资源利用率和投资效率。
+4. **Support for Multiple Strategies**
+   - **Flexible Application**: Run and manage multiple trading strategies simultaneously, improving resource utilization and investment efficiency.
    
-5. **事件驱动模型**
-   - **高效响应**：优化策略执行和信号处理，确保及时响应市场变化。
+5. **Event-Driven Model**
+   - **Efficient Response**: Optimize strategy execution and signal processing to ensure timely responses to market changes.
    
-6. **集成[Photon](https://github.com/alibaba/PhotonLibOS)高性能协程库**
-   - **并发处理**：通过高效的Photon协程库，提高程序的并发处理能力，优化执行效率和资源利用。
+6. **Integration with [Photon](https://github.com/alibaba/PhotonLibOS) High-Performance Coroutine Library**
+   - **Concurrent Processing**: Enhance the program's concurrency capabilities and optimize execution efficiency and resource utilization with the efficient Photon coroutine library.
    
-7. **低延迟HTTP客户端组件**
-   - **快速通讯**：通过低延迟的HTTP客户端组件，确保数据传输和策略执行的实时性和准确性。
+7. **Low-Latency HTTP Client Component**
+   - **Rapid Communication**: Ensure real-time and accurate data transmission and strategy execution with the low-latency HTTP client component.
    
-8. **高性能WebSocket模块**
-   - **实时数据流**：利用高性能的WebSocket模块，实现与交易所的实时数据交流，保证信息的即时更新和策略的迅速执行。
+8. **High-Performance WebSocket Module**
+   - **Real-Time Data Stream**: Achieve real-time data exchange with exchanges and ensure immediate information updates and rapid strategy execution with the high-performance WebSocket module.
    
-9. **集成[simdjson](https://github.com/simdjson/simdjson)解析库**
-   - **高效解析**：利用simdjson解析库，提供极速的JSON处理能力，确保数据解析的高效性和准确性。
+9. **Integration with [simdjson](https://github.com/simdjson/simdjson) Parsing Library**
+   - **Efficient Parsing**: Utilize the simdjson parsing library for rapid JSON processing capabilities, ensuring efficient and accurate data parsing.
 
-## 简介
+## Introduction
 
-**MOXT**致力于成为最具影响力的开源量化交易库之一，为量化交易人员提供一个强大、灵活且易于使用的平台。它适合各类用户，从量化交易新手到专业交易者，都能在MOXT中找到所需工具，以应对复杂多变的市场环境。
+**MOXT** aims to become one of the most influential open-source quantitative trading libraries, providing a powerful, flexible, and easy-to-use platform for quantitative traders. It is suitable for all types of users, from novices to professional traders, offering the necessary tools to navigate the complex and dynamic market environment.
 
-## 安装
+## Installation
 
-确保你的环境中已经安装了 Mojo 编程语言(v0.7.0)。在项目目录下运行以下命令安装依赖：
+Ensure Mojo programming language (v0.7.0) is installed in your environment. Run the following commands in the project directory to install dependencies:
 
 ```bash
-请参考mojo官方文档安装
+Refer to the official mojo documentation for installation
 
-或者使用mojo容器
+Or use the mojo docker
 docker build -t mojo -f mojo.Dockerfile .
 docker run -it mojo
 ```
 
-## 快速开始
+## Quick Start
 
 ```mojo
-# 设置脚本可执行权限
+# Set script execution permissions
 chmod +x ./scripts/ld
 chmod +x ./scripts/mojoc
 chmod +x ./build.sh
 
-# 编译
+# Compile
 ./build.sh main.mojo -o moxt
-# 设置环境变量
+# Set environment variables
 source setup.sh
-# 安装python依赖库
+# Install Python dependencies
 pip install tomli
-# 运行
+# Run
 ./moxt
 
-# 示例策略目录
+# Example strategy directory
 trading_strategies
 
 ```
 
-## 授权
+## License
 
-本项目采用 MIT 授权许可 - 请查看 [LICENSE] 文件了解更多细节。
+This project is licensed under the MIT License - see the [LICENSE] file for more details.
 
 ---
 
-**免责声明：** 本项目仅供学习和研究使用，不构成任何交易建议或投资建议。请谨慎使用该项目进行实际交易。
+**Disclaimer: ** This project is for learning and research purposes only and does not constitute any trading or investment advice. Please use this project cautiously for actual trading.

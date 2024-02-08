@@ -42,10 +42,6 @@ Note: After compiling, please copy the compiled libmoxt.so file to this project 
 9. **Integration with [simdjson](https://github.com/simdjson/simdjson) Parsing Library**
    - **Efficient Parsing**: Utilize the simdjson parsing library for rapid JSON processing capabilities, ensuring efficient and accurate data parsing.
 
-## Introduction
-
-**MOXT** aims to become one of the most influential open-source quantitative trading libraries, providing a powerful, flexible, and easy-to-use platform for quantitative traders. It is suitable for all types of users, from novices to professional traders, offering the necessary tools to navigate the complex and dynamic market environment.
-
 ## Installation
 
 Ensure Mojo programming language (v0.7.0) is installed in your environment. Run the following commands in the project directory to install dependencies:

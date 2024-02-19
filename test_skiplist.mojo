@@ -3,7 +3,7 @@ from base.mo import *
 from base.fixed import Fixed
 
 
-fn main() raises:
+fn test_skiplist() raises:
     let asks = seq_skiplist_new(True)
     _ = seq_skiplist_insert(asks, Fixed(3000).value(), Fixed(100).value(), True)
     _ = seq_skiplist_insert(asks, Fixed(3005).value(), Fixed(200).value(), True)
@@ -30,3 +30,7 @@ fn main() raises:
 
     seq_skiplist_dump(asks)
     seq_skiplist_free(asks)
+
+
+fn main() raises:
+    test_skiplist()

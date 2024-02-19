@@ -1,1 +1,0 @@
-./scripts/mojoc test_trade.mojo -lmoxt -L . -o test_trade

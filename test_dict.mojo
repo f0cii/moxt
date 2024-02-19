@@ -3,7 +3,7 @@ from stdlib_extensions.builtins import dict, HashableInt, HashableStr
 import os
 
 
-fn main() raises:
+fn test_dict() raises:
     var a_dict = dict[HashableInt, Int]()
     a_dict[1] = 100
 
@@ -18,3 +18,7 @@ fn main() raises:
     c_dict["a1"] = "hello100"
 
     assert_equal(c_dict["a1"], "hello100")
+
+
+fn main() raises:
+    test_dict()

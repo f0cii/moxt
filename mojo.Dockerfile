@@ -1,14 +1,14 @@
-# 参考:
+# Reference:
 # https://github.com/modularml/mojo/blob/main/examples/docker/Dockerfile.mojosdk
 
-# 使用基于 Ubuntu 22.04 的基础镜像
+# Use the base image based on Ubuntu 22.04
 FROM ubuntu:22.04
 
-# ARG DEFAULT_TZ=America/Los_Angeles
+# Set the default timezone argument
 ARG DEFAULT_TZ=Asia/Shanghai
 ENV DEFAULT_TZ=$DEFAULT_TZ
 
-# 更新软件包列表并安装基本工具
+# Update package list and install basic utilities
 RUN apt-get update \
    && DEBIAN_FRONTEND=noninteractive TZ=$DEFAULT_TZ apt-get install -y \
    tzdata \
@@ -52,5 +52,5 @@ RUN chmod -R a+rwX /root
 RUN jupyter labextension disable "@jupyterlab/apputils-extension:announcements"
 # CMD ["jupyter", "lab", "--ip='*'", "--NotebookApp.token=''", "--NotebookApp.password=''","--allow-root"]
 
-# 设置容器启动命令
+# Set the container startup command
 CMD ["/bin/bash"]

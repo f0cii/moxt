@@ -19,9 +19,9 @@ struct SmartGridStrategy(BaseStrategy):
     var config: AppConfig
     var grid_interval: String
     var order_qty: String
-    # 总体止损百分比
+    # Overall stop-loss percentage
     var total_sl_percent: Fixed
-    # 单个格子止损百分比
+    # Individual grid stop-loss percentage
     var cell_sl_percent: Fixed
     var rwlock: RWLock
 
@@ -61,27 +61,15 @@ struct SmartGridStrategy(BaseStrategy):
     fn setup(inout self) raises:
         self.platform.setup()
 
-    fn on_update_orderbook(
-        inout self,
-        symbol: String,
-        type_: String,
-        inout asks: list[OrderBookLevel],
-        inout bids: list[OrderBookLevel],
-    ) raises:
-        self.platform.on_update_orderbook(symbol, type_, asks, bids)
-
-    fn on_update_order(inout self, order: Order) raises:
-        _ = self.platform.on_update_order(order)
-
-    fn get_orderbook(self, symbol: String, n: Int) raises -> OrderBookLite:
-        return self.platform.get_orderbook(symbol, n)
+    fn get_platform_pointer(inout self) -> Pointer[Platform]:
+        return Reference(self.platform).get_unsafe_pointer()
 
     fn on_init(inout self) raises:
         logi("SmartGridStrategy.on_init")
 
-        # 撤销订单
+        # Cancel all orders
         _ = self.platform.cancel_orders_enhanced(self.category, self.symbol)
-        # 全部平仓
+        # Close positions
         _ = self.platform.close_positions_enhanced(self.category, self.symbol)
 
         let exchange_info = self.platform.fetch_exchange_info(
@@ -99,10 +87,10 @@ struct SmartGridStrategy(BaseStrategy):
         self.step_size = step_size
         let dp = decimal_places(tick_size.to_float())
 
-        # 获取盘口价格
+        # fetch orderbook
         let ob = self.platform.fetch_orderbook(self.category, self.symbol, 5)
         if len(ob.asks) == 0 or len(ob.bids) == 0:
-            raise Error("获取盘口数据失败")
+            raise Error("Failed to fetch orderbook")
 
         let ask = Fixed(ob.asks[0].price)
         let bid = Fixed(ob.bids[0].price)
@@ -125,9 +113,9 @@ struct SmartGridStrategy(BaseStrategy):
 
     fn on_exit(inout self) raises:
         logi("SmartGridStrategy.on_exit")
-        # 撤销订单
+        # Cancel all orders
         _ = self.platform.cancel_orders_enhanced(self.category, self.symbol)
-        # 全部平仓
+        # Close positions
         _ = self.platform.close_positions_enhanced(self.category, self.symbol)
         logi("SmartGridStrategy.on_exit done")
 
@@ -135,7 +123,7 @@ struct SmartGridStrategy(BaseStrategy):
         # logd("SmartGridStrategy.on_tick")
         let ob = self.platform.get_orderbook(self.symbol, 5)
         if len(ob.asks) == 0 or len(ob.bids) == 0:
-            logw("订单薄缺少买卖单")
+            logw("Order book lacks buy and sell orders")
             return
 
         let ask = ob.asks[0]
@@ -144,13 +132,16 @@ struct SmartGridStrategy(BaseStrategy):
         let cell_profits = self.calculate_cell_profits(
             ask.price, bid.price, PositionIdx.both_side_buy
         )
-        # 判断单个格子止损条件
+        # Evaluate stop-loss condition for individual grid
         for index in range(len(cell_profits)):
             let item = cell_profits[index]
             let level = item.get[0, Int]()
-            let profit = item.get[1, Float64]()
+            let profit = item.get[1, Fixed]()
             if profit <= -self.cell_sl_percent.to_float():
-                logi("触发单个格子止损，停止格子 {level} 的交易")
+                logi(
+                    "Trigger stop-loss for individual grid, halt trading for grid "
+                    + str(level)
+                )
                 self.stop_cell_trading(level)
 
         let mid = (ask.price + bid.price) / Fixed(2)
@@ -165,61 +156,70 @@ struct SmartGridStrategy(BaseStrategy):
     fn calculate_total_profit(
         self, ask: Fixed, bid: Fixed, position_idx: PositionIdx
     ) raises -> Float64:
-        # 计算总体浮亏
+        # Calculate overall floating loss
         var total_profit: Float64 = 0
         for cell_ptr in self.grid.cells:
-            # 计算每个格子的浮亏并累加
-            total_profit += __get_address_as_lvalue(cell_ptr.value).calculate_profit_amount(ask, bid, position_idx)
+            # Compute the floating loss for each grid and accumulate
+            total_profit += __get_address_as_lvalue(
+                cell_ptr.value
+            ).calculate_profit_amount(ask, bid, position_idx)
         return total_profit
 
     fn calculate_cell_profits(
         self, ask: Fixed, bid: Fixed, position_idx: PositionIdx
-    ) raises -> list[Tuple[Int, Float64]]:
+    ) raises -> list[Tuple[Int, Fixed]]:
         """
-        计算各格子浮盈
+        Calculate floating profit for each grid
         """
-        var cell_profits = list[Tuple[Int, Float64]]()
+        var cell_profits = list[Tuple[Int, Fixed]]()
 
         for index in range(len(self.grid.cells)):
             let cell = self.grid.cells[index]
-            # 计算每个格子的浮亏并添加到列表中
+            # Calculate the floating loss for each grid and add it to the list
             cell_profits.append(
                 (index, cell.calculate_profit_percentage(ask, bid, position_idx))
             )
         return cell_profits
 
     fn stop_strategy(self) raises:
-        # 添加总体止损的停止策略逻辑
-        logi("执行总体止损的停止策略")
+        # Implement stop strategy logic for overall stop-loss
+        logi("Execute stop strategy for overall stop-loss")
         # ...
 
     fn stop_cell_trading(inout self, index: Int) raises:
-        # 添加单个格子止损的停止策略逻辑
-        logi("执行单个格子止损的停止策略，停止格子 " + str(index) + " 的交易")
+        # Incorporate stop strategy logic for individual grid stop-loss
+        logi(
+            "Execute stop-loss strategy for individual grid, halting trading for grid "
+            + str(index)
+        )
         let cell = self.grid.cells[index]
-        # 撤销止盈单
+        # Cancel take-profit order
         if cell.long_tp_cid != "":
             let res = self.platform.cancel_order(
                 self.category, self.symbol, order_client_id=cell.long_tp_cid
             )
-            logi("撤销止盈单返回: " + str(res))
+            logi("Cancel take-profit order returns: " + str(res))
         self.reset_cell(index, PositionIdx.both_side_buy)
 
     fn place_buy_orders(inout self, current_cell_level: Int) raises:
         for index in range(len(self.grid.cells)):
             # let cell = self.grid.cells[index]
             let cell_ptr = self.grid.cells.unsafe_get(index)
-            if self.is_within_buy_range(__get_address_as_lvalue(cell_ptr.value), current_cell_level):
-                self.place_buy_order(index, __get_address_as_lvalue(cell_ptr.value) )
+            if self.is_within_buy_range(
+                __get_address_as_lvalue(cell_ptr.value), current_cell_level
+            ):
+                self.place_buy_order(index, __get_address_as_lvalue(cell_ptr.value))
 
-    # 判断网格单元是否在买单范围内
-    fn is_within_buy_range(self, inout cell: GridCellInfo, current_cell_level: Int) -> Bool:
-        let buy_range = 3  # 定义买单的范围，可以根据实际情况调整
+    # Check whether the grid unit is within the buy order range
+    fn is_within_buy_range(
+        self, inout cell: GridCellInfo, current_cell_level: Int
+    ) -> Bool:
+        let buy_range = 3  # Define the range of buy orders, which can be adjusted according to actual circumstances
         return current_cell_level - buy_range <= cell.level <= current_cell_level
 
     fn place_buy_order(inout self, index: Int, inout cell: GridCellInfo) raises:
         """
-        下开仓单
+        Place an opening order
         """
         if cell.long_open_status != OrderStatus.empty:
             return
@@ -231,7 +231,7 @@ struct SmartGridStrategy(BaseStrategy):
         let position_idx: Int = int(PositionIdx.both_side_buy)
         let order_client_id = self.platform.generate_order_id()
         logi(
-            "下单 "
+            "Place order "
             + side
             + " "
             + qty
@@ -253,23 +253,23 @@ struct SmartGridStrategy(BaseStrategy):
             position_idx=position_idx,
             order_client_id=order_client_id,
         )
-        logi("下单返回: " + str(res))
+        logi("Place order returns: " + str(res))
         cell.long_open_cid = order_client_id
         cell.long_open_status = OrderStatus.new
-        logi("更新订单号")
+        logi("Update order id")
 
     fn place_tp_orders(inout self) raises:
         """
-        下止盈单
+        Place a take-profit order
         """
         for index in range(len(self.grid.cells)):
             let cell = self.grid.cells[index]
             if cell.long_open_status == OrderStatus.filled:
                 if cell.long_tp_cid == "":
-                    logi("下止盈单")
+                    logi("Place a take-profit order")
                     self.place_tp_order(index, cell)
                 elif cell.long_tp_status.is_closed():
-                    logi("清理网格")
+                    logi("Clean up grid")
                     self.reset_cell(index, PositionIdx.both_side_buy)
 
     fn place_tp_order(inout self, index: Int, cell: GridCellInfo) raises:
@@ -277,11 +277,11 @@ struct SmartGridStrategy(BaseStrategy):
         let order_type = String("Limit")
         let qty = str(cell.long_open_quantity)
         let price = str(self.grid.get_price_by_level(cell.level + 1))
-        logi("下止盈单: " + str(cell.price) + ">" + price)
+        logi("Place a take-profit order: " + str(cell.price) + ">" + price)
         let position_idx: Int = int(PositionIdx.both_side_buy)
         let order_client_id = self.platform.generate_order_id()
         logi(
-            "下止盈单 "
+            "Place take-profit order "
             + side
             + " "
             + qty
@@ -303,10 +303,10 @@ struct SmartGridStrategy(BaseStrategy):
             position_idx=position_idx,
             order_client_id=order_client_id,
         )
-        logi("下平仓单返回: " + str(res))
+        logi("Place a closing order and return: " + str(res))
         self.grid.cells[index].set_long_tp_cid(order_client_id)
         self.grid.cells[index].set_long_tp_status(OrderStatus.new)
-        logi("更新订单号")
+        logi("Update order id")
 
     fn reset_cell(inout self, index: Int, position_idx: PositionIdx) raises:
         if position_idx == PositionIdx.both_side_buy:

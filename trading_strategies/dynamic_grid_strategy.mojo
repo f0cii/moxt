@@ -53,27 +53,15 @@ struct DynamicGridStrategy(BaseStrategy):
     fn setup(inout self) raises:
         self.platform.setup()
 
-    fn on_update_orderbook(
-        inout self,
-        symbol: String,
-        type_: String,
-        inout asks: list[OrderBookLevel],
-        inout bids: list[OrderBookLevel],
-    ) raises:
-        self.platform.on_update_orderbook(symbol, type_, asks, bids)
-
-    fn on_update_order(inout self, order: Order) raises:
-        _ = self.platform.on_update_order(order)
-
-    fn get_orderbook(self, symbol: String, n: Int) raises -> OrderBookLite:
-        return self.platform.get_orderbook(symbol, n)
+    fn get_platform_pointer(inout self) -> Pointer[Platform]:
+        return Reference(self.platform).get_unsafe_pointer()
 
     fn on_init(inout self) raises:
         logi("DynamicGridStrategy.on_init")
 
-        # 撤销订单
+        # Cancel all orders
         _ = self.platform.cancel_orders_enhanced(self.category, self.symbol)
-        # 全部平仓
+        # Close positions
         _ = self.platform.close_positions_enhanced(self.category, self.symbol)
 
         let exchange_info = self.platform.fetch_exchange_info(
@@ -91,10 +79,10 @@ struct DynamicGridStrategy(BaseStrategy):
         self.step_size = step_size
         let dp = decimal_places(tick_size.to_float())
 
-        # 获取盘口价格
+        # fetch orderbook
         let ob = self.platform.fetch_orderbook(self.category, self.symbol, 5)
         if len(ob.asks) == 0 or len(ob.bids) == 0:
-            raise Error("获取盘口数据失败")
+            raise Error("Failed to fetch orderbook")
 
         let ask = Fixed(ob.asks[0].price)
         let bid = Fixed(ob.bids[0].price)
@@ -117,9 +105,9 @@ struct DynamicGridStrategy(BaseStrategy):
 
     fn on_exit(inout self) raises:
         logi("DynamicGridStrategy.on_exit")
-        # 撤销订单
+        # Cancel all orders
         _ = self.platform.cancel_orders_enhanced(self.category, self.symbol)
-        # 全部平仓
+        # Close positions
         _ = self.platform.close_positions_enhanced(self.category, self.symbol)
         logi("DynamicGridStrategy.on_exit done")
 
@@ -127,7 +115,7 @@ struct DynamicGridStrategy(BaseStrategy):
         # logd("DynamicGridStrategy.on_tick")
         let ob = self.platform.get_orderbook(self.symbol, 5)
         if len(ob.asks) == 0 or len(ob.bids) == 0:
-            logw("订单薄缺少买卖单")
+            logw("Order book lacks buy and sell orders")
             return
 
         let ask = ob.asks[0]
@@ -147,14 +135,14 @@ struct DynamicGridStrategy(BaseStrategy):
             if self.is_within_buy_range(cell.level, current_cell_level):
                 self.place_buy_order(index, cell)
 
-    # 判断网格单元是否在买单范围内
+    # Check whether the grid unit is within the buy order range
     fn is_within_buy_range(self, cell_level: Int, current_cell_level: Int) -> Bool:
-        let buy_range = 3  # 定义买单的范围，可以根据实际情况调整
+        let buy_range = 3  # Define the range of buy orders, which can be adjusted according to actual circumstances
         return current_cell_level - buy_range <= cell_level <= current_cell_level
 
     fn place_buy_order(inout self, index: Int, cell: GridCellInfo) raises:
         """
-        下开仓单
+        Place an opening order
         """
         if cell.long_open_status != OrderStatus.empty:
             return
@@ -166,7 +154,7 @@ struct DynamicGridStrategy(BaseStrategy):
         let position_idx: Int = int(PositionIdx.both_side_buy)
         let order_client_id = self.platform.generate_order_id()
         logi(
-            "下单 "
+            "Place order "
             + side
             + " "
             + qty
@@ -188,23 +176,23 @@ struct DynamicGridStrategy(BaseStrategy):
             position_idx=position_idx,
             order_client_id=order_client_id,
         )
-        logi("下单返回: " + str(res))
+        logi("Place order returns: " + str(res))
         self.grid.cells[index].set_long_open_cid(order_client_id)
         self.grid.cells[index].set_long_open_status(OrderStatus.new)
-        logi("更新订单号")
+        logi("Update order id")
 
     fn place_tp_orders(inout self) raises:
         """
-        下止盈单
+        Place a take-profit order
         """
         for index in range(len(self.grid.cells)):
             let cell = self.grid.cells[index]
             if cell.long_open_status == OrderStatus.filled:
                 if cell.long_tp_cid == "":
-                    logi("下止盈单")
+                    logi("Place a take-profit order")
                     self.place_tp_order(index, cell)
                 elif cell.long_tp_status.is_closed():
-                    logi("清理网格")
+                    logi("Clean up grid")
                     self.reset_cell(index, PositionIdx.both_side_buy)
 
     fn place_tp_order(inout self, index: Int, cell: GridCellInfo) raises:
@@ -212,11 +200,11 @@ struct DynamicGridStrategy(BaseStrategy):
         let order_type = String("Limit")
         let qty = str(cell.long_open_quantity)
         let price = str(self.grid.get_price_by_level(cell.level + 1))
-        logi("下止盈单: " + str(cell.price) + ">" + price)
+        logi("Place a take-profit order: " + str(cell.price) + ">" + price)
         let position_idx: Int = int(PositionIdx.both_side_buy)
         let order_client_id = self.platform.generate_order_id()
         logi(
-            "下止盈单 "
+            "Place take-profit order "
             + side
             + " "
             + qty
@@ -238,10 +226,10 @@ struct DynamicGridStrategy(BaseStrategy):
             position_idx=position_idx,
             order_client_id=order_client_id,
         )
-        logi("下平仓单返回: " + str(res))
+        logi("Place a closing order and return: " + str(res))
         self.grid.cells[index].set_long_tp_cid(order_client_id)
         self.grid.cells[index].set_long_tp_status(OrderStatus.new)
-        logi("更新订单号")
+        logi("Update order id")
 
     fn reset_cell(inout self, index: Int, position_idx: PositionIdx) raises:
         if position_idx == PositionIdx.both_side_buy:

@@ -1,5 +1,6 @@
 from python import Python
 import time
+from testing import assert_equal, assert_true, assert_false
 from base.containers import ObjectContainer
 from base.c import *
 from base.mo import *
@@ -11,14 +12,15 @@ from trade.base_strategy import *
 from trade.executor import *
 from trading_strategies.dynamic_grid_strategy import DynamicGridStrategy
 from trading_strategies.smart_grid_strategy import SmartGridStrategy
+from trading_strategies.yl_smart_grid_strategy import YlYlSmartGridStrategy
 
-# 运行操作
+# Run operation
 alias ACTION_RUN = 1000
 
-# 停止操作
+# Stop operation
 alias ACTION_STOP_NOW = 1001
 
-# 执行任务操作
+# Perform tasks operation
 alias ACTION_PERFORM_TASKS = 1002
 
 
@@ -28,6 +30,8 @@ fn execute_executor_action(action: Int, c_ptr: Int):
         __execute_executor_action[DynamicGridStrategy](c_ptr, action)
     elif strategy == "SmartGridStrategy":
         __execute_executor_action[SmartGridStrategy](c_ptr, action)
+    elif strategy == "YlYlSmartGridStrategy":
+        __execute_executor_action[YlYlSmartGridStrategy](c_ptr, action)
 
 
 fn run(app_config: AppConfig) raises:
@@ -36,6 +40,8 @@ fn run(app_config: AppConfig) raises:
         __run[DynamicGridStrategy](app_config)
     elif strategy == "SmartGridStrategy":
         __run[SmartGridStrategy](app_config)
+    elif strategy == "YlYlSmartGridStrategy":
+        __run[YlYlSmartGridStrategy](app_config)
 
 
 fn run_forever():
@@ -102,7 +108,7 @@ fn __run[T: BaseStrategy](app_config: AppConfig) raises:
         __executor_perform_tasks_entry, ptr
     )
 
-    logi("程序已准备就绪，等待事件中...")
+    logi("The program is prepared and ready, awaiting events...")
     run_forever()
 
     logi("Done!!!")
@@ -125,7 +131,7 @@ fn main() raises:
     log_file_arg.default = ""
     log_file_arg.help = "Set the log file name (default: app.log)"
 
-    let config_arg = parser.add_argument("--config", "--config_file")
+    let config_arg = parser.add_argument("--config", "--config")
     config_arg.request = True
     config_arg.default = "config.toml"
     config_arg.help = "Set the configuration file name (default: config.toml)"
@@ -134,7 +140,7 @@ fn main() raises:
 
     let log_level: String = args.log_level
     let log_file: String = args.log_file
-    let config_file: String = args.config_file
+    let config_file: String = args.config
 
     # print("log_level=" + log_level)
     # print(config_file)
@@ -147,12 +153,12 @@ fn main() raises:
     seq_init_net(0)
     # seq_init_net(1)
 
-    logi("初始化返回: " + str(ret))
+    logi("Initialization return result: " + str(ret))
 
     seq_init_signal(handle_term)
     seq_init_photon_signal(photon_handle_term)
 
-    # 定义全局对象
+    # Define global object
     var coc = ObjectContainer[OnConnectWrapper]()
     var hoc = ObjectContainer[OnHeartbeatWrapper]()
     var moc = ObjectContainer[OnMessageWrapper]()
@@ -167,7 +173,7 @@ fn main() raises:
 
     let app_config = load_config(config_file)
 
-    logi("加载配置信息: " + str(app_config))
+    logi("Load configuration information: " + str(app_config))
 
     seq_set_global_string(CURRENT_STRATEGY_KEY, app_config.strategy)
 

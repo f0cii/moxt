@@ -17,15 +17,15 @@ struct GridCellInfo(ListElement):
     var level: Int
     var price: Fixed
 
-    var long_open_cid: String  # 订单Client Id
-    var long_open_status: OrderStatus  # 订单状态
-    var long_open_quantity: Fixed  # 挂单数量
-    var long_entry_price: Fixed  # 入场价格记录
-    var long_filled_qty: Fixed  # 成交数量
-    var long_tp_cid: String  # 止盈单Client Id
-    var long_tp_status: OrderStatus  # 止盈单状态
-    var long_sl_cid: String  # 止损单Client Id
-    var long_sl_status: OrderStatus  # 止损单状态
+    var long_open_cid: String  # Order client ID
+    var long_open_status: OrderStatus  # Order status
+    var long_open_quantity: Fixed  # Quantity of open orders
+    var long_entry_price: Fixed  # Entry price
+    var long_filled_qty: Fixed  # Filled quantity
+    var long_tp_cid: String  # Take-profit order Client ID
+    var long_tp_status: OrderStatus  # Take-profit order status
+    var long_sl_cid: String  # Stop-loss order Client ID
+    var long_sl_status: OrderStatus  # Stop-loss order status
 
     var short_open_cid: String
     var short_open_status: OrderStatus
@@ -155,43 +155,43 @@ struct GridCellInfo(ListElement):
 
     fn calculate_profit_percentage(
         self, ask: Fixed, bid: Fixed, position_idx: PositionIdx
-    ) -> Float64:
+    ) -> Fixed:
         """
-        计算盈利率
+        Calculate profit margin
         """
-        # 使用入场价格计算浮动盈利
+        # Calculate floating profit using entry price
         var entry_price = Fixed.zero
         var entry_quantity = Fixed.zero
-        var profit = Float64(0.0)
+        var profit = Fixed(0.0)
         if position_idx == PositionIdx.both_side_buy:
             entry_price = self.long_entry_price
             entry_quantity = self.long_open_quantity
             let current_price = ask
             profit = (
-                current_price.to_float() - entry_price.to_float()
-            ) * entry_quantity.to_float()
+                current_price - entry_price
+            ) * entry_quantity
         else:
             entry_price = self.short_entry_price
             entry_quantity = self.short_open_quantity
             let current_price = bid
             profit = (
-                entry_price.to_float() - current_price.to_float()
-            ) * entry_quantity.to_float()
+                entry_price - current_price
+            ) * entry_quantity
 
         let entry_value = entry_price * entry_quantity
         if entry_price.is_zero():
             return 0.0
 
-        let profit_percentage = profit / entry_value.to_float()
+        let profit_percentage = profit / entry_value
         return profit_percentage
 
     fn calculate_profit_amount(
         self, ask: Fixed, bid: Fixed, position_idx: PositionIdx
     ) -> Float64:
         """
-        计算盈利额
+        Calculate profit amount
         """
-        # 使用入场价格计算浮动盈利
+        # Calculate floating profit using entry price
         var entry_price = Fixed.zero
         var entry_quantity = Fixed.zero
         var profit = Float64(0.0)

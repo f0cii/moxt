@@ -33,18 +33,7 @@ struct OrderInfo(Stringable, CollectionElement):
         "goodTillDate": 0,
         "updateTime": 1704291033033
     }
-    status:
-    Created 訂單已經被系統接收但還沒有推送到撮合引擎中
-    New 訂單成功下達
-    Rejected
-    PartiallyFilled
-    PartiallyFilledCanceled 僅現貨存在該枚舉值
-    Filled
-    Cancelled 期貨交易，當訂單是該狀態時，是可能存在部分成交的; 經典帳戶的現貨盈止損單、條件單、OCO訂單觸發前取消
-    Untriggered
-    Triggered
-    Deactivated 統一帳戶下期貨、現貨的盈止損單、條件單、OCO訂單觸發前取消
-    Active 條件單已經被觸發，並且活動單已經成功創建。該狀態是條件單成功觸發後的終態
+    status: NEW, PARTIALLY_FILLED, FILLED, CANCELED, REJECTED, EXPIRED, EXPIRED_IN_MATCH
     """
 
     var order_id: Int  # orderId

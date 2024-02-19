@@ -12,6 +12,8 @@ from stdlib_extensions.time import time_ns
 from stdlib_extensions.builtins import dict, HashableInt, HashableStr
 from testing import assert_equal, assert_true, assert_false
 from base.moutil import *
+from base.globals import *
+from base.containers import *
 from core.binancemodel import *
 from core.sign import hmac_sha256_b64, hmac_sha256_hex
 from base.yyjson import *
@@ -31,7 +33,6 @@ fn test_httpclient_perf():
     # let path = "/static/superman/js/super_ext-a0b60bd05d.js"
 
     let client = HttpClient(base_url)
-    # let headers = SSMap()
     var headers = Headers()
     headers["a"] = "aaaaaaaaaaaaaaaa"
     headers["b"] = "aaaaaaaaaaaaaaaa"
@@ -89,7 +90,6 @@ fn test_websocket() raises:
 
 
 fn get_on_message() -> on_message_callback:
-    @parameter
     fn wrapper(data: c_char_pointer, data_len: Int):
         let s = c_str_to_string(data, data_len)
         logi("get_on_message=" + s)
@@ -117,9 +117,9 @@ fn test_binancews() raises:
     var on_heartbeat = ws.get_on_heartbeat()
     var on_message = get_on_message()
 
-    ws.set_on_connect(Pointer[on_connect_callback].address_of(on_connect))
-    ws.set_on_heartbeat(Pointer[on_heartbeat_callback].address_of(on_heartbeat))
-    ws.set_on_message(Pointer[on_message_callback].address_of(on_message))
+    ws.set_on_connect(on_connect)
+    ws.set_on_heartbeat(on_heartbeat)
+    ws.set_on_message(on_message)
 
     # var topics = list[String]()
     # topics.append("btcusdt@depth5")
@@ -216,19 +216,18 @@ fn test_binanceclient_public_time() raises:
     # let res = client.cancel_order(symbol, order_id="237740210409")
     # logi("res=" + str(res))
 
-    # 预热
+    # Preparation phase
     _ = client.public_time()
 
     let order_end = time_us()
 
-    logi("耗时: " + str(order_end - order_start) + " us")
+    logi("Time consumption: " + str(order_end - order_start) + " us")
 
-    # 测试下单速度
+    # Test order placement speed
     let times = 3
-    var order_times = list[Int]()  # 记录每次下单耗时
-    # var cancel_times = list[Int]()  # 记录每次撤单耗时
+    var order_times = list[Int]()  # Record the time taken for each order placement
 
-    let start_time = time_us()  # 记录开始时间
+    let start_time = time_us()
 
     for i in range(times):
         # logi("i=" + str(i))
@@ -243,7 +242,7 @@ fn test_binanceclient_public_time() raises:
             str(i)
             + ":public_time"
             # + str(res)
-            + " 耗时: "
+            + " Time consumption: "
             + str(order_end - order_start)
             + " us"
         )
@@ -254,13 +253,17 @@ fn test_binanceclient_public_time() raises:
 
         _ = seq_photon_thread_sleep_ms(3500)
 
-    let end_time = time_us()  # 记录结束时间
+    let end_time = time_us()
 
     let total_time = end_time - start_time
 
-    logi("总耗时:" + str(total_time) + " us")
+    logi("Total time consumed:" + str(total_time) + " us")
 
-    logi("平均耗时:" + str(sum_int_list(order_times) / len(order_times)) + " us")
+    logi(
+        "Average time consumed:"
+        + str(sum_int_list(order_times) / len(order_times))
+        + " us"
+    )
 
     logi("Done!!!")
 
@@ -282,7 +285,7 @@ fn test_binanceclient() raises:
 
     let symbol = "BTCUSDT"
 
-    # 预热
+    # Preparation phase
     _ = client.public_time()
 
     let side = "BUY"
@@ -301,14 +304,14 @@ fn test_binanceclient() raises:
 
     let order_end = time_us()
 
-    logi("耗时: " + str(order_end - order_start) + " us")
+    logi("Time consumption: " + str(order_end - order_start) + " us")
 
-    # 测试下单速度
+    # Test order placement speed
     let times = 30
-    var order_times = list[Int]()  # 记录每次下单耗时
-    var cancel_times = list[Int]()  # 记录每次撤单耗时
+    var order_times = list[Int]()  # Record the time taken for each order placement
+    var cancel_times = list[Int]()  # Record the time taken for each order cancellation
 
-    let start_time = time_us()  # 记录开始时间
+    let start_time = time_us()
 
     for i in range(times):
         # logi("i=" + str(i))
@@ -323,9 +326,9 @@ fn test_binanceclient() raises:
 
         logi(
             str(i)
-            + ":下单返回="
+            + ":Place order returns="
             + str(res)
-            + " 耗时: "
+            + " Time consumption: "
             + str(order_end - order_start)
             + " us"
         )
@@ -342,9 +345,9 @@ fn test_binanceclient() raises:
 
         logi(
             str(i)
-            + ":撤单返回="
+            + ":Cancel order returns="
             + str(res1)
-            + " 耗时: "
+            + " Time consumption: "
             + str(cancel_end - cancel_start)
             + " us"
         )
@@ -354,14 +357,22 @@ fn test_binanceclient() raises:
 
         _ = seq_photon_thread_sleep_ms(500)
 
-    let end_time = time_us()  # 记录结束时间
+    let end_time = time_us()
 
     let total_time = end_time - start_time
 
-    logi("总耗时:" + str(total_time) + " us")
+    logi("Total time consumed:" + str(total_time) + " us")
 
-    logi("平均下单耗时:" + str(sum_int_list(order_times) / len(order_times)) + " us")
-    logi("平均撤单耗时:" + str(sum_int_list(cancel_times) / len(cancel_times)) + " us")
+    logi(
+        "Average time taken for order placement:"
+        + str(sum_int_list(order_times) / len(order_times))
+        + " us"
+    )
+    logi(
+        "Average time taken for order cancellation:"
+        + str(sum_int_list(cancel_times) / len(cancel_times))
+        + " us"
+    )
 
     logi("Done!!!")
 
@@ -415,10 +426,22 @@ fn main() raises:
     # seq_init_net(0)
     seq_init_net(1)
 
-    logi("初始化返回: " + str(ret))
+    logi("Initialization return result: " + str(ret))
 
     seq_init_signal(handle_term)
     seq_init_photon_signal(photon_handle_term)
+
+    var coc = ObjectContainer[OnConnectWrapper]()
+    var hoc = ObjectContainer[OnHeartbeatWrapper]()
+    var moc = ObjectContainer[OnMessageWrapper]()
+
+    let coc_ref = Reference(coc).get_unsafe_pointer()
+    let hoc_ref = Reference(hoc).get_unsafe_pointer()
+    let moc_ref = Reference(moc).get_unsafe_pointer()
+
+    set_global_pointer(WS_ON_CONNECT_WRAPPER_PTR_KEY, coc_ref.__as_index())
+    set_global_pointer(WS_ON_HEARTBEAT_WRAPPER_PTR_KEY, hoc_ref.__as_index())
+    set_global_pointer(WS_ON_MESSAGE_WRAPPER_PTR_KEY, moc_ref.__as_index())
 
     # while True:
     # test_httpclient_perf()
@@ -429,5 +452,9 @@ fn main() raises:
     # test_binancews()
     # test_listen_key()
 
-    logi("程序已准备就绪，等待事件中...")
+    logi("The program is prepared and ready, awaiting events...")
     run_forever()
+
+    _ = coc ^
+    _ = hoc ^
+    _ = moc ^

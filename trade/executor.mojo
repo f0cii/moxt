@@ -6,6 +6,7 @@ from base.thread import *
 from core.bybitclient import BybitClient
 from core.bybitmodel import *
 from core.bybitws import *
+from base.mo import logd, logi, logw, loge
 from .config import AppConfig
 from .platform import *
 from .base_strategy import *
@@ -39,9 +40,10 @@ struct Executor[T: BaseStrategy](Movable, Runable, IExecutor):
     var _private_ws: BybitWS
     var _strategy: T
     var _is_initialized: AtomicBool
-    var _is_running: AtomicBool  # 表示是否在运行
-    var _stop_requested: AtomicBool  # 表示是否已经接收到停止请求
-    var _is_stopped: AtomicBool  # 表示是否已经停止
+    var _is_running: AtomicBool  # Is it currently running
+    var _stop_requested: AtomicBool  # Indicate whether a stop request has been received
+    var _is_stopped: AtomicBool  # Has it already ceased
+    var _platform: Pointer[Platform]
 
     fn __init__(inout self, config: AppConfig, owned strategy: T) raises:
         self._client = BybitClient(
@@ -73,12 +75,11 @@ struct Executor[T: BaseStrategy](Movable, Runable, IExecutor):
             topics=private_topic,
         )
         self._strategy = strategy ^
-        # self._tc_executor = TimedClosureExecutor()
-        # self._timer = c_void_pointer.get_null()
         self._is_initialized = AtomicBool(False)
         self._is_running = AtomicBool(False)
         self._stop_requested = AtomicBool(False)
         self._is_stopped = AtomicBool(False)
+        self._platform = self._strategy.get_platform_pointer()
 
     fn __moveinit__(inout self, owned existing: Self):
         print("Executor.__moveinit__")
@@ -86,12 +87,11 @@ struct Executor[T: BaseStrategy](Movable, Runable, IExecutor):
         self._public_ws = existing._public_ws ^
         self._private_ws = existing._private_ws ^
         self._strategy = existing._strategy ^
-        # self._tc_executor = existing._tc_executor ^
-        # self._timer = existing._timer
         self._is_initialized = AtomicBool(existing._is_initialized.load())
         self._is_running = AtomicBool(existing._is_running.load())
         self._stop_requested = AtomicBool(existing._stop_requested.load())
         self._is_stopped = AtomicBool(existing._is_stopped.load())
+        self._platform = self._strategy.get_platform_pointer()
 
     fn start(inout self) raises:
         var on_connect_private = self._private_ws.get_on_connect()
@@ -128,7 +128,7 @@ struct Executor[T: BaseStrategy](Movable, Runable, IExecutor):
 
     fn stop_now(inout self):
         logi("Executor.stop")
-        # 设置停止标志
+        # Set stop flag
         self._stop_requested.store(True)
         self._private_ws.disconnect()
         self._public_ws.disconnect()
@@ -259,9 +259,13 @@ struct Executor[T: BaseStrategy](Movable, Runable, IExecutor):
 
         # logd("asks=" + str(len(asks)) + " bids=" + str(len(bids)))
 
-        self._strategy.on_update_orderbook(symbol, type_, asks, bids)
+        __get_address_as_lvalue(self._platform.address).on_update_orderbook(
+            symbol, type_, asks, bids
+        )
         if self.is_initialized():
-            let ob = self._strategy.get_orderbook(symbol, 5)
+            let ob = __get_address_as_lvalue(self._platform.address).get_orderbook(
+                symbol, 5
+            )
             self._strategy.on_orderbook(ob)
 
         # logd("process_orderbook_message done")
@@ -308,11 +312,7 @@ struct Executor[T: BaseStrategy](Movable, Runable, IExecutor):
 
             logi("order: " + str(order))
 
-            try:
-                self._strategy.on_update_order(order)
-                self._strategy.on_order(order)
-            except err:
-                loge("on_order error: " + str(err))
+            _ = __get_address_as_lvalue(self._platform.address).on_update_order(order)
 
             iter.step()
 
@@ -377,7 +377,7 @@ struct Executor[T: BaseStrategy](Movable, Runable, IExecutor):
 
     fn run(inout self):
         while self._is_running.load():
-            # 检查停止请求
+            # Check for stop request
             if self._stop_requested.load():
                 logi("Executor stopping...")
                 self._is_running.store(False)
@@ -393,7 +393,7 @@ struct Executor[T: BaseStrategy](Movable, Runable, IExecutor):
 
     fn perform_tasks(inout self):
         """
-        执行一些定期清理
+        Perform periodic cleanup
         """
         while self._is_running.load():
             # logi("perform_tasks")

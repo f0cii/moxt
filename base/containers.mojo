@@ -16,8 +16,14 @@ struct ObjectContainer[T: CollectionElement]:
         # print("ObjectContainer.__moveinit__")
         self.data = existing.data
         self.offset = existing.offset
+    
+    fn emplace(inout self, owned i: T) -> AnyPointer[T]:
+        (self.data + self.offset).emplace_value(i)
+        let ptr = (self.data + self.offset)
+        self.offset += 1
+        return ptr
 
-    fn emplace(inout self, owned i: T) -> Int:
+    fn emplace_as_index(inout self, owned i: T) -> Int:
         (self.data + self.offset).emplace_value(i)
         let index = (self.data + self.offset).__as_index()
         self.offset += 1

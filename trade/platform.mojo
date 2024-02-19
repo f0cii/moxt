@@ -1,5 +1,6 @@
 from stdlib_extensions.builtins import dict, list, HashableInt, HashableStr
 from stdlib_extensions.builtins.string import *
+from ylstdlib import *
 from base.c import *
 from base.mo import *
 from base.thread import *
@@ -11,6 +12,23 @@ from .types import *
 from .helpers import *
 
 
+alias OrderUpdateCallback = fn (order: Order) escaping -> None
+
+
+@value
+struct OrderUpdateCallbackWrapper(ListElement):
+    var _callback: OrderUpdateCallback
+
+    fn __init__(inout self, owned callback: OrderUpdateCallback):
+        self._callback = callback ^
+
+    fn __call__(self, order: Order):
+        self._callback(order)
+
+    fn __str__(self) -> String:
+        return "OrderUpdateCallbackWrapper"
+
+
 struct Platform:
     var _config: AppConfig
     var _client: BybitClient
@@ -20,6 +38,7 @@ struct Platform:
     var _symbol_index_dict: dict[HashableStr, Int]
     var _order_cache: dict[HashableStr, Order]  # key: order_client_id
     var _order_cache_lock: RWLock
+    var _order_update_callbacks: List[OrderUpdateCallbackWrapper]
 
     fn __init__(inout self, config: AppConfig):
         logd("Platform.__init__")
@@ -32,6 +51,7 @@ struct Platform:
         self._symbol_index_dict = dict[HashableStr, Int]()
         self._order_cache = dict[HashableStr, Order]()
         self._order_cache_lock = RWLock()
+        self._order_update_callbacks = List[OrderUpdateCallbackWrapper]()
         logd("Platform.__init__ done")
 
     fn __moveinit__(inout self, owned existing: Self):
@@ -42,16 +62,12 @@ struct Platform:
 
         let symbol_count = len(self._symbols)
         self._asks = Pointer[c_void_pointer].alloc(symbol_count)
-        # let asks_ptr = existing._asks.load(0)
-        # self._asks.store(0, asks_ptr)
-
         self._bids = Pointer[c_void_pointer].alloc(symbol_count)
-        # let bids_ptr = existing._bids.load(0)
-        # self._bids.store(0, bids_ptr)
 
         self._symbol_index_dict = existing._symbol_index_dict
         self._order_cache = existing._order_cache ^
         self._order_cache_lock = existing._order_cache_lock
+        self._order_update_callbacks = existing._order_update_callbacks
         logd("Platform.__moveinit__ done")
 
     fn __del__(owned self):
@@ -77,6 +93,11 @@ struct Platform:
             self._bids.store(i, seq_skiplist_new(False))
         # logi("Platform.setup done")
 
+    fn register_order_update_callback(
+        inout self, owned callback: OrderUpdateCallbackWrapper
+    ) raises:
+        self._order_update_callbacks.append(callback ^)
+
     fn free(inout self) raises:
         for i in range(len(self._symbols)):
             let asks_ptr = self._asks.load(i)
@@ -91,10 +112,10 @@ struct Platform:
         self._order_cache_lock.lock()
         for cid in cids:
             try:
-                logi("移除订单: " + cid)
+                logi("Remove order: " + cid)
                 self._order_cache.pop(cid)
             except e:
-                logw("清理订单时出错: " + str(e))
+                logw("An error occurred while cleaning orders: " + str(e))
         self._order_cache_lock.unlock()
 
     fn on_update_orderbook(
@@ -132,10 +153,19 @@ struct Platform:
         logi("on_update_order: " + str(order))
         let key = order.order_client_id
         self._order_cache_lock.lock()
-        # TODO: 需要比较订单版本，如果版本较旧，返回false
+        # TODO: Order versions need to be compared, returning false if the version is older
         self._order_cache[key] = order
         self._order_cache_lock.unlock()
+
+        self.notify_order_update(order)
+
         return True
+
+    @always_inline
+    fn notify_order_update(inout self, order: Order):
+        for i in range(len(self._order_update_callbacks)):
+            let ptr = self._order_update_callbacks.unsafe_get(i)
+            __get_address_as_lvalue(ptr.value)(order)
 
     fn get_order(self, cid: String) raises -> Order:
         self._order_cache_lock.lock()
@@ -196,7 +226,7 @@ struct Platform:
 
     @always_inline
     fn generate_order_id(self) -> String:
-        # 基于考虑性能，可以预先生成存池子里面，这里从池子里面直接拿
+        # Considering performance, it may be beneficial to pre-generate and store in a pool, then directly retrieve from the pool here
         return seq_nanoid()
 
     @always_inline
@@ -210,37 +240,62 @@ struct Platform:
         self, category: String, symbol: String, limit: Int
     ) raises -> OrderBook:
         return self._client.fetch_orderbook(category, symbol, limit)
-    
+
     @always_inline
-    fn fetch_order(inout self, category: String, symbol: String, order_client_id: String) raises -> Order:
-        let res = self._client.fetch_orders(category, symbol, order_link_id=order_client_id)
+    fn fetch_order(
+        inout self, category: String, symbol: String, order_client_id: String
+    ) raises -> Order:
+        let res = self._client.fetch_orders(
+            category, symbol, order_link_id=order_client_id
+        )
         if len(res) == 0:
             return Order()
-        let order = convert_bybit_order(res[0])
+        var order = convert_bybit_order(res[0])
         _ = self.on_update_order(order)
         return order
 
     @always_inline
     fn fetch_orders(
-        self,
+        inout self,
         category: String,
         symbol: String,
         order_client_id: String = "",
         limit: Int = 0,
         cursor: String = "",
-    ) raises -> list[OrderInfo]:
-        return self._client.fetch_orders(category, symbol, order_client_id, limit, cursor)
+    ) raises -> list[Order]:
+        let orders_original = self._client.fetch_orders(
+            category, symbol, order_client_id, limit, cursor
+        )
+        var orders = list[Order]()
+        for i in range(len(orders_original)):
+            let order = convert_bybit_order(orders_original[i])
+            orders.append(order)
+            _ = self.on_update_order(order)
+        return orders
 
     @always_inline
     fn cancel_order(
-        self,
+        inout self,
         category: String,
         symbol: String,
         order_id: String = "",
         order_client_id: String = "",
-    ) raises -> CancelOrderResult:
+        fetch_full_info: Bool = False,
+    ) raises -> Order:
         let res = self._client.cancel_order(category, symbol, order_id, order_client_id)
-        return CancelOrderResult(res.order_id, res.order_link_id)
+        if not fetch_full_info:
+            return Order(
+                symbol=symbol,
+                order_type="",
+                order_client_id=res.order_link_id,
+                order_id=res.order_id,
+                price=Fixed.zero,
+                quantity=Fixed.zero,
+                filled_qty=Fixed.zero,
+                status=OrderStatus.empty,
+            )
+        else:
+            return self.fetch_order(category, symbol, order_client_id)
 
     @always_inline
     fn cancel_orders(
@@ -303,30 +358,32 @@ struct Platform:
             reduce_only,
         )
 
-    fn cancel_orders_enhanced(self, category: String, symbol: String) raises -> Bool:
+    fn cancel_orders_enhanced(
+        inout self, category: String, symbol: String
+    ) raises -> Bool:
         """
-        撤销所有活跃订单
+        Cancel all active orders
         """
         let orders = self.fetch_orders(category, symbol)
         if len(orders) == 0:
-            logi("没有活跃订单，撤单操作完成")
+            logi("There are no active orders; the cancellation operation is complete")
             return True
 
         let res = self.cancel_orders(category, symbol)
         for i in range(len(res.cancelled_orders)):
-            logi("撤单返回项目: " + str(res.cancelled_orders[i]))
+            logi("Cancellation returns: " + str(res.cancelled_orders[i]))
         return True
 
     fn close_positions_enhanced(
         inout self, category: String, symbol: String
     ) raises -> Bool:
         """
-        平持仓
+        Close positions
         """
-        logi("关闭持仓")
+        logi("Close positions")
         let positions = self.fetch_positions(category, symbol)
         if len(positions) == 0:
-            logi("没有任何持仓，平仓操作完成")
+            logi("There are no open positions; the closure operation is complete")
             return True
 
         for i in range(len(positions)):
@@ -335,8 +392,8 @@ struct Platform:
             let size = Fixed(pos.size)
             if size.is_zero():
                 continue
-            logi("当前持仓: " + str(pos))
-            # 市价平仓
+            logi("Current position: " + str(pos))
+            # Close position at market price
             var side = String("")
             let order_type = String("Market")
             let qty = str(size)
@@ -350,7 +407,7 @@ struct Platform:
                 side = "Buy"
             let order_client_id = self.generate_order_id()
             logi(
-                "下单平仓 "
+                "Place an order to close position "
                 + side
                 + " "
                 + qty
@@ -375,8 +432,8 @@ struct Platform:
                     order_client_id=order_client_id,
                     reduce_only=True,
                 )
-                logi("下单平仓返回: " + str(res))
+                logi("Place a closing order and return: " + str(res))
             except e:
-                logw("下单失败 error=" + str(e))
-        logi("关闭持仓完成")
+                logw("Order placement failed error=" + str(e))
+        logi("Position closure completed")
         return True

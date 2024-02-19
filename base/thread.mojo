@@ -347,24 +347,24 @@ struct iovec:
         return (ptr, self.iov_len)
 
 
-# 创建队列
+# Create queue
 fn seq_lockfree_queue_new() -> c_void_pointer:
     return external_call["seq_lockfree_queue_new", c_void_pointer]()
 
 
-# 销毁队列
+# Destroy queue
 fn seq_lockfree_queue_free(q: c_void_pointer) -> None:
     external_call["seq_lockfree_queue_free", NoneType, c_void_pointer](q)
 
 
-# 入队操作
+# Enqueue operation
 fn seq_lockfree_queue_push(q: c_void_pointer, data: Pointer[iovec]) -> Bool:
     return external_call[
         "seq_lockfree_queue_push", Bool, c_void_pointer, Pointer[iovec]
     ](q, data)
 
 
-# 出队操作
+# Dequeue operation
 fn seq_lockfree_queue_pop(q: c_void_pointer, data: Pointer[iovec]) -> Bool:
     return external_call[
         "seq_lockfree_queue_pop", Bool, c_void_pointer, Pointer[iovec]

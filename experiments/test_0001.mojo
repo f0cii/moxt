@@ -35,7 +35,6 @@ fn do_it() -> None:
 # let do_func_ptr: a_fun = e_do()
 
 
-# 测试集成
 fn test_h():
     w.set_f(e_do1)
     do_it()

@@ -56,10 +56,9 @@ def str_to_bool(s: String) -> Bool:
 
 fn decimal_places(value: Float64) -> Int:
     """
-    返回小数位: 0.0001 -> 4
+    Return decimal places: 0.0001 -> 4
     """
     if value == 0.0:
         return 0
 
-    # 取整位数即decimal places
     return int(math.ceil(math.log10(1.0 / value)))

@@ -321,9 +321,9 @@ fn test_bybitws() raises:
     # let on_message_ptr = Pointer[on_message_callback].address_of(on_message).__as_index()
 
     # ws.set_on_connect(on_connect_ptr)
-    ws.set_on_connect(Pointer[on_connect_callback].address_of(on_connect))
-    ws.set_on_heartbeat(Pointer[on_heartbeat_callback].address_of(on_heartbeat))
-    ws.set_on_message(Pointer[on_message_callback].address_of(on_message))
+    ws.set_on_connect(on_connect)
+    ws.set_on_heartbeat(on_heartbeat)
+    ws.set_on_message(on_message)
 
     var topics = list[String]()
     topics.append("orderbook.1.BTCUSDT")
@@ -467,7 +467,6 @@ fn test_bybitclient() raises:
         # let res = client.switch_position_mode(category, symbol, "0")
         # logi("res=" + str(res))
 
-        # 测试不通过
         # try:
         #     let res = client.switch_position_mode(category, symbol, "0")
         #     logi("res=" + str(res))
@@ -482,7 +481,6 @@ fn test_bybitclient() raises:
         let qty = "0.0001"
         let price = "30000"
 
-        # 测试失败
         # let res = client.place_order(category, symbol, side, order_type, qty, price)
         # logi("res=" + str(res))
 
@@ -632,7 +630,6 @@ fn main() raises:
     # test_ws_auth()
     # test_parse_order()
 
-    # 协程运行
     # seq_photon_thread_create_and_migrate_to_work_pool(func1, c_void_pointer.get_null())
 
     logi("started")

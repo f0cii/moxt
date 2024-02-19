@@ -300,7 +300,7 @@ struct BybitClient:
         self, category: String, symbol: String, mode: String
     ) raises -> Bool:
         """
-        切换持仓模式
+        Switch position mode
         mode: 0-PositionModeMergedSingle 3-PositionModeBothSides
         """
         var yy_doc = yyjson_mut_doc()
@@ -345,7 +345,7 @@ struct BybitClient:
         sell_leverage: String,
     ) raises -> Bool:
         """
-        设置杠杆倍数
+        Set leverage multiplier
         """
         var yy_doc = yyjson_mut_doc()
         yy_doc.add_str("category", category)
@@ -393,7 +393,7 @@ struct BybitClient:
         reduce_only: Bool = False,
     ) raises -> OrderResponse:
         """
-        下单
+        Place an order
         """
         var yy_doc = yyjson_mut_doc()
         yy_doc.add_str("category", category)
@@ -455,7 +455,7 @@ struct BybitClient:
         order_link_id: String = "",
     ) raises -> OrderResponse:
         """
-        撤单
+        Cancel order
         """
         var yy_doc = yyjson_mut_doc()
         yy_doc.add_str("category", category)
@@ -504,7 +504,7 @@ struct BybitClient:
         settle_coin: String = "",
     ) raises -> list[OrderResponse]:
         """
-        批量撤单
+        Batch cancel orders
         """
         var yy_doc = yyjson_mut_doc()
         yy_doc.add_str("category", category)
@@ -558,12 +558,7 @@ struct BybitClient:
         self, account_type: String, coin: String
     ) raises -> list[BalanceInfo]:
         """
-        获取钱包余额
-        <param name="accountType">
-        統一帳戶: UNIFIED(現貨/USDT和USDC永續/期權), CONTRACT(反向)
-        普通帳戶: CONTRACT(期貨), SPOT(現貨)
-        </param>
-        <param name="coin">USDT,USDC</param>
+        Fetch wallet balance
         """
         var query_values = QueryParams()
         query_values["accountType"] = account_type
@@ -644,7 +639,7 @@ struct BybitClient:
         cursor: String = "",
     ) raises -> list[OrderInfo]:
         """
-        获取当前订单
+        Fetch current orders
         https://bybit-exchange.github.io/docs/zh-TW/v5/order/open-order
         """
         var query_values = QueryParams()
@@ -742,7 +737,7 @@ struct BybitClient:
         cursor: String = "",
     ) raises -> list[OrderInfo]:
         """
-        获取历史订单
+        Fetch historical orders
         https://bybit-exchange.github.io/docs/zh-TW/v5/order/order-list
         """
         var query_values = QueryParams()

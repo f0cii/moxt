@@ -5,6 +5,7 @@ from stdlib_extensions.time import time_ns
 from stdlib_extensions.builtins import dict, list, HashableInt, HashableStr, list_to_str
 from stdlib_extensions.builtins.string import __str_contains__
 from flx import *
+from ylstdlib import *
 
 from base.mo import *
 from base.c import *
@@ -26,6 +27,7 @@ from core.bybitmodel import *
 from core.bybitclient import *
 from core.bybitclientjson import *
 from core.bybitws import *
+from trade.pos import LocalPosition
 from trade.config import *
 from trade.platform import Platform
 
@@ -64,6 +66,22 @@ fn test_fixed() raises:
     assert_equal(str(f00a_copy), "0.01")
 
     assert_equal(str(Fixed.zero), "0")
+
+    assert_equal(str(Fixed(0)), "0")
+
+    assert_equal(str(Fixed(-0.123)), "-0.123")
+    assert_equal(str(Fixed(-10.123)), "-10.123")
+    assert_equal(str(Fixed(-10.1)), "-10.1")
+
+    assert_equal(str(Fixed("-10.123456789123")), "-10.123456789123")
+    assert_equal(Fixed("-10.123"), Fixed(-10.123))
+
+    assert_true(Fixed(100) > Fixed(-100))
+    assert_true(Fixed(0) > Fixed(-100))
+    assert_true(Fixed(100) > Fixed(0))
+    assert_true(Fixed(-0.1) < Fixed(0))
+
+    assert_true(-Fixed(-0.1) == Fixed(0.1))
 
 
 fn test_hmac_sha256_b64() raises:
@@ -697,21 +715,41 @@ fn test_ti_call_at_index2() raises:
 fn test_sma() raises:
     let input_length = 10
     var real = Series(input_length)
-    real.append(5)
-    real.append(8)
-    real.append(12)
-    real.append(11)
-    real.append(9)
-    real.append(8)
-    real.append(7)
-    real.append(10)
-    real.append(11)
-    real.append(13)
+    real.append(5.0)
+    real.append(8.0)
+    real.append(12.0)
+    real.append(11.0)
+    real.append(9.0)
+    real.append(8.0)
+    real.append(7.0)
+    real.append(10.0)
+    real.append(11.0)
+    real.append(13.0)
     var outputs = Outputs()
     ti_sma(input_length, real, outputs, 3)
     let result = outputs[0]
     for i in range (len(result)):
         print(i, result[i])
+    
+
+fn test_queue() raises:
+    var q = Queue[Int](10)
+    q.enqueue(100)
+    q.enqueue(101)
+    q.enqueue(102)
+    let a100 = q.dequeue()
+    assert_equal(a100.value(), 100)
+    let a101 = q.dequeue()
+    assert_equal(a101.value(), 101)
+    let a102 = q.dequeue()
+    assert_equal(a102.value(), 102)
+    var a103 = q.dequeue()
+    assert_equal(a103.__bool__(), False)
+
+
+fn test_local_position() raises:
+    var lp = LocalPosition()
+    lp.add(100, 3000)
 
 
 fn run_forever():
@@ -725,7 +763,7 @@ fn main() raises:
 
     var n = 1
     n = 1
-    n = 1000000000000
+    # n = 1000000000000
     if n == 1:
         seq_init_log(LOG_LEVEL_DBG, "")
     else:
@@ -746,7 +784,9 @@ fn main() raises:
     # test_ti_call()
     # test_ti_call_at_index()
     # test_ti_call_at_index2()
-    
+    # test_fixed()
+    test_queue()
+
 
     for i in range (n):
         # test_str()
@@ -776,7 +816,8 @@ fn main() raises:
         # test_ti_call_at_index()
         # test_ti_call_at_index2()
         # test_ti_indicator()
-        test_sma()
+        # test_sma()
+        pass
 
     logi("Done!!!")
     # run_forever()

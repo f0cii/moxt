@@ -1,39 +1,39 @@
 #!/bin/bash
 
-# 定义默认输出文件名变量
+# Define the default output filename variable
 output="" 
 
-# 解析输入参数
+# Parse input arguments
 while [[ $# -gt 0 ]]; do
   case $1 in
     -o)
-      # 获取输出文件名参数
+      # Get the output filename argument
       output="$2"
       shift 2
       ;;
     *)
-      # 获取输入mojo文件名
+      # Get the input mojo filename
       input="$1" 
       shift
       ;;
   esac
 done
 
-# 如果没有指定输出文件名,默认设置为输入文件名
+# If no output filename is specified, set it to the input filename by default
 if [ -z "$output" ]; then
   output="${input%.*}"
 fi
 
-# 构造mojoc命令
+# Construct mojoc command
 cmd="./scripts/mojoc $input -lmoxt -L . -o $output"
 
-# 打印将要执行的命令
+# Print the command to be executed
 echo "Executing command: $cmd"
 
-# 执行命令 
+# Execute the command 
 $cmd
 
-# 检查返回状态
+# Check return status
 if [ $? -eq 0 ]; then
   echo "Command executed successfully"
 else

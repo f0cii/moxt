@@ -76,18 +76,18 @@ struct BinanceClient:
         reduce_only: Bool = False,
     ) raises -> OrderInfo:
         """
-        symbol: 交易对 BTCUSDT
-        side: 买卖方向 SELL, BUY
-        type_(type): 订单类型 LIMIT, MARKET, STOP, TAKE_PROFIT, STOP_MARKET, TAKE_PROFIT_MARKET, TRAILING_STOP_MARKET
-        position_side(positionSide): 持仓方向，单向持仓模式下非必填，默认且仅可填BOTH;在双向持仓模式下必填,且仅可选择 LONG 或 SHORT
-        time_in_force(timeInForce): 下单时传参 timeInForce为 FOK 或 GTX(Post-only)
-        有效方式 (timeInForce):
-        GTC - Good Till Cancel 成交为止
-        IOC - Immediate or Cancel 无法立即成交(吃单)的部分就撤销
-        FOK - Fill or Kill 无法全部立即成交就撤销
-        GTX - Good Till Crossing 无法成为挂单方就撤销
-        GTD - Good Till Date 在特定时间之前有效，到期自动撤销
-        reduce_only(reduceOnly): true, false; 非双开模式下默认false；双开模式下不接受此参数； 使用closePosition不支持此参数。
+        symbol: BTCUSDT
+        side: SELL, BUY
+        type_(type): Order type LIMIT, MARKET, STOP, TAKE_PROFIT, STOP_MARKET, TAKE_PROFIT_MARKET, TRAILING_STOP_MARKET
+        position_side(positionSide): BOTH; LONG or SHORT
+        time_in_force(timeInForce): FOK or GTX(Post-only)
+        (timeInForce):
+        GTC - Good Till Cancel
+        IOC - Immediate or Cancel
+        FOK - Fill or Kill
+        GTX - Good Till Crossing
+        GTD - Good Till Date
+        reduce_only(reduceOnly): true, false
         """
         var query_values = QueryParams()
         query_values["symbol"] = symbol
@@ -180,7 +180,7 @@ struct BinanceClient:
         self,
     ) raises -> String:
         """
-        生成listenKey (USER_STREAM)
+        Generate listen key (USER_STREAM)
         """
         let ret = self.do_post("/fapi/v1/listenKey", "", True)
         # print(ret)
@@ -207,7 +207,7 @@ struct BinanceClient:
         self,
     ) raises -> Bool:
         """
-        延长listenKey有效期 (USER_STREAM)
+        Extend listen key (USER_STREAM)
         """
         let ret = self.do_put("/fapi/v1/listenKey", "", True)
         # print(ret)

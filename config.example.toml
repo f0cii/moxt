@@ -11,7 +11,7 @@ name = "SmartGridStrategy"
 [params]
 grid_interval = 0.01
 order_qty = 0.001
-# 设置总体止损百分比
+# Set overall stop-loss percentage
 total_sl_percent = -0.1
-# 设置单个格子止损百分比
+# Set individual grid stop-loss percentage
 cell_sl_percent = -0.05

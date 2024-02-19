@@ -5,6 +5,7 @@ from base.fixed import Fixed
 from core.bybitmodel import *
 from .config import AppConfig
 from .types import *
+from .platform import Platform
 
 
 trait DefaultConstructible:
@@ -26,21 +27,8 @@ trait BaseStrategy(StrategyConstructible, Movable):
 
     fn on_exit(inout self) raises:
         ...
-
-    # 临时放到策略类，因为mojo的Pointer还不支持AnyType，目前只支持AnyRegType
-    fn on_update_orderbook(
-        inout self,
-        symbol: String,
-        type_: String,
-        inout asks: list[OrderBookLevel],
-        inout bids: list[OrderBookLevel],
-    ) raises:
-        ...
-
-    fn on_update_order(inout self, order: Order) raises:
-        ...
-
-    fn get_orderbook(self, symbol: String, n: Int) raises -> OrderBookLite:
+    
+    fn get_platform_pointer(inout self) -> Pointer[Platform]:
         ...
 
     fn on_tick(inout self) raises:

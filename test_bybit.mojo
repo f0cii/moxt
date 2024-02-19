@@ -146,26 +146,30 @@ fn sum_int_list(v: list[Int]) raises -> Int:
 
 
 fn test_bybitclient() raises:
-    let env_dict = env_load()
+    let app_config = load_config("config.toml")
 
-    let access_key = env_dict["BYBIT_API_KEY"]
-    let secret_key = env_dict["BYBIT_API_SECRET"]
-    let client = BybitClient(
-        testnet=False, access_key=access_key, secret_key=secret_key
+    let access_key = app_config.access_key
+    let secret_key = app_config.secret_key
+    let testnet = app_config.testnet
+    var client = BybitClient(
+        testnet=testnet, access_key=access_key, secret_key=secret_key
     )
 
-    # client.set_verbose(True)
+    client.set_verbose(True)
 
-    # 预热
-    let server_time = client.fetch_public_time()
-    logi(str(server_time))
+    # Preparation phase
+    # let server_time = client.fetch_public_time()
+    # logi(str(server_time))
     # _ = seq_photon_thread_sleep_ms(200)
 
     let category = "linear"
-    let symbol = "BTCUSDT"
+    # let symbol = "BTCUSDT"
+    let symbol = "XRPUSDT"
 
-    # let exchange_info = client.fetch_exchange_info(category, symbol)
-    # logi(str(exchange_info))
+    let exchange_info = client.fetch_exchange_info(category, symbol)
+    logi(str(exchange_info))
+
+    # <ExchangeInfo: symbol=BTCUSDT, tick_size=0.10000000000000001, step_size=0.001>
 
     # let kline = client.fetch_kline(category, symbol, interval="1", limit=5, start=0, end=0)
     # for item in kline:
@@ -191,7 +195,7 @@ fn test_bybitclient() raises:
     let side = "Buy"
     let order_type = "Limit"
     let qty = "0.001"
-    let price = "10000"
+    let price = "3000"
 
     # let res = client.place_order(category, symbol, side, order_type, qty, price, position_idx=1)
     # logi("res=" + str(res))
@@ -212,12 +216,58 @@ fn test_bybitclient() raises:
     # for item in res:
     #     logi("item=" + str(item))
 
-    # 测试下单速度
-    let times = 30
-    var order_times = list[Int]()  # 记录每次下单耗时
-    var cancel_times = list[Int]()  # 记录每次撤单耗时
+    # let res = client.fetch_positions(category, symbol)
+    # for item in res:
+    #     logi("item=" + str(item))
+    # <PositionInfo: symbol=BTCUSDT, position_idx=1, side=Buy, size=0.015, avg_price=40869.30666667, position_value=613.0396, leverage=1.0, mark_price=42191.30, position_mm=0.0000075, position_im=6.130396, take_profit=0.00, stop_loss=0.00, unrealised_pnl=19.8299, cum_realised_pnl=838.09142572, created_time=1682125794703, updated_time=1706790560723>
 
-    let start_time = time_us()  # 记录开始时间
+    # Close position
+    # let side = "Buy"
+    # let order_type = "Limit"
+    # let qty = "0.001"
+    # let price = "3000"
+
+    # let res = client.place_order(category, symbol, "Sell", "Market", qty, "", position_idx=1)
+    # logi("res=" + str(res))
+
+    logi("Done!!!")
+
+    run_forever()
+
+    _ = client ^
+
+
+fn test_bybit_perf() raises:
+    let app_config = load_config("config.toml")
+
+    let access_key = app_config.access_key
+    let secret_key = app_config.secret_key
+    let testnet = app_config.testnet
+    var client = BybitClient(
+        testnet=testnet, access_key=access_key, secret_key=secret_key
+    )
+
+    client.set_verbose(True)
+
+    # Preparation phase
+    let server_time = client.fetch_public_time()
+    logi(str(server_time))
+    _ = seq_photon_thread_sleep_ms(200)
+
+    let category = "linear"
+    let symbol = "BTCUSDT"
+
+    let side = "Buy"
+    let order_type = "Limit"
+    let qty = "0.001"
+    let price = "10000"
+
+    # Test order placement speed
+    let times = 30
+    var order_times = list[Int]()  # Record the time taken for each order placement
+    var cancel_times = list[Int]()  # Record the time taken for each order cancellation
+
+    let start_time = time_us()
 
     for i in range(times):
         # logi("i=" + str(i))
@@ -232,9 +282,9 @@ fn test_bybitclient() raises:
 
         logi(
             str(i)
-            + ":下单返回="
+            + ":Place order returns="
             + str(res)
-            + " 耗时: "
+            + " Time consumption: "
             + str(order_end - order_start)
             + " us"
         )
@@ -249,9 +299,9 @@ fn test_bybitclient() raises:
 
         logi(
             str(i)
-            + ":撤单返回="
+            + ":Cancel order returns="
             + str(res1)
-            + " 耗时: "
+            + " Time consumption: "
             + str(cancel_end - cancel_start)
             + " us"
         )
@@ -261,14 +311,22 @@ fn test_bybitclient() raises:
 
         _ = seq_photon_thread_sleep_ms(500)
 
-    let end_time = time_us()  # 记录结束时间
+    let end_time = time_us()
 
     let total_time = end_time - start_time
 
-    logi("总耗时:" + str(total_time) + " us")
+    logi("Total time consumed:" + str(total_time) + " us")
 
-    logi("平均下单耗时:" + str(sum_int_list(order_times) / len(order_times)) + " us")
-    logi("平均撤单耗时:" + str(sum_int_list(cancel_times) / len(cancel_times)) + " us")
+    logi(
+        "Average time taken for order placement:"
+        + str(sum_int_list(order_times) / len(order_times))
+        + " us"
+    )
+    logi(
+        "Average time taken for order cancellation:"
+        + str(sum_int_list(cancel_times) / len(cancel_times))
+        + " us"
+    )
 
     logi("Done!!!")
 
@@ -300,7 +358,7 @@ fn main() raises:
     seq_init_net(0)
     # seq_init_net(1)
 
-    logi("初始化返回: " + str(ret))
+    logi("Initialization return result: " + str(ret))
 
     seq_init_signal(handle_term)
     seq_init_photon_signal(photon_handle_term)
@@ -319,10 +377,10 @@ fn main() raises:
 
     # while True:
     # test_httpclient_perf()
-    # test_bybitclient()
-    test_bybitws()
+    test_bybitclient()
+    # test_bybitws()
 
-    logi("程序已准备就绪，等待事件中...")
+    logi("The program is prepared and ready, awaiting events...")
     run_forever()
 
     _ = coc ^

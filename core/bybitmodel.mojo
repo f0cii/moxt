@@ -24,8 +24,8 @@ struct ServerTime(Stringable):
 @value
 struct ExchangeInfo(Stringable):
     var symbol: String
-    var tick_size: Float64  # 价格 0.01
-    var step_size: Float64  # 数量 0.001
+    var tick_size: Float64  # Price 0.01
+    var step_size: Float64  # Size 0.001
 
     fn __str__(self) -> String:
         return (
@@ -43,7 +43,7 @@ struct ExchangeInfo(Stringable):
 @register_passable
 struct KlineItem(Stringable, CollectionElement):
     """
-    K线的一条记录
+    A single record of a candlestick
     """
 
     var timestamp: Int
@@ -102,7 +102,7 @@ struct KlineItem(Stringable, CollectionElement):
 @register_passable
 struct OrderBookItem(Stringable, CollectionElement):
     """
-    订单薄的一条记录
+    A single record from the order book
     """
 
     var price: Float64
@@ -121,7 +121,7 @@ struct OrderBookItem(Stringable, CollectionElement):
 @value
 struct OrderBook(Stringable):
     """
-    订单薄
+    Order book
     """
 
     var asks: list[OrderBookItem]
@@ -324,9 +324,9 @@ struct BalanceInfo(Stringable, CollectionElement):
 @value
 struct OrderInfo(Stringable, CollectionElement):
     # position_idx:
-    # 0 - 单向持仓
-    # 1 - 买侧双向持仓
-    # 2 - 卖侧双向持仓
+    # 0 - Unidirectional position
+    # 1 - Bidirectional position on the buy side
+    # 2 - Bidirectional position on the sell side
     var position_idx: Int  # positionIdx
     var order_id: String  # orderId
     var symbol: String  # BTCUSDT
@@ -341,10 +341,10 @@ struct OrderInfo(Stringable, CollectionElement):
     var avg_price: Float64  # avgPrice
     var cum_exec_fee: Float64  # cumExecFee
     # time_in_force:
-    # GTC - Good Till Cancel 成交为止, 一直有效直到被取消
-    # IOC - Immediate or Cancel 无法立即成交(吃单)的部分就撤销
-    # FOK - Fill or Kill 无法全部立即成交就撤销
-    # PostOnly - 只做Maker单, 如果会成为Taker单则取消
+    # GTC - Good Till Cancel
+    # IOC - Immediate or Cancel
+    # FOK - Fill or Kill
+    # PostOnly - Only place Maker orders; cancel if it would become a Taker order
     var time_in_force: String  # timeInForce
     var reduce_only: Bool  # reduceOnly
     var order_link_id: String  # orderLinkId

@@ -30,21 +30,21 @@ struct OrderType:
 @register_passable("trivial")
 struct OrderStatus(Stringable):
     var value: UInt8
-    alias empty = OrderStatus(0)  # 空订单
-    alias new = OrderStatus(1)  # 新建订单
-    alias partially_filled = OrderStatus(2)  # 部分成交
-    alias filled = OrderStatus(3)  # 全部成交
-    alias canceled = OrderStatus(4)  # 已撤销
-    alias rejected = OrderStatus(5)  # 订单被拒绝
-    alias expired = OrderStatus(6)  # 订单过期
+    alias empty = OrderStatus(0)  # Empty order
+    alias new = OrderStatus(1)  # Create new order
+    alias partially_filled = OrderStatus(2)  # Partial filled
+    alias filled = OrderStatus(3)  # Complete filled
+    alias canceled = OrderStatus(4)  # Cancelled
+    alias rejected = OrderStatus(5)  # Order rejected
+    alias expired = OrderStatus(6)  # Order expired
 
-    # 判断订单是否活跃的方法
-    # 活跃订单包括新建、部分成交状态
+    # Method to determine if an order is active
+    # Active orders include statuses of "new" and "partially filled"
     fn is_active(self: Self) -> Bool:
         return self.value == 1 or self.value == 2
 
-    # 判断订单是否已关闭的方法
-    # 已关闭订单包括全部成交、已撤销、被拒绝、过期状态
+    # Method to determine if an order is closed
+    # Closed orders include statuses of "fully filled", "cancelled", "rejected", and "expired"
     fn is_closed(self: Self) -> Bool:
         return self.value == 3 or self.value == 4 or self.value == 5 or self.value == 6
 
@@ -77,9 +77,9 @@ struct OrderStatus(Stringable):
 @register_passable("trivial")
 struct PositionIdx(Stringable, Intable):
     var value: UInt8
-    alias single_side = PositionIdx(0)  # 单向持仓
-    alias both_side_buy = PositionIdx(1)  # 买侧双向持仓
-    alias both_side_sell = PositionIdx(2)  # 卖侧双向持仓
+    alias single_side = PositionIdx(0)  # Unidirectional position
+    alias both_side_buy = PositionIdx(1)  # Bidirectional position on the buy side
+    alias both_side_sell = PositionIdx(2)  # Bidirectional position on the sell side
 
     fn __eq__(self: Self, rhs: Self) -> Bool:
         return self.value == rhs.value

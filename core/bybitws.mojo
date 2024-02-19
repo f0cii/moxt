@@ -160,7 +160,9 @@ struct BybitWS:
         let coc_any_ptr = AnyPointer[ObjectContainer[OnConnectWrapper]].__from_index(
             coc_ptr
         )
-        let wrapper_ptr = __get_address_as_lvalue(coc_any_ptr.value).emplace(wrapper)
+        let wrapper_ptr = __get_address_as_lvalue(coc_any_ptr.value).emplace_as_index(
+            wrapper
+        )
         set_on_connect(id, wrapper_ptr)
 
     fn set_on_heartbeat(self, owned wrapper: OnHeartbeatWrapper):
@@ -169,7 +171,9 @@ struct BybitWS:
         let coc_any_ptr = AnyPointer[ObjectContainer[OnHeartbeatWrapper]].__from_index(
             coc_ptr
         )
-        let wrapper_ptr = __get_address_as_lvalue(coc_any_ptr.value).emplace(wrapper)
+        let wrapper_ptr = __get_address_as_lvalue(coc_any_ptr.value).emplace_as_index(
+            wrapper
+        )
         set_on_heartbeat(id, wrapper_ptr)
 
     fn set_on_message(self, owned wrapper: OnMessageWrapper):
@@ -178,7 +182,9 @@ struct BybitWS:
         let coc_any_ptr = AnyPointer[ObjectContainer[OnMessageWrapper]].__from_index(
             coc_ptr
         )
-        let wrapper_ptr = __get_address_as_lvalue(coc_any_ptr.value).emplace(wrapper)
+        let wrapper_ptr = __get_address_as_lvalue(coc_any_ptr.value).emplace_as_index(
+            wrapper
+        )
         set_on_message(id, wrapper_ptr)
 
     fn set_subscription(inout self, topics: list[String]) raises:
@@ -192,10 +198,10 @@ struct BybitWS:
         # logd("id=" + str(self._id))
         # logd("_subscription_topics_str=" + str(self._subscription_topics_str))
         # if len(self._subscription_topics) == 0:
-        #     logd("BybitWS 没有任何订阅")
+        #     logd("BybitWS has no active subscriptions")
         #     return
         if self._subscription_topics_str == "":
-            logd("BybitWS 没有任何订阅")
+            logd("BybitWS has no active subscriptions")
             return
 
         try:
@@ -293,13 +299,8 @@ struct BybitWS:
     fn on_message(self, s: String) -> None:
         # logd("BybitWS::on_message: " + s)
 
-        # 认证成功
         # {"req_id":"LzIP5BH2aBVLUkmsOzg-q","success":true,"ret_msg":"","op":"auth","conn_id":"cldfn01dcjmj8l28s6sg-ngkux"}
-
-        # 订阅成功
         # {"req_id":"74z-iUiWshWGFAyIWQBxk","success":true,"ret_msg":"","op":"subscribe","conn_id":"cl9i0rtdaugsu2kfn8ng-3084a"}
-
-        # pong 消息
         # {"req_id":"VCKnRAeA6qrQXS8H94a-_","op":"pong","args":["1703683273204"],"conn_id":"cl9i0rtdaugsu2kfn8ng-3aqxh"}
 
         let parser = OndemandParser(ParserBufferSize)
@@ -308,10 +309,10 @@ struct BybitWS:
         if op == "auth":
             let success = doc.get_bool("success")
             if success:
-                logi("ws认证成功")
+                logi("WebSocket authentication successful")
                 self.subscribe()
             else:
-                logw("ws认证失败")
+                logw("WebSocket authentication failed")
         elif op == "pong":
             pass
 

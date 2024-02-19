@@ -18,12 +18,12 @@ fn seq_fixed12_to_string(fixed: Int64, result: c_void_pointer) -> c_size_t:
     )
 
 
-# 自定义*
+# Customize multiplication operation
 fn seq_fixed_mul(a: Int64, b: Int64) -> Int64:
     return external_call["seq_fixed_mul", Int64, Int64, Int64](a, b)
 
 
-# 自定义/
+# Customize division operation
 fn seq_fixed_truediv(a: Int64, b: Int64) -> Int64:
     return external_call["seq_fixed_truediv", Int64, Int64, Int64](a, b)
 
@@ -115,6 +115,10 @@ struct Fixed(Stringable):
             _value: v,
         }
 
+    fn abs(self) -> Self:
+        let v = -self._value if self._value < 0 else self._value
+        return Self {_value: v}
+
     fn __eq__(self, other: Self) -> Bool:
         return self._value == other._value
 
@@ -133,37 +137,41 @@ struct Fixed(Stringable):
     fn __ge__(self, other: Self) -> Bool:
         return self._value >= other._value
 
-    # 自定义+
+    # Customizing negation
+    def __neg__(self) -> Self:
+        return Self {_value: -self._value}
+
+    # Customizing addition
     fn __add__(self, other: Self) -> Self:
         return Self {_value: self._value + other._value}
 
-    # 自定义+=
+    # Customizing +=
     fn __iadd__(inout self, other: Self):
         self._value += other._value
 
-    # 自定义-
+    # Customizing subtraction
     fn __sub__(self, other: Self) -> Self:
         return Self {_value: self._value - other._value}
 
-    # 自定义-=
+    # Customizing -=
     fn __isub__(inout self, other: Self):
         self._value -= other._value
 
-    # 自定义*
+    # Customizing multiplication
     fn __mul__(self, other: Self) -> Self:
         let v = seq_fixed_mul(self._value, other._value)
         return Self {_value: v}
 
-    # 自定义*=
+    # Customizing *=
     fn __imul__(inout self, other: Self):
         self._value = seq_fixed_mul(self._value, other._value)
 
-    # 自定义/
+    # Customizing division
     fn __truediv__(self, other: Self) -> Self:
         let v = seq_fixed_truediv(self._value, other._value)
         return Self {_value: v}
 
-    # 自定义/=
+    # Customizing /=
     fn __itruediv__(inout self, other: Self):
         self._value = seq_fixed_truediv(self._value, other._value)
 

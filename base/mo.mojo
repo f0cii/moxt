@@ -19,24 +19,24 @@ fn seq_int_to_voidptr(i: Int) -> c_void_pointer:
     return external_call["seq_int_to_voidptr", c_void_pointer, Int](i)
 
 
-# 存储全局Int值
+# Store global integer value
 fn seq_set_global_int(id: Int, i: Int) -> None:
     external_call["seq_set_global_int", NoneType, Int, Int](id, i)
 
 
-# 读取全局Int值
+# Retrieve global integer value
 fn seq_get_global_int(id: Int) -> Int:
     return external_call["seq_get_global_int", Int, Int](id)
 
 
-# 存储全局String值
+# Store global string value
 fn seq_set_global_string(id: Int, s: String) -> None:
     external_call["seq_set_global_string", NoneType, Int, c_char_pointer, c_size_t](
         id, s._buffer.data.value, len(s)
     )
 
 
-# 读取全局String值
+# Retrieve global string value
 fn seq_get_global_string(id: Int) -> String:
     var s_len: c_size_t = 0
     let s = external_call[
@@ -106,7 +106,7 @@ fn init_log(level: String, filename: String) -> None:
     seq_init_log(level_, filename)
 
 
-# 初始化日志
+# Initialization log
 fn seq_init_log(level: UInt8, filename: String) -> None:
     external_call["seq_init_log", NoneType, UInt8, Pointer[c_schar], c_int](
         level, filename._buffer.data.value, len(filename)

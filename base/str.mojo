@@ -2,22 +2,6 @@ from .list_iterator import ListIterator
 from memory import memcpy
 
 
-# @value
-# @register_passable("trivial")
-# struct Str2:
-#     var data: DynamicVector[Int8]
-
-#     fn __init__(value: StringLiteral) -> Str2:
-#         let l = len(value)
-#         let s = String(value)
-#         let p = Pointer[Int8].alloc(l)
-
-#         for i in range(l):
-#             p.store(i, s._buffer[i])
-
-#         return Str(p, l)
-
-
 @value
 @register_passable
 struct Str(Stringable):
@@ -82,14 +66,6 @@ struct Str(Stringable):
         let ptr = Pointer[Int8]().alloc(self.size)
         memcpy(ptr, self.data, self.size)
         return String(ptr, self.size + 1)
-
-    # fn to_string_ref(self) -> StringRef:
-    #     # 返回的StringRef，需要自己释放内存，否则有泄漏问题
-    #     let ptr = Pointer[Int8]().alloc(self.size)
-    #     memcpy(ptr, self.data, self.size)
-    #     return StringRef(
-    #         ptr.bitcast[__mlir_type.`!pop.scalar<si8>`]().address, self.size
-    #     )
 
     fn __str__(self) -> String:
         return self.to_string()

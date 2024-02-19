@@ -4,6 +4,7 @@ from memory import memcpy, memset_zero
 from memory.unsafe import bitcast
 from math import max
 
+
 fn flx_null() -> (DTypePointer[DType.uint8], Int):
     var buffer = FlxBuffer(16)
     buffer.add_null()

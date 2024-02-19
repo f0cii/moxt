@@ -5,6 +5,7 @@ from sys.info import is_big_endian
 
 alias is_be = is_big_endian()
 
+
 @value
 @register_passable("trivial")
 struct ValueBitWidth:

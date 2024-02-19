@@ -166,6 +166,7 @@ cython_debug/
 # Do not ignore directories
 !*/
 
+# Ignore special files
 libmoxt.so
 .env
 config.toml

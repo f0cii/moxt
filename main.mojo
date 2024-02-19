@@ -12,7 +12,6 @@ from trade.base_strategy import *
 from trade.executor import *
 from trading_strategies.dynamic_grid_strategy import DynamicGridStrategy
 from trading_strategies.smart_grid_strategy import SmartGridStrategy
-from trading_strategies.yl_smart_grid_strategy import YlYlSmartGridStrategy
 
 # Run operation
 alias ACTION_RUN = 1000
@@ -30,8 +29,6 @@ fn execute_executor_action(action: Int, c_ptr: Int):
         __execute_executor_action[DynamicGridStrategy](c_ptr, action)
     elif strategy == "SmartGridStrategy":
         __execute_executor_action[SmartGridStrategy](c_ptr, action)
-    elif strategy == "YlYlSmartGridStrategy":
-        __execute_executor_action[YlYlSmartGridStrategy](c_ptr, action)
 
 
 fn run(app_config: AppConfig) raises:
@@ -40,8 +37,6 @@ fn run(app_config: AppConfig) raises:
         __run[DynamicGridStrategy](app_config)
     elif strategy == "SmartGridStrategy":
         __run[SmartGridStrategy](app_config)
-    elif strategy == "YlYlSmartGridStrategy":
-        __run[YlYlSmartGridStrategy](app_config)
 
 
 fn run_forever():

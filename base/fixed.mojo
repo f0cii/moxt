@@ -84,18 +84,23 @@ struct Fixed(Stringable):
             _value: value,
         }
 
+    @always_inline
     fn is_zero(self) -> Bool:
         return self._value == 0
 
+    @always_inline
     fn value(self) -> Int64:
         return self._value
 
+    @always_inline
     fn to_int(self) -> Int:
         return int(self._value / FIXED_SCALE_I)
 
+    @always_inline
     fn to_float(self) -> Float64:
         return self._value.cast[DType.float64]() / FIXED_SCALE_F
 
+    @always_inline
     fn to_string(self) -> String:
         let ptr = Pointer[c_char].alloc(17)
         let n = seq_fixed12_to_string(self._value, ptr)
@@ -103,18 +108,21 @@ struct Fixed(Stringable):
         ptr.free()
         return s
 
+    @always_inline
     fn round_to_fractional(self, scale: Int) -> Self:
         let v = seq_fixed_round_to_fractional(self._value, scale)
         return Self {
             _value: v,
         }
 
+    @always_inline
     fn round(self, decimal_places: Int) -> Self:
         let v = seq_fixed_round(self._value, decimal_places)
         return Self {
             _value: v,
         }
 
+    @always_inline
     fn abs(self) -> Self:
         let v = -self._value if self._value < 0 else self._value
         return Self {_value: v}

@@ -45,8 +45,6 @@ fn test_json_parse() raises:
     while list_iter.has_value():
         let obj = list_iter.get()
         let symbol_ = obj.get_str("symbol")
-        # if symbol.upper() != symbol_.upper():
-        # continue
 
         let priceFilter = obj.get_object("priceFilter")
         let tick_size = strtod(priceFilter.get_str("tickSize"))

@@ -25,14 +25,6 @@ def get_timestamp() -> String:
     return t + "Z"
 
 
-# def sign(message, secretKey) -> str:
-#     # mac = hmac.new(bytes(secretKey, encoding='utf8'), bytes(
-#     #     message, encoding='utf-8'), digestmod='sha256')
-#     # d = mac.digest()
-#     # return base64.b64encode(d)
-#     return ""
-
-
 def pre_hash(
     timestamp: String,
     method: String,

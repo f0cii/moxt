@@ -180,9 +180,11 @@ struct SonicDocument:
     fn __del__(owned self):
         seq_sonic_json_document_free(self._doc)
 
+    @always_inline
     fn set_object(self):
         seq_sonic_json_document_set_object(self._doc)
 
+    @always_inline
     fn add_string(inout self, key: StringLiteral, value: String) raises -> None:
         let v = self._sc.set_string(value)
         seq_sonic_json_document_add_string(
@@ -194,6 +196,7 @@ struct SonicDocument:
             v.len,
         )
 
+    @always_inline
     fn to_string(self, buff_size: Int = 1024) -> String:
         let result = Pointer[c_schar].alloc(buff_size)
         let n = seq_sonic_json_document_to_string(self._doc, result)

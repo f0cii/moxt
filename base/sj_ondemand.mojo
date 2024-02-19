@@ -41,12 +41,6 @@ struct OndemandValue:
         let s = seq_simdjson_ondemand_string_v(self.p, Pointer[c_size_t].address_of(n))
         return c_str_to_string(s, n)
 
-    # @always_inline
-    # fn str_ref(self) -> StringRef:
-    #     var n: c_size_t = 0
-    #     let s = seq_simdjson_ondemand_string_v(self.p, Pointer[c_size_t].address_of(n))
-    #     return to_string_ref(s, n)
-
     @always_inline
     fn object(self) -> OndemandObject:
         let p = seq_simdjson_ondemand_object_v(self.p)
@@ -113,17 +107,6 @@ struct OndemandValue:
             Pointer[c_size_t].address_of(n),
         )
         return c_str_to_string(s, n)
-
-    # @always_inline
-    # fn get_str_ref(self, key: StringLiteral) -> StringRef:
-    #     var n: c_size_t = 0
-    #     let s = seq_simdjson_ondemand_get_string_v(
-    #         self.p,
-    #         key.data()._as_scalar_pointer(),
-    #         len(key),
-    #         Pointer[c_size_t].address_of(n),
-    #     )
-    #     return to_string_ref(s, n)
 
     @always_inline
     fn get_object(self, key: StringLiteral) -> OndemandObject:
@@ -257,17 +240,6 @@ struct OndemandObject:
         )
         return c_str_to_string(s, n)
 
-    # @always_inline
-    # fn get_str_ref(self, key: StringLiteral) -> StringRef:
-    #     var n: c_size_t = 0
-    #     let s = seq_simdjson_ondemand_get_string_o(
-    #         self.p,
-    #         key.data()._as_scalar_pointer(),
-    #         len(key),
-    #         Pointer[c_size_t].address_of(n),
-    #     )
-    #     return to_string_ref(s, n)
-
     @always_inline
     fn get_object(self, key: StringLiteral) -> OndemandObject:
         let p = seq_simdjson_ondemand_get_object_o(
@@ -360,14 +332,6 @@ struct OndemandArrayIter:
         )
         return c_str_to_string(s, n)
 
-    # @always_inline
-    # fn get_str_ref(self) -> StringRef:
-    #     var n: c_size_t = 0
-    #     let s = seq_simdjson_ondemand_array_iter_get_str(
-    #         self.it, Pointer[c_size_t].address_of(n)
-    #     )
-    #     return to_string_ref(s, n)
-
     @always_inline
     fn step(self):
         seq_simdjson_ondemand_array_iter_step(self.it)
@@ -432,17 +396,6 @@ struct OndemandDocument:
             Pointer[c_size_t].address_of(n),
         )
         return c_str_to_string(s, n)
-
-    # @always_inline
-    # fn get_str_ref(self, key: StringLiteral) -> StringRef:
-    #     var n: c_size_t = 0
-    #     let s = seq_simdjson_ondemand_get_string_d(
-    #         self.doc,
-    #         key.data()._as_scalar_pointer(),
-    #         len(key),
-    #         Pointer[c_size_t].address_of(n),
-    #     )
-    #     return to_string_ref(s, n)
 
     @always_inline
     fn get_object(self, key: StringLiteral) -> OndemandObject:

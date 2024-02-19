@@ -195,22 +195,6 @@ struct yyjson_val(CollectionElement):
             val = seq_unsafe_yyjson_get_next(val)
         return res
 
-    # @always_inline
-    # fn obj_list(self) -> List[Tuple[yyjson_val,yyjson_val]]:
-    #     res = List[Tuple[yyjson_val,yyjson_val]]()
-    #     iter = seq_yyjson_obj_iter_ptr_new(self.p)
-    #     key = Ptr[yyjson_val]()
-    #     val = Ptr[yyjson_val]()
-    #     while True:
-    #         key = seq_yyjson_obj_iter_next(iter)
-    #         if not key:
-    #             break
-    #         val = seq_yyjson_obj_iter_get_val(key)
-    #         #item: Tuple[yyjson_val,yyjson_val] = (yyjson_val.from_ptr(_key), yyjson_val.from_ptr(_val))
-    #         res.append((yyjson_val.from_ptr(key), yyjson_val.from_ptr(val)))
-    #     seq_yyjson_obj_iter_ptr_free(iter)
-    #     return res
-
     fn __repr__(self) -> String:
         return "<yyjson_val: p={self.p}>"
 

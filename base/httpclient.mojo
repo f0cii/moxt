@@ -94,27 +94,22 @@ struct HttpClient:
         self._verbose = verbose
 
     fn delete(self, request_path: String, headers: Headers) -> HttpResponse:
-        # print("post", request_path, data, headers)
         let res = self.do_request(request_path, VERB_DELETE, headers, "")
         return res
 
     fn get(self, request_path: String, headers: Headers) -> HttpResponse:
-        # print("get", request_path, headers)
         let res = self.do_request(request_path, VERB_GET, headers, "")
         return res
 
     fn head(self, request_path: String, data: String, headers: Headers) -> HttpResponse:
-        # print("post", request_path, data, headers)
         let res = self.do_request(request_path, VERB_HEAD, headers, data)
         return res
 
     fn post(self, request_path: String, data: String, headers: Headers) -> HttpResponse:
-        # print("post", request_path, data, headers)
         let res = self.do_request(request_path, VERB_POST, headers, data)
         return res
 
     fn put(self, request_path: String, data: String, headers: Headers) -> HttpResponse:
-        # print("post", request_path, data, headers)
         let res = self.do_request(request_path, VERB_PUT, headers, data)
         return res
 

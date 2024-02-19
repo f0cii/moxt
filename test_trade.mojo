@@ -10,7 +10,6 @@ from ylstdlib import *
 from base.mo import *
 from base.c import *
 from base.str import Str
-from base.stringlist import StringList
 from base.str_cache import *
 from base.sj_dom import *
 from base.sj_ondemand import OndemandParser
@@ -119,18 +118,6 @@ fn test_lockfree_queue() raises:
     assert_equal(c, "hello")
 
     ptr.free()
-
-
-fn test_stringlist() raises:
-    var slist = StringList()
-    slist.append("abc")
-    slist.append("10000")
-    
-    assert_equal(len(slist), 2)
-
-    let s = slist.unchecked_get_buffer(0)
-    
-    # assert_equal(String(s), "abc")
 
 
 fn test_str_cache() raises:
@@ -796,7 +783,6 @@ fn main() raises:
         # test_hmac_sha256_b64()
         # test_lockfree_queue()
 
-        # test_stringlist()
         # test_str_cache()
         # test_query_values()
         # test_sonic_raw()

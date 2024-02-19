@@ -19,9 +19,6 @@ fn env_loads(s: String) raises -> dict[HashableStr, String]:
         let value = l_array[1]
         env_dict[key] = value
 
-    # for key_value in env_dict.items():
-    #     print("[" + str(key_value.key) + "=" + key_value.value + "]")
-
     return env_dict
 
 

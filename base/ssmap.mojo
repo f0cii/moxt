@@ -14,15 +14,12 @@ struct SSMap:
     var ptr: c_void_pointer
 
     fn __init__(inout self):
-        # logd("SSMap.__init__")
         self.ptr = seq_ssmap_new()
 
     fn __del__(owned self):
-        # logd("SSMap.__del__")
         seq_ssmap_free(self.ptr)
 
     fn __moveinit__(inout self, owned existing: Self):
-        # logd("SSMap.__moveinit__")
         self.ptr = existing.ptr
 
     fn __setitem__(inout self, key: StringLiteral, value: String):

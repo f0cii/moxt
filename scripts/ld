@@ -71,10 +71,6 @@ def main():
                 shutil.copyfile(p, p+".1")
 
 
-    #print("ld argv: ", argv)
-    #with open("/tmp/last-ld-args.txt", "w") as f:
-    #    f.write(argv)
-
     subprocess.run(argv)
 
 if __name__ == "__main__":

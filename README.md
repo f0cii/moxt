@@ -80,8 +80,8 @@ trading_strategies
 
 Join our community to get help, share ideas, and collaborate!
 
-Discord: Join our [Discord server](https://discord.gg/XE8KJhq8) to chat with the MOXT community.
-QQ Group: Connect with us on QQ Group (717747352) for discussions in Chinese.
+* Discord: Join our [Discord server](https://discord.gg/XE8KJhq8) to chat with the MOXT community.
+* QQ Group: Connect with us on QQ Group (717747352) for discussions in Chinese.
 
 ## License
 

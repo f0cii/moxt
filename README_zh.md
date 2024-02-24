@@ -77,8 +77,8 @@ trading_strategies
 
 加入我们的社区，获取帮助，分享想法，进行协作！
 
-Discord：加入我们的[Discord服务器](https://discord.gg/XE8KJhq8)，与MOXT社区交流。
-QQ群：加入我们的QQ群（717747352），进行中文讨论。
+* Discord：加入我们的[Discord服务器](https://discord.gg/XE8KJhq8)，与MOXT社区交流。
+* QQ群：加入我们的QQ群（717747352），进行中文讨论。
 
 ---
 

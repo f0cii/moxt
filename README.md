@@ -5,9 +5,9 @@
     </p>
 </h4>
 
-# MOXT: Open Source Quantitative Trading Library
+# MOXT
 
-**MOXT** is a leading open-source quantitative trading library designed to enhance the efficiency and effectiveness of quantitative trading. It features a simple and efficient syntax, integration with multiple exchanges, extensive support for technical indicators, and provides high-performance coroutine support, low-latency HTTP client components, and an efficient WebSocket module. Notably, MOXT integrates the [Photon](https://github.com/alibaba/PhotonLibOS) coroutine library and the [simdjson](https://github.com/simdjson/simdjson) parsing library, ensuring ultimate performance in data processing, making MOXT an ideal choice for quantitative traders.
+A high-performance trading library, written in Mojo and C++, designed to simplify quantitative trading.
 
 To compile libmoxt.so, please visit [moxt-cpp](https://github.com/f0cii/moxt-cpp)
 
@@ -75,6 +75,13 @@ pip install tomli
 trading_strategies
 
 ```
+
+## Community
+
+Join our community to get help, share ideas, and collaborate!
+
+Discord: Join our [Discord server](https://discord.gg/XE8KJhq8) to chat with the MOXT community.
+QQ Group: Connect with us on QQ Group (717747352) for discussions in Chinese.
 
 ## License
 

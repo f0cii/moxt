@@ -48,11 +48,12 @@ docker run -it mojo
 在运行应用程序之前，您需要下载编译好的 libmoxt.so 库文件。您可以使用 curl 或 wget 命令直接将其下载到您的项目目录中：
 
 ```bash
-# 使用 curl
-curl -L -o libmoxt.so "https://github.com/f0cii/moxt-cpp/releases/download/v1.0.0/libmoxt-1.0.0-linux-x86_64.so"
-
-# 使用 wget
-wget -O libmoxt.so "https://github.com/f0cii/moxt-cpp/releases/download/v1.0.0/libmoxt-1.0.0-linux-x86_64.so"
+# 安装 jq
+sudo apt  install jq
+# 将下载脚本设置为可执行
+chmod +x download_libmoxt.sh
+# 运行下载脚本
+./download_libmoxt.sh
 ```
 
 注意：这些命令从 moxt-cpp GitHub 发布中下载 libmoxt.so 的最新版本。确保您的系统中已安装 curl 或 wget 以使用这些命令。

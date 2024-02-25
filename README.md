@@ -55,11 +55,12 @@ docker run -it mojo
 Before running the application, you need to download the compiled libmoxt.so library file. You can use either curl or wget command to download it directly into your project directory:
 
 ```bash
-# Using curl
-curl -L -o libmoxt.so "https://github.com/f0cii/moxt-cpp/releases/download/v1.0.0/libmoxt-1.0.0-linux-x86_64.so"
-
-# Using wget
-wget -O libmoxt.so "https://github.com/f0cii/moxt-cpp/releases/download/v1.0.0/libmoxt-1.0.0-linux-x86_64.so"
+# Install jq
+sudo apt  install jq
+# Make the download script executable
+chmod +x download_libmoxt.sh
+# Run the download script
+./download_libmoxt.sh
 ```
 
 Note: These commands download the latest version of libmoxt.so from the moxt-cpp GitHub releases. Ensure you have curl or wget installed on your system to use these commands.

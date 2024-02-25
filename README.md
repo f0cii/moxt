@@ -9,10 +9,6 @@
 
 A high-performance trading library, written in Mojo and C++, designed to simplify quantitative trading.
 
-To compile libmoxt.so, please visit [moxt-cpp](https://github.com/f0cii/moxt-cpp)
-
-Note: After compiling, please copy the compiled libmoxt.so file to this project directory.
-
 ## Features
 
 1. **Simple and Efficient Syntax**
@@ -53,6 +49,22 @@ Or use the mojo docker
 docker build -t mojo -f mojo.Dockerfile .
 docker run -it mojo
 ```
+
+## Downloading libmoxt.so
+
+Before running the application, you need to download the compiled libmoxt.so library file. You can use either curl or wget command to download it directly into your project directory:
+
+```bash
+# Using curl
+curl -L -o libmoxt.so "https://github.com/f0cii/moxt-cpp/releases/download/v1.0.0/libmoxt-1.0.0-linux-x86_64.so"
+
+# Using wget
+wget -O libmoxt.so "https://github.com/f0cii/moxt-cpp/releases/download/v1.0.0/libmoxt-1.0.0-linux-x86_64.so"
+```
+
+Note: These commands download the latest version of libmoxt.so from the moxt-cpp GitHub releases. Ensure you have curl or wget installed on your system to use these commands.
+
+Alternatively, if you prefer to compile libmoxt.so yourself or need a specific version, please visit [moxt-cpp](https://github.com/f0cii/moxt-cpp) for compilation instructions.
 
 ## Quick Start
 

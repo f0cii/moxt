@@ -2,10 +2,6 @@
 
 一个高性能的交易库，用Mojo和C++编写，旨在简化量化交易。
 
-编译 libmoxt.so，请移步 [moxt-cpp](https://github.com/f0cii/moxt-cpp)
-
-注意: 编译后，请将编译后的 libmoxt.so 文件拷贝到本项目目录
-
 ## 特点
 
 1. **简洁高效的语法**
@@ -46,6 +42,22 @@
 docker build -t mojo -f mojo.Dockerfile .
 docker run -it mojo
 ```
+
+## 下载 libmoxt.so
+
+在运行应用程序之前，您需要下载编译好的 libmoxt.so 库文件。您可以使用 curl 或 wget 命令直接将其下载到您的项目目录中：
+
+```bash
+# 使用 curl
+curl -L -o libmoxt.so "https://github.com/f0cii/moxt-cpp/releases/download/v1.0.0/libmoxt-1.0.0-linux-x86_64.so"
+
+# 使用 wget
+wget -O libmoxt.so "https://github.com/f0cii/moxt-cpp/releases/download/v1.0.0/libmoxt-1.0.0-linux-x86_64.so"
+```
+
+注意：这些命令从 moxt-cpp GitHub 发布中下载 libmoxt.so 的最新版本。确保您的系统中已安装 curl 或 wget 以使用这些命令。
+
+或者，如果您更倾向于自己编译 libmoxt.so 或需要特定版本，请访问 [moxt-cpp](https://github.com/f0cii/moxt-cpp) 获取编译指南。
 
 ## 快速开始
 

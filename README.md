@@ -11,8 +11,8 @@ A high-performance trading library, written in Mojo and C++, designed to simplif
 
 ## Features
 
-1. **Simple and Efficient Syntax**
-   - **Mojo Syntax**: Borrowing the usability of Python while providing the high performance of C/C++/Rust.
+1. **Concise and Efficient Syntax**
+   - **Mojo Programming Language**: Inspired by the ease of use of Python, the Mojo programming language has been designed with a concise and efficient syntax aimed at delivering performance comparable to that of C/C++/Rust, while maintaining code readability and ease of use.
    
 2. **Integration with Multiple Exchanges**
    - **Broad Support**: Easily integrate with mainstream exchanges, such as OKX, Bybit, Binance, etc.
@@ -38,25 +38,47 @@ A high-performance trading library, written in Mojo and C++, designed to simplif
 9. **Integration with [simdjson](https://github.com/simdjson/simdjson) Parsing Library**
    - **Efficient Parsing**: Utilize the simdjson parsing library for rapid JSON processing capabilities, ensuring efficient and accurate data parsing.
 
+## System Requirements
+
+To ensure optimal performance and compatibility, please make sure your system meets the following requirements:
+
+- Operating System: Ubuntu 20.04+ (amd64)
+- Python Environment: Python 3.9+ is required. It is recommended to manage it using [Miniconda](https://docs.anaconda.com/free/miniconda/index.html).
+- Mojo Programming Language Version: 0.7.0
+
+For information on how to install Mojo 0.7.0, please refer to the [Mojo Official Installation Guide](https://docs.modular.com/mojo/manual/get-started/). Make sure you are using the supported version of the operating system to avoid compatibility issues.
+
 ## Installation
 
-Ensure Mojo programming language (v0.7.0) is installed in your environment. Run the following commands in the project directory to install dependencies:
+Before starting, make sure you have installed the Mojo programming language (version 0.7.0) and all necessary dependencies according to the system requirements. Next, you can install and configure this quantitative trading library by following the steps below:
+
+1. Clone the Project
+
+Clone this project into your local environment:
 
 ```bash
-Refer to the official mojo documentation for installation
-
-Or use the mojo docker
-docker build -t mojo -f mojo.Dockerfile .
-docker run -it mojo
+git clone https://github.com/f0cii/moxt.git
+cd moxt
 ```
 
-## Downloading libmoxt.so
+2. Use Docker (Optional)
+
+If you prefer to use Docker to run the Mojo environment, you can use our provided Dockerfile by following these steps:
+
+```bash
+docker build -t moxt -f mojo.Dockerfile .
+docker run -it moxt
+```
+
+This step is optional and is provided for those who wish to simplify their environment setup using Docker. If you are not familiar with Docker, we recommend checking the Docker Official Documentation for more information.
+
+## Download libmoxt.so
 
 Before running the application, you need to download the compiled libmoxt.so library file. You can use either curl or wget command to download it directly into your project directory:
 
 ```bash
 # Install jq
-sudo apt  install jq
+sudo apt install jq
 # Make the download script executable
 chmod +x download_libmoxt.sh
 # Run the download script
@@ -66,6 +88,10 @@ chmod +x download_libmoxt.sh
 Note: These commands download the latest version of libmoxt.so from the moxt-cpp GitHub releases. Ensure you have curl or wget installed on your system to use these commands.
 
 Alternatively, if you prefer to compile libmoxt.so yourself or need a specific version, please visit [moxt-cpp](https://github.com/f0cii/moxt-cpp) for compilation instructions.
+
+## Why is it necessary to download libmoxt.so?
+
+Some of the core functionalities of this project are implemented in C++ and compiled into the libmoxt.so shared library. This means that in order for the MOXT library to function correctly and take full advantage of these high-performance features, you need to download this shared library to your project directory. The C++ code for the project is located in the [moxt-cpp](https://github.com/f0cii/moxt-cpp) repository.
 
 ## Quick Start
 
@@ -81,20 +107,19 @@ chmod +x ./build.sh
 source setup.sh
 # Install Python dependencies
 pip install tomli
-# Run
+
+# Running ./moxt initiates the quantitative trading process.
+# Please note that the specific strategies to be run must be specified in the configuration file (config.toml). Ensure that the strategy settings in this file have been correctly configured according to your requirements before executing ./moxt.
 ./moxt
-
-# Example strategy directory
-trading_strategies
-
 ```
+
+Note: The `trading_strategies` directory is used to store trading strategies.
 
 ## Community
 
 Join our community to get help, share ideas, and collaborate!
 
 * Discord: Join our [Discord server](https://discord.gg/XE8KJhq8) to chat with the MOXT community.
-* QQ Group: Connect with us on QQ Group (717747352) for discussions in Chinese.
 
 ## License
 

@@ -118,6 +118,12 @@ pip install tomli
 
 * Discord：加入我们的[Discord服务器](https://discord.gg/XE8KJhq8)，与MOXT社区交流。
 
+## 关于我
+
+欢迎通过微信加我为好友，一起交流分享！
+
+![WeChat QR Code](https://raw.githubusercontent.com/f0cii/moxt/main/assets/wechat.jpg)
+
 ---
 
 **免责声明：** 本项目仅供学习和研究使用，不构成任何交易建议或投资建议。请谨慎使用该项目进行实际交易。

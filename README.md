@@ -121,6 +121,12 @@ Join our community to get help, share ideas, and collaborate!
 
 * Discord: Join our [Discord server](https://discord.gg/XE8KJhq8) to chat with the MOXT community.
 
+## About Me
+
+Feel free to add me on WeChat for further discussions and sharing!
+
+![WeChat QR Code](https://raw.githubusercontent.com/f0cii/moxt/main/assets/wechat.jpg)
+
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE] file for more details.

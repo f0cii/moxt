@@ -30,7 +30,7 @@ struct BinanceClient:
         self.testnet = testnet
         self.access_key = access_key
         self.secret_key = secret_key
-        let base_url = "https://testnet.binancefuture.com" if self.testnet else "https://fapi.binance.com"
+        var base_url = "https://testnet.binancefuture.com" if self.testnet else "https://fapi.binance.com"
         self.client = HttpClient(base_url, tlsv13_client)
 
     fn __moveinit__(inout self, owned existing: Self):
@@ -38,7 +38,7 @@ struct BinanceClient:
         self.testnet = existing.testnet
         self.access_key = existing.access_key
         self.secret_key = existing.secret_key
-        let base_url = "https://api-testnet.bybit.com" if self.testnet else "https://api.bybit.com"
+        var base_url = "https://api-testnet.bybit.com" if self.testnet else "https://api.bybit.com"
         self.client = existing.client ^
         logd("BybitClient.__moveinit__ done")
 
@@ -46,16 +46,16 @@ struct BinanceClient:
         self.client.set_verbose(verbose)
 
     fn public_time(self) raises -> Int:
-        let ret = self.do_get("/fapi/v1/time", "", False)
+        var ret = self.do_get("/fapi/v1/time", "", False)
         if ret.status != 200:
             raise Error("error status=" + str(ret.status) + " body=" + ret.body)
 
         logd("body: " + str(ret.body))
 
         # {"serverTime":1704283776645}
-        let parser = OndemandParser(ParserBufferSize)
-        let doc = parser.parse(ret.body)
-        let server_time = doc.get_int("serverTime")
+        var parser = OndemandParser(ParserBufferSize)
+        var doc = parser.parse(ret.body)
+        var server_time = doc.get_int("serverTime")
         if server_time == 0:
             raise Error("error server_time=0")
 
@@ -102,10 +102,10 @@ struct BinanceClient:
         query_values["timeInForce"] = time_in_force
         if reduce_only:
             query_values["reduceOnly"] = "true"
-        let query_str = query_values.to_string()
+        var query_str = query_values.to_string()
         # logd(query_str)
 
-        let ret = self.do_post("/fapi/v1/order", query_str, True)
+        var ret = self.do_post("/fapi/v1/order", query_str, True)
         # print(ret)
         if ret.status != 200:
             raise Error("error status=" + str(ret.status) + " body=" + ret.body)
@@ -116,15 +116,15 @@ struct BinanceClient:
         # {"orderId":237740210409,"symbol":"BTCUSDT","status":"NEW","clientOrderId":"62ayQ4MjyVIaCkvDX00dhh","price":"20000.00","avgPrice":"0.00","origQty":"0.010","executedQty":"0.000","cumQty":"0.000","cumQuote":"0.00000","timeInForce":"GTC","type":"LIMIT","reduceOnly":false,"closePosition":false,"side":"BUY","positionSide":"LONG","stopPrice":"0.00","workingType":"CONTRACT_PRICE","priceProtect":false,"origType":"LIMIT","priceMatch":"NONE","selfTradePreventionMode":"NONE","goodTillDate":0,"updateTime":1704291033033}
         # logd(ret.body)
 
-        let parser = DomParser(ParserBufferSize)
-        let doc = parser.parse(ret.body)
-        let code = doc.get_int("code")
+        var parser = DomParser(ParserBufferSize)
+        var doc = parser.parse(ret.body)
+        var code = doc.get_int("code")
         if code != 0:
-            let msg = doc.get_str("msg")
+            var msg = doc.get_str("msg")
             raise Error("error code=" + str(code) + ", msg=" + msg)
 
-        let _order_id = doc.get_int("orderId")
-        let _order_client_id = doc.get_str("clientOrderId")
+        var _order_id = doc.get_int("orderId")
+        var _order_client_id = doc.get_str("clientOrderId")
 
         _ = doc ^
         _ = parser ^
@@ -146,10 +146,10 @@ struct BinanceClient:
             query_values["orderId"] = order_id
         if order_client_id != "":
             query_values["origClientOrderId"] = order_client_id
-        let query_str = query_values.to_string()
+        var query_str = query_values.to_string()
         # logd(query_str)
 
-        let ret = self.do_delete("/fapi/v1/order", query_str, True)
+        var ret = self.do_delete("/fapi/v1/order", query_str, True)
         # print(ret)
         if ret.status != 200:
             raise Error("error status=" + str(ret.status) + " body=" + ret.body)
@@ -158,15 +158,15 @@ struct BinanceClient:
         # {"orderId":237740210409,"symbol":"BTCUSDT","status":"CANCELED","clientOrderId":"62ayQ4MjyVIaCkvDX00dhh","price":"20000.00","avgPrice":"0.00","origQty":"0.010","executedQty":"0.000","cumQty":"0.000","cumQuote":"0.00000","timeInForce":"GTC","type":"LIMIT","reduceOnly":false,"closePosition":false,"side":"BUY","positionSide":"LONG","stopPrice":"0.00","workingType":"CONTRACT_PRICE","priceProtect":false,"origType":"LIMIT","priceMatch":"NONE","selfTradePreventionMode":"NONE","goodTillDate":0,"updateTime":1704339843127}
         # logd(ret.body)
 
-        let parser = DomParser(ParserBufferSize)
-        let doc = parser.parse(ret.body)
-        let code = doc.get_int("code")
+        var parser = DomParser(ParserBufferSize)
+        var doc = parser.parse(ret.body)
+        var code = doc.get_int("code")
         if code != 0:
-            let msg = doc.get_str("msg")
+            var msg = doc.get_str("msg")
             raise Error("error code=" + str(code) + ", msg=" + msg)
 
-        let _order_id = doc.get_int("orderId")
-        let _order_client_id = doc.get_str("clientOrderId")
+        var _order_id = doc.get_int("orderId")
+        var _order_client_id = doc.get_str("clientOrderId")
 
         _ = doc ^
         _ = parser ^
@@ -182,21 +182,21 @@ struct BinanceClient:
         """
         Generate listen key (USER_STREAM)
         """
-        let ret = self.do_post("/fapi/v1/listenKey", "", True)
+        var ret = self.do_post("/fapi/v1/listenKey", "", True)
         # print(ret)
         if ret.status != 200:
             raise Error("error status=" + str(ret.status) + " body=" + ret.body)
 
         logd("body=" + ret.body)
 
-        let parser = DomParser(ParserBufferSize)
-        let doc = parser.parse(ret.body)
-        let code = doc.get_int("code")
+        var parser = DomParser(ParserBufferSize)
+        var doc = parser.parse(ret.body)
+        var code = doc.get_int("code")
         if code != 0:
-            let msg = doc.get_str("msg")
+            var msg = doc.get_str("msg")
             raise Error("error code=" + str(code) + ", msg=" + msg)
 
-        let listen_key = doc.get_str("listenKey")
+        var listen_key = doc.get_str("listenKey")
 
         _ = doc ^
         _ = parser ^
@@ -209,7 +209,7 @@ struct BinanceClient:
         """
         Extend listen key (USER_STREAM)
         """
-        let ret = self.do_put("/fapi/v1/listenKey", "", True)
+        var ret = self.do_put("/fapi/v1/listenKey", "", True)
         # print(ret)
         if ret.status != 200:
             raise Error("error status=" + str(ret.status) + " body=" + ret.body)
@@ -217,11 +217,11 @@ struct BinanceClient:
         logd("body=" + ret.body)
         # {}
 
-        let parser = DomParser(ParserBufferSize)
-        let doc = parser.parse(ret.body)
-        let code = doc.get_int("code")
+        var parser = DomParser(ParserBufferSize)
+        var doc = parser.parse(ret.body)
+        var code = doc.get_int("code")
         if code != 0:
-            let msg = doc.get_str("msg")
+            var msg = doc.get_str("msg")
             raise Error("error code=" + str(code) + ", msg=" + msg)
 
         _ = doc ^
@@ -230,10 +230,10 @@ struct BinanceClient:
         return True
 
     fn do_sign(self, inout headers: Headers, data: String) raises -> String:
-        let ts_str = "recvWindow=5000&timestamp=" + str(time_ms())
-        # let recv_window_str = "5000"
-        let payload = data + "&" + ts_str if data != "" else ts_str
-        let signature = hmac_sha256_hex(payload, self.secret_key)
+        var ts_str = "recvWindow=5000&timestamp=" + str(time_ms())
+        # var recv_window_str = "5000"
+        var payload = data + "&" + ts_str if data != "" else ts_str
+        var signature = hmac_sha256_hex(payload, self.secret_key)
         headers["X-MBX-APIKEY"] = self.access_key
         return payload + "&signature=" + signature
 
@@ -241,9 +241,9 @@ struct BinanceClient:
         self, path: StringLiteral, param: String, sign: Bool
     ) raises -> HttpResponse:
         var headers = Headers()
-        let param_ = self.do_sign(headers, param) if sign else param
+        var param_ = self.do_sign(headers, param) if sign else param
 
-        let request_path: String
+        var request_path: String
         if param_ != "":
             request_path = str(path) + "?" + param_
         else:
@@ -257,9 +257,9 @@ struct BinanceClient:
     ) raises -> HttpResponse:
         var headers = Headers()
         # headers["Connection"] = "Keep-Alive"
-        let param_ = self.do_sign(headers, param) if sign else param
+        var param_ = self.do_sign(headers, param) if sign else param
 
-        let request_path: String
+        var request_path: String
         if param_ != "":
             request_path = str(path) + "?" + param_
         else:
@@ -274,7 +274,7 @@ struct BinanceClient:
         var headers = Headers()
         headers["Content-Type"] = "application/json"
         if sign:
-            let body_ = self.do_sign(headers, body)
+            var body_ = self.do_sign(headers, body)
             # logi("body_=" + body_)
             # return HttpResponse(200, "")
             return self.client.post(path, data=body_, headers=headers)
@@ -287,7 +287,7 @@ struct BinanceClient:
         var headers = Headers()
         headers["Content-Type"] = "application/json"
         if sign:
-            let body_ = self.do_sign(headers, body)
+            var body_ = self.do_sign(headers, body)
             # logi("body_=" + body_)
             # return HttpResponse(200, "")
             return self.client.put(path, data=body_, headers=headers)

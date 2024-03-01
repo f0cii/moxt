@@ -432,7 +432,7 @@ struct DomElement:
 
     @always_inline
     fn __getitem__(self, key: StringLiteral) -> DomElement:
-        let elem = seq_simdjson_dom_document_get_element(
+        var elem = seq_simdjson_dom_document_get_element(
             self.p, key.data()._as_scalar_pointer(), len(key)
         )
         return DomElement(elem)
@@ -464,7 +464,7 @@ struct DomElement:
     @always_inline
     fn get_str(self, key: StringLiteral) -> String:
         var n: c_size_t = 0
-        let s = seq_simdjson_dom_element_get_str(
+        var s = seq_simdjson_dom_element_get_str(
             self.p,
             key.data()._as_scalar_pointer(),
             len(key),
@@ -474,14 +474,14 @@ struct DomElement:
 
     @always_inline
     fn get_object(self, key: StringLiteral) -> DomObject:
-        let p = seq_simdjson_dom_element_get_object(
+        var p = seq_simdjson_dom_element_get_object(
             self.p, key.data()._as_scalar_pointer(), len(key)
         )
         return DomObject(p)
 
     @always_inline
     fn get_array(self, key: StringLiteral) -> DomArray:
-        let p = seq_simdjson_dom_element_get_array(
+        var p = seq_simdjson_dom_element_get_array(
             self.p, key.data()._as_scalar_pointer(), len(key)
         )
         return DomArray(p)
@@ -492,7 +492,7 @@ struct DomElement:
 
     @always_inline
     fn type_desc(self) -> String:
-        let type_ = seq_simdjson_dom_element_type(self.p)
+        var type_ = seq_simdjson_dom_element_type(self.p)
         if type_ == 0:
             return "array"
         elif type_ == 1:
@@ -516,12 +516,12 @@ struct DomElement:
 
     @always_inline
     fn object(self) -> DomObject:
-        let p = seq_simdjson_dom_element_object(self.p)
+        var p = seq_simdjson_dom_element_object(self.p)
         return DomObject(p)
 
     @always_inline
     fn array(self) -> DomArray:
-        let p = seq_simdjson_dom_element_array(self.p)
+        var p = seq_simdjson_dom_element_array(self.p)
         return DomArray(p)
 
     @always_inline
@@ -543,7 +543,7 @@ struct DomElement:
     @always_inline
     fn str(self) -> String:
         var n: c_size_t = 0
-        let s = seq_simdjson_dom_element_str(self.p, Pointer[c_size_t].address_of(n))
+        var s = seq_simdjson_dom_element_str(self.p, Pointer[c_size_t].address_of(n))
         return c_str_to_string(s, n)
 
     fn __repr__(self) -> String:
@@ -591,7 +591,7 @@ struct DomObject(CollectionElement):
     @always_inline
     fn get_str(self, key: StringLiteral) -> String:
         var n: c_size_t = 0
-        let s = seq_simdjson_dom_object_get_str(
+        var s = seq_simdjson_dom_object_get_str(
             self.p,
             key.data()._as_scalar_pointer(),
             len(key),
@@ -601,14 +601,14 @@ struct DomObject(CollectionElement):
 
     @always_inline
     fn get_object(self, key: StringLiteral) -> DomObject:
-        let p = seq_simdjson_dom_object_get_object(
+        var p = seq_simdjson_dom_object_get_object(
             self.p, key.data()._as_scalar_pointer(), len(key)
         )
         return DomObject(p)
 
     @always_inline
     fn get_array(self, key: StringLiteral) -> DomArray:
-        let p = seq_simdjson_dom_object_get_array(
+        var p = seq_simdjson_dom_object_get_array(
             self.p, key.data()._as_scalar_pointer(), len(key)
         )
         return DomArray(p)
@@ -641,7 +641,7 @@ struct DomArray:
 
     @always_inline
     fn at(self, index: Int) -> DomElement:
-        let p = seq_simdjson_dom_array_at(self.p, index)
+        var p = seq_simdjson_dom_array_at(self.p, index)
         return DomElement(p)
 
     @always_inline
@@ -663,19 +663,19 @@ struct DomArray:
     @always_inline
     fn at_str(self, index: Int) -> String:
         var n: c_size_t = 0
-        let s = seq_simdjson_dom_array_at_str(
+        var s = seq_simdjson_dom_array_at_str(
             self.p, index, Pointer[c_size_t].address_of(n)
         )
         return c_str_to_string(s, n)
 
     @always_inline
     fn at_obj(self, index: Int) -> DomObject:
-        let p = seq_simdjson_dom_array_at_obj(self.p, index)
+        var p = seq_simdjson_dom_array_at_obj(self.p, index)
         return DomObject(p)
 
     @always_inline
     fn at_arr(self, index: Int) -> DomArray:
-        let p = seq_simdjson_dom_array_at_arr(self.p, index)
+        var p = seq_simdjson_dom_array_at_arr(self.p, index)
         return DomArray(p)
 
     @always_inline
@@ -712,7 +712,7 @@ struct DomArrayIter:
 
     @always_inline
     fn get(self) -> DomElement:
-        let p = seq_simdjson_dom_array_iter_get(self.it)
+        var p = seq_simdjson_dom_array_iter_get(self.it)
         return DomElement(p)
 
     @always_inline
@@ -734,7 +734,7 @@ struct DomArrayIter:
     @always_inline
     fn get_str(self) -> String:
         var n: c_size_t = 0
-        let s = seq_simdjson_dom_array_iter_get_str(
+        var s = seq_simdjson_dom_array_iter_get_str(
             self.it, Pointer[c_size_t].address_of(n)
         )
         return c_str_to_string(s, n)
@@ -775,14 +775,14 @@ struct DomParser:
 
     @always_inline
     fn parse(self, s: String) raises -> DomElement:
-        let p = seq_simdjson_dom_parser_parse(self.p, s._buffer.data.value, len(s))
+        var p = seq_simdjson_dom_parser_parse(self.p, s._buffer.data.value, len(s))
         if not seq_simdjson_dom_element_is_valid(p):
             raise Error("JSON parsing error: [" + s + "]")
         return DomElement(p)
 
     @always_inline
     fn parse(self, data: Pointer[c_schar], data_len: Int) raises -> DomElement:
-        let p = seq_simdjson_dom_parser_parse(self.p, data, data_len)
+        var p = seq_simdjson_dom_parser_parse(self.p, data, data_len)
         if not seq_simdjson_dom_element_is_valid(p):
             raise Error("JSON parsing error: [" + c_str_to_string(data, data_len) + "]")
         return DomElement(p)

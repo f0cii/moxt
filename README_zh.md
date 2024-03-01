@@ -37,13 +37,13 @@
 
 - 操作系统：Ubuntu 20.04+ (amd64)
 - Python环境：Python 3.9+，推荐使用[Miniconda](https://docs.anaconda.com/free/miniconda/index.html)进行管理
-- Mojo编程语言版本：0.7.0
+- Mojo编程语言版本：24.1.0
 
-关于如何安装Mojo 0.7.0，请参考[Mojo官方安装指南](https://docs.modular.com/mojo/manual/get-started/)。确保您使用的是支持的操作系统版本，以避免兼容性问题。
+关于如何安装Mojo 24.1.0，请参考[Mojo官方安装指南](https://docs.modular.com/mojo/manual/get-started/)。确保您使用的是支持的操作系统版本，以避免兼容性问题。
 
 ## 安装
 
-在开始之前，请确保您已按照系统要求安装了Mojo编程语言（版本0.7.0）和所有必要的依赖项。接下来，您可以通过以下步骤安装和配置本量化交易库：
+在开始之前，请确保您已按照系统要求安装了Mojo编程语言（版本24.1.0）和所有必要的依赖项。接下来，您可以通过以下步骤安装和配置本量化交易库：
 
 1. 克隆项目
 

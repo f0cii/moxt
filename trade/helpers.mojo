@@ -4,15 +4,6 @@ from .types import *
 from core.bybitmodel import OrderInfo
 
 
-fn safe_split(
-    input_string: String, sep: String = " ", owned maxsplit: Int = -1
-) -> list[String]:
-    try:
-        return split(input_string, sep, maxsplit)
-    except e:
-        return list[String]()
-
-
 fn convert_bybit_order_status(status: String) -> OrderStatus:
     if status == "Created" or status == "New":
         return OrderStatus.new
@@ -29,7 +20,7 @@ fn convert_bybit_order_status(status: String) -> OrderStatus:
 
 
 fn convert_bybit_order(order: OrderInfo) -> Order:
-    let order_ = Order(
+    var order_ = Order(
         symbol=order.symbol,
         order_type=order.type_,
         order_client_id=order.order_link_id,

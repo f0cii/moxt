@@ -1,4 +1,4 @@
-from python import Python
+from sys import argv
 import time
 from testing import assert_equal, assert_true, assert_false
 from base.containers import ObjectContainer
@@ -24,7 +24,7 @@ alias ACTION_PERFORM_TASKS = 1002
 
 
 fn execute_executor_action(action: Int, c_ptr: Int):
-    let strategy = seq_get_global_string(CURRENT_STRATEGY_KEY)
+    var strategy = seq_get_global_string(CURRENT_STRATEGY_KEY)
     if strategy == "DynamicGridStrategy":
         __execute_executor_action[DynamicGridStrategy](c_ptr, action)
     elif strategy == "SmartGridStrategy":
@@ -32,7 +32,7 @@ fn execute_executor_action(action: Int, c_ptr: Int):
 
 
 fn run(app_config: AppConfig) raises:
-    let strategy = seq_get_global_string(CURRENT_STRATEGY_KEY)
+    var strategy = seq_get_global_string(CURRENT_STRATEGY_KEY)
     if strategy == "DynamicGridStrategy":
         __run[DynamicGridStrategy](app_config)
     elif strategy == "SmartGridStrategy":
@@ -61,7 +61,7 @@ fn photon_handle_term(sig: c_int) raises -> None:
 
 
 fn __execute_executor_action[T: BaseStrategy](c_ptr: Int, action: Int):
-    let executor_ptr = AnyPointer[Executor[T]].__from_index(c_ptr)
+    var executor_ptr = AnyPointer[Executor[T]].__from_index(c_ptr)
     if action == ACTION_RUN:
         __get_address_as_lvalue(executor_ptr.value).run()
     elif action == ACTION_STOP_NOW:
@@ -71,33 +71,33 @@ fn __execute_executor_action[T: BaseStrategy](c_ptr: Int, action: Int):
 
 
 fn execute_executor_action(action: Int):
-    let c_ptr = get_global_pointer(TRADE_EXECUTOR_PTR_KEY)
+    var c_ptr = get_global_pointer(TRADE_EXECUTOR_PTR_KEY)
     execute_executor_action(action, c_ptr)
 
 
 fn __executor_run_entry(arg: c_void_pointer) raises -> c_void_pointer:
-    let ptr = seq_voidptr_to_int(arg)
+    var ptr = seq_voidptr_to_int(arg)
     execute_executor_action(ACTION_RUN, ptr)
     return c_void_pointer.get_null()
 
 
 fn __executor_perform_tasks_entry(arg: c_void_pointer) raises -> c_void_pointer:
-    let ptr = seq_voidptr_to_int(arg)
+    var ptr = seq_voidptr_to_int(arg)
     execute_executor_action(ACTION_PERFORM_TASKS, ptr)
     return c_void_pointer.get_null()
 
 
 fn __run[T: BaseStrategy](app_config: AppConfig) raises:
-    let strategy = create_strategy[T](app_config)
+    var strategy = create_strategy[T](app_config)
     var executor = Executor[T](app_config, strategy ^)
 
     executor.start()
 
-    let executor_ptr = Reference(executor).get_unsafe_pointer()
-    let executor_ptr_index = executor_ptr.__as_index()
+    var executor_ptr = Reference(executor).get_unsafe_pointer()
+    var executor_ptr_index = int(executor_ptr)
     set_global_pointer(TRADE_EXECUTOR_PTR_KEY, executor_ptr_index)
 
-    let ptr = seq_int_to_voidptr(executor_ptr_index)
+    var ptr = seq_int_to_voidptr(executor_ptr_index)
     seq_photon_thread_create_and_migrate_to_work_pool(__executor_run_entry, ptr)
     seq_photon_thread_create_and_migrate_to_work_pool(
         __executor_perform_tasks_entry, ptr
@@ -111,37 +111,61 @@ fn __run[T: BaseStrategy](app_config: AppConfig) raises:
     _ = executor ^
 
 
+fn print_usage():
+    print("Usage: ./moxt [options]")
+    print("Example: ./moxt -v")
+    print("Options:")
+    print("  -log-level <string> Set the logging level (default: INFO)")
+    print("  -log-file <string> Set the log file name (default: app.log)")
+    print("  -c <string> Set the configuration file name (default: config.toml)")
+
+
 fn main() raises:
-    let argparse = Python.import_module("argparse")
-    let parser = argparse.ArgumentParser()
-    parser.description = "MOXT"
+    var host = String("")
+    var secret = String("")
+    var log_level = String("INF")  # Default log level set to "INF" for "Info"
+    var log_file = String(
+        ""
+    )  # Initialize log file path as empty, meaning logging to stdout by default
+    var config_file = String("config.toml")  # Default configuration file name
 
-    let log_level_arg = parser.add_argument("--log-level", "--log_level")
-    log_level_arg.request = True
-    log_level_arg.default = "INF"
-    log_level_arg.help = "Set the logging level (default: INFO)"
+    @parameter
+    fn argparse() raises -> Int:
+        var args = argv()
+        for i in range(1, len(args), 2):
+            if args[i] == "-host":
+                host = args[i + 1]
+            if args[i] == "-secret":
+                secret = args[i + 1]
+            if args[i] == "-log-level":
+                log_level = args[i + 1]
+            if args[i] == "-log-file":
+                log_file = args[i + 1]
+            if args[i] == "-c":
+                config_file = args[i + 1]
+            if args[i] == "-v":
+                return 2
+            if args[i] == "-h":
+                print_usage()
+                return 0
+        return 1
 
-    let log_file_arg = parser.add_argument("--log-file", "--log_file")
-    log_file_arg.request = True
-    log_file_arg.default = ""
-    log_file_arg.help = "Set the log file name (default: app.log)"
-
-    let config_arg = parser.add_argument("--config", "--config")
-    config_arg.request = True
-    config_arg.default = "config.toml"
-    config_arg.help = "Set the configuration file name (default: config.toml)"
-
-    let args = parser.parse_args()
-
-    let log_level: String = args.log_level
-    let log_file: String = args.log_file
-    let config_file: String = args.config
+    var res = argparse()
+    if res == 0:
+        return
 
     # print("log_level=" + log_level)
     # print(config_file)
 
+    var app_config: AppConfig = AppConfig()
+    if host != "" and secret != "":
+        print("exit")
+        _ = exit(0)
+    else:
+        app_config = load_config(config_file)
+
     _ = seq_ct_init()
-    let ret = seq_photon_init_default()
+    var ret = seq_photon_init_default()
     seq_init_photon_work_pool(2)
 
     init_log(log_level, log_file)
@@ -158,15 +182,13 @@ fn main() raises:
     var hoc = ObjectContainer[OnHeartbeatWrapper]()
     var moc = ObjectContainer[OnMessageWrapper]()
 
-    let coc_ref = Reference(coc).get_unsafe_pointer()
-    let hoc_ref = Reference(hoc).get_unsafe_pointer()
-    let moc_ref = Reference(moc).get_unsafe_pointer()
+    var coc_ref = Reference(coc).get_unsafe_pointer()
+    var hoc_ref = Reference(hoc).get_unsafe_pointer()
+    var moc_ref = Reference(moc).get_unsafe_pointer()
 
-    set_global_pointer(WS_ON_CONNECT_WRAPPER_PTR_KEY, coc_ref.__as_index())
-    set_global_pointer(WS_ON_HEARTBEAT_WRAPPER_PTR_KEY, hoc_ref.__as_index())
-    set_global_pointer(WS_ON_MESSAGE_WRAPPER_PTR_KEY, moc_ref.__as_index())
-
-    let app_config = load_config(config_file)
+    set_global_pointer(WS_ON_CONNECT_WRAPPER_PTR_KEY, int(coc_ref))
+    set_global_pointer(WS_ON_HEARTBEAT_WRAPPER_PTR_KEY, int(hoc_ref))
+    set_global_pointer(WS_ON_MESSAGE_WRAPPER_PTR_KEY, int(moc_ref))
 
     logi("Load configuration information: " + str(app_config))
 

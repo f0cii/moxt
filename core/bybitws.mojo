@@ -79,10 +79,10 @@ struct BybitWS:
             + str(is_private)
         )
 
-        let host_ = to_schar_ptr(host)
-        let port_ = to_schar_ptr(port)
-        let path_ = to_schar_ptr(path)
-        let ptr = seq_websocket_new(
+        var host_ = to_schar_ptr(host)
+        var port_ = to_schar_ptr(port)
+        var path_ = to_schar_ptr(path)
+        var ptr = seq_websocket_new(
             host_,
             port_,
             path_,
@@ -155,34 +155,34 @@ struct BybitWS:
         return self._id
 
     fn set_on_connect(self, owned wrapper: OnConnectWrapper):
-        let id = self.get_id()
-        let coc_ptr = get_global_pointer(WS_ON_CONNECT_WRAPPER_PTR_KEY)
-        let coc_any_ptr = AnyPointer[ObjectContainer[OnConnectWrapper]].__from_index(
+        var id = self.get_id()
+        var coc_ptr = get_global_pointer(WS_ON_CONNECT_WRAPPER_PTR_KEY)
+        var coc_any_ptr = AnyPointer[ObjectContainer[OnConnectWrapper]].__from_index(
             coc_ptr
         )
-        let wrapper_ptr = __get_address_as_lvalue(coc_any_ptr.value).emplace_as_index(
+        var wrapper_ptr = __get_address_as_lvalue(coc_any_ptr.value).emplace_as_index(
             wrapper
         )
         set_on_connect(id, wrapper_ptr)
 
     fn set_on_heartbeat(self, owned wrapper: OnHeartbeatWrapper):
-        let id = self.get_id()
-        let coc_ptr = get_global_pointer(WS_ON_HEARTBEAT_WRAPPER_PTR_KEY)
-        let coc_any_ptr = AnyPointer[ObjectContainer[OnHeartbeatWrapper]].__from_index(
+        var id = self.get_id()
+        var coc_ptr = get_global_pointer(WS_ON_HEARTBEAT_WRAPPER_PTR_KEY)
+        var coc_any_ptr = AnyPointer[ObjectContainer[OnHeartbeatWrapper]].__from_index(
             coc_ptr
         )
-        let wrapper_ptr = __get_address_as_lvalue(coc_any_ptr.value).emplace_as_index(
+        var wrapper_ptr = __get_address_as_lvalue(coc_any_ptr.value).emplace_as_index(
             wrapper
         )
         set_on_heartbeat(id, wrapper_ptr)
 
     fn set_on_message(self, owned wrapper: OnMessageWrapper):
-        let id = self.get_id()
-        let coc_ptr = get_global_pointer(WS_ON_MESSAGE_WRAPPER_PTR_KEY)
-        let coc_any_ptr = AnyPointer[ObjectContainer[OnMessageWrapper]].__from_index(
+        var id = self.get_id()
+        var coc_ptr = get_global_pointer(WS_ON_MESSAGE_WRAPPER_PTR_KEY)
+        var coc_any_ptr = AnyPointer[ObjectContainer[OnMessageWrapper]].__from_index(
             coc_ptr
         )
-        let wrapper_ptr = __get_address_as_lvalue(coc_any_ptr.value).emplace_as_index(
+        var wrapper_ptr = __get_address_as_lvalue(coc_any_ptr.value).emplace_as_index(
             wrapper
         )
         set_on_message(id, wrapper_ptr)
@@ -205,16 +205,16 @@ struct BybitWS:
             return
 
         try:
-            let id = seq_nanoid()
+            var id = seq_nanoid()
             var yy_doc = yyjson_mut_doc()
             yy_doc.add_str("req_id", id)
             yy_doc.add_str("op", "subscribe")
             var values = list[String]()
-            let topics = split(self._subscription_topics_str, ",")
+            var topics = split(self._subscription_topics_str, ",")
             for topic in topics:
                 values.append(topic)
             yy_doc.arr_with_str("args", values)
-            let body_str = yy_doc.mut_write()
+            var body_str = yy_doc.mut_write()
             logd("send: " + body_str)
             self.send(body_str)
         except err:
@@ -224,7 +224,7 @@ struct BybitWS:
     #     return Reference(self).get_unsafe_pointer().__as_index()
 
     fn get_on_connect(self) -> on_connect_callback:
-        let self_ptr = Reference(self).get_unsafe_pointer()
+        var self_ptr = Reference(self).get_unsafe_pointer()
 
         fn wrapper() -> None:
             __get_address_as_lvalue(self_ptr.address).on_connect()
@@ -232,7 +232,7 @@ struct BybitWS:
         return wrapper
 
     fn get_on_heartbeat(self) -> on_heartbeat_callback:
-        let self_ptr = Reference(self).get_unsafe_pointer()
+        var self_ptr = Reference(self).get_unsafe_pointer()
 
         fn wrapper():
             __get_address_as_lvalue(self_ptr.address).on_heartbeat()
@@ -249,7 +249,7 @@ struct BybitWS:
         logd("BybitWS.on_connect")
         self._heartbeat_time.store(time_ms())
         if self._is_private:
-            let param = self.generate_auth_payload()
+            var param = self.generate_auth_payload()
             # logd("auth: " + param)
             self.send(param)
         else:
@@ -257,15 +257,15 @@ struct BybitWS:
 
     fn generate_auth_payload(self) -> String:
         try:
-            let expires = str(time_ns() / 1e6 + 5000)
-            let req: String = "GET/realtime" + expires
-            let hex_signature = hmac_sha256_hex(req, self._secret_key)
+            var expires = str(time_ns() / 1e6 + 5000)
+            var req: String = "GET/realtime" + expires
+            var hex_signature = hmac_sha256_hex(req, self._secret_key)
 
             # logd("expires=" + expires)
             # logd("req=" + req)
             # logd("hex_signature=" + hex_signature)
 
-            let id = seq_nanoid()
+            var id = seq_nanoid()
             var yy_doc = yyjson_mut_doc()
             yy_doc.add_str("req_id", id)
             yy_doc.add_str("op", "auth")
@@ -274,7 +274,7 @@ struct BybitWS:
             args.append(expires)
             args.append(hex_signature)
             yy_doc.arr_with_str("args", args)
-            let body_str = yy_doc.mut_write()
+            var body_str = yy_doc.mut_write()
             return body_str
         except err:
             loge("generate_auth_payload error=" + str(err))
@@ -282,17 +282,17 @@ struct BybitWS:
 
     fn on_heartbeat(self) -> None:
         # logd("BybitWS.on_heartbeat")
-        let elapsed_time = time_ms() - self._heartbeat_time.load()
+        var elapsed_time = time_ms() - self._heartbeat_time.load()
         if elapsed_time <= 5000:
             # logd("BybitWS.on_heartbeat ignore [" + str(elapsed_time) + "]")
             return
 
-        let id = seq_nanoid()
+        var id = seq_nanoid()
 
         var yy_doc = yyjson_mut_doc()
         yy_doc.add_str("req_id", id)
         yy_doc.add_str("op", "ping")
-        let body_str = yy_doc.mut_write()
+        var body_str = yy_doc.mut_write()
         # logd("send: " + body_str)
         self.send(body_str)
 
@@ -303,11 +303,11 @@ struct BybitWS:
         # {"req_id":"74z-iUiWshWGFAyIWQBxk","success":true,"ret_msg":"","op":"subscribe","conn_id":"cl9i0rtdaugsu2kfn8ng-3084a"}
         # {"req_id":"VCKnRAeA6qrQXS8H94a-_","op":"pong","args":["1703683273204"],"conn_id":"cl9i0rtdaugsu2kfn8ng-3aqxh"}
 
-        let parser = OndemandParser(ParserBufferSize)
-        let doc = parser.parse(s)
-        let op = doc.get_str("op")
+        var parser = OndemandParser(ParserBufferSize)
+        var doc = parser.parse(s)
+        var op = doc.get_str("op")
         if op == "auth":
-            let success = doc.get_bool("success")
+            var success = doc.get_bool("success")
             if success:
                 logi("WebSocket authentication successful")
                 self.subscribe()

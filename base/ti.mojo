@@ -15,7 +15,7 @@ alias Options = VariadicList[Float64]
 
 
 @value
-@register_passable("trivial")
+@register_passable
 struct ti_stream:
     pass
 
@@ -85,21 +85,21 @@ struct ti_indicator_info(Movable):
     fn input_names(self) -> list[String]:
         var result = list[String]()
         for i in range(self._inputs):
-            let s = self._input_names[i]
+            var s = self._input_names[i]
             result.append(c_str_to_string(s, strlen(s)))
         return result
 
     fn option_names(self) -> list[String]:
         var result = list[String]()
         for i in range(self._options):
-            let s = self._option_names[i]
+            var s = self._option_names[i]
             result.append(c_str_to_string(s, strlen(s)))
         return result
 
     fn output_names(self) -> list[String]:
         var result = list[String]()
         for i in range(self._outputs):
-            let s = self._output_names[i]
+            var s = self._output_names[i]
             result.append(c_str_to_string(s, strlen(s)))
         return result
 
@@ -219,7 +219,7 @@ struct Outputs:
 
     fn __init__(inout self, outputs: Int = 4):
         self.data = Pointer[AnyPointer[Float64]].alloc(outputs)
-        self.data_vec = DynamicVector[Series](outputs)
+        self.data_vec = DynamicVector[Series](capacity=outputs)
         self.outputs = outputs
 
     fn __del__(owned self):
@@ -246,17 +246,17 @@ fn ti_indicator(
     inout outputs: Outputs,
     options: VariadicList[Float64],
 ) raises:
-    let info = seq_ti_indicator_at_index(indicator_index)
-    var options_ = DynamicVector[Float64](len(options))
+    var info = seq_ti_indicator_at_index(indicator_index)
+    var options_ = DynamicVector[Float64](capacity=len(options))
     options_.append(3)
     for i in options:
         options_.append(i)
 
-    let start = seq_ti_indicator_start(info, options_.data)
-    let output_length = input_length - int(start)
+    var start = seq_ti_indicator_start(info, options_.data)
+    var output_length = input_length - int(start)
 
     outputs.resize(output_length, 0.0)
-    let ok = seq_ti_indicator_run(
+    var ok = seq_ti_indicator_run(
         info, input_length, inputs.data, options_.data, outputs.data
     )
     if not ok:

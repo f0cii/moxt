@@ -44,8 +44,8 @@ struct Platform:
         logd("Platform.__init__")
         self._config = config
         self._client = BybitClient(config.testnet, config.access_key, config.secret_key)
-        self._symbols = safe_split(config.symbols, ",")
-        let symbol_count = len(self._symbols)
+        self._symbols = split(config.symbols, ",")
+        var symbol_count = len(self._symbols)
         self._asks = Pointer[c_void_pointer].alloc(symbol_count)
         self._bids = Pointer[c_void_pointer].alloc(symbol_count)
         self._symbol_index_dict = dict[HashableStr, Int]()
@@ -60,7 +60,7 @@ struct Platform:
         self._symbols = existing._symbols
         self._client = existing._client ^
 
-        let symbol_count = len(self._symbols)
+        var symbol_count = len(self._symbols)
         self._asks = Pointer[c_void_pointer].alloc(symbol_count)
         self._bids = Pointer[c_void_pointer].alloc(symbol_count)
 
@@ -72,11 +72,11 @@ struct Platform:
 
     fn __del__(owned self):
         logd("Platform.__del__")
-        # let NULL = c_void_pointer.get_null()
-        # let asks_ptr = self._asks.load(0)
+        # var NULL = c_void_pointer.get_null()
+        # var asks_ptr = self._asks.load(0)
         # if asks_ptr != NULL:
         #     seq_skiplist_free(asks_ptr)
-        # let bids_ptr = self._bids.load(0)
+        # var bids_ptr = self._bids.load(0)
         # if bids_ptr != NULL:
         #     seq_skiplist_free(bids_ptr)
         self._asks.free()
@@ -86,7 +86,7 @@ struct Platform:
     fn setup(inout self) raises:
         # logi("Platform.setup")
         for i in range(len(self._symbols)):
-            let sym = self._symbols[i]
+            var sym = self._symbols[i]
             # logi("sym=" + sym + " i=" + str(i))
             self._symbol_index_dict[sym] = i
             self._asks.store(i, seq_skiplist_new(True))
@@ -100,9 +100,9 @@ struct Platform:
 
     fn free(inout self) raises:
         for i in range(len(self._symbols)):
-            let asks_ptr = self._asks.load(i)
+            var asks_ptr = self._asks.load(i)
             seq_skiplist_free(asks_ptr)
-            let bids_ptr = self._bids.load(i)
+            var bids_ptr = self._bids.load(i)
             seq_skiplist_free(bids_ptr)
 
     fn delete_orders_from_cache(inout self, cids: list[String]) raises:
@@ -111,11 +111,8 @@ struct Platform:
 
         self._order_cache_lock.lock()
         for cid in cids:
-            try:
-                logi("Remove order: " + cid)
-                self._order_cache.pop(cid)
-            except e:
-                logw("An error occurred while cleaning orders: " + str(e))
+            logi("Remove order: " + cid)
+            self._order_cache.pop(cid)
         self._order_cache_lock.unlock()
 
     fn on_update_orderbook(
@@ -125,7 +122,7 @@ struct Platform:
         inout asks: list[OrderBookLevel],
         inout bids: list[OrderBookLevel],
     ) raises:
-        let index = self._symbol_index_dict[symbol]
+        var index = self._symbol_index_dict[symbol]
         # logd("Platform.update_orderbook")
         if type_ == "snapshot":
             seq_skiplist_free(self._asks.load(index))
@@ -133,7 +130,7 @@ struct Platform:
             self._asks.store(seq_skiplist_new(True))
             self._bids.store(seq_skiplist_new(False))
 
-        let _asks = self._asks.load(index)
+        var _asks = self._asks.load(index)
         for i in asks:
             # logd("ask price: " + str(i.price) + " qty: " + str(i.qty))
             if i.qty.is_zero():
@@ -141,7 +138,7 @@ struct Platform:
             else:
                 _ = seq_skiplist_insert(_asks, i.price.value(), i.qty.value(), True)
 
-        let _bids = self._bids.load(index)
+        var _bids = self._bids.load(index)
         for i in bids:
             # logd("bid price: " + str(i.price) + " qty: " + str(i.qty))
             if i.qty.is_zero():
@@ -151,7 +148,7 @@ struct Platform:
 
     fn on_update_order(inout self, order: Order) -> Bool:
         logi("on_update_order: " + str(order))
-        let key = order.order_client_id
+        var key = order.order_client_id
         self._order_cache_lock.lock()
         # TODO: Order versions need to be compared, returning false if the version is older
         self._order_cache[key] = order
@@ -164,13 +161,13 @@ struct Platform:
     @always_inline
     fn notify_order_update(inout self, order: Order):
         for i in range(len(self._order_update_callbacks)):
-            let ptr = self._order_update_callbacks.unsafe_get(i)
+            var ptr = self._order_update_callbacks.unsafe_get(i)
             __get_address_as_lvalue(ptr.value)(order)
 
     fn get_order(self, cid: String) raises -> Order:
         self._order_cache_lock.lock()
         try:
-            let order = self._order_cache[cid]
+            var order = self._order_cache[cid]
             self._order_cache_lock.unlock()
             return order
         except e:
@@ -178,14 +175,14 @@ struct Platform:
             raise e
 
     fn get_orderbook(self, symbol: String, n: Int) raises -> OrderBookLite:
-        let index: Int = self._symbol_index_dict[symbol]
+        var index: Int = self._symbol_index_dict[symbol]
         var ob = OrderBookLite(symbol=symbol)
 
-        let _asks = self._asks.load(index)
-        let _bids = self._bids.load(index)
+        var _asks = self._asks.load(index)
+        var _bids = self._bids.load(index)
 
         var a_node = seq_skiplist_begin(_asks)
-        let a_end = seq_skiplist_end(_asks)
+        var a_end = seq_skiplist_end(_asks)
         var a_count: Int = 0
 
         while a_node != a_end:
@@ -194,8 +191,8 @@ struct Platform:
             seq_skiplist_node_value(
                 a_node, Pointer[Int64].address_of(key), Pointer[Int64].address_of(value)
             )
-            let key_ = Fixed.from_value(key)
-            let value_ = Fixed.from_value(value)
+            var key_ = Fixed.from_value(key)
+            var value_ = Fixed.from_value(value)
             # print("key: " + str(key_) + " value: " + str(value_))
             ob.asks.append(OrderBookLevel(key_, value_))
             a_count += 1
@@ -204,7 +201,7 @@ struct Platform:
             a_node = seq_skiplist_next(_asks, a_node)
 
         var b_node = seq_skiplist_begin(_bids)
-        let b_end = seq_skiplist_end(_bids)
+        var b_end = seq_skiplist_end(_bids)
         var b_count: Int = 0
 
         while b_node != b_end:
@@ -213,8 +210,8 @@ struct Platform:
             seq_skiplist_node_value(
                 b_node, Pointer[Int64].address_of(key), Pointer[Int64].address_of(value)
             )
-            let key_ = Fixed.from_value(key)
-            let value_ = Fixed.from_value(value)
+            var key_ = Fixed.from_value(key)
+            var value_ = Fixed.from_value(value)
             # print("key: " + str(key_) + " value: " + str(value_))
             ob.bids.append(OrderBookLevel(key_, value_))
             b_count += 1
@@ -245,7 +242,7 @@ struct Platform:
     fn fetch_order(
         inout self, category: String, symbol: String, order_client_id: String
     ) raises -> Order:
-        let res = self._client.fetch_orders(
+        var res = self._client.fetch_orders(
             category, symbol, order_link_id=order_client_id
         )
         if len(res) == 0:
@@ -263,12 +260,12 @@ struct Platform:
         limit: Int = 0,
         cursor: String = "",
     ) raises -> list[Order]:
-        let orders_original = self._client.fetch_orders(
+        var orders_original = self._client.fetch_orders(
             category, symbol, order_client_id, limit, cursor
         )
         var orders = list[Order]()
         for i in range(len(orders_original)):
-            let order = convert_bybit_order(orders_original[i])
+            var order = convert_bybit_order(orders_original[i])
             orders.append(order)
             _ = self.on_update_order(order)
         return orders
@@ -282,7 +279,7 @@ struct Platform:
         order_client_id: String = "",
         fetch_full_info: Bool = False,
     ) raises -> Order:
-        let res = self._client.cancel_order(category, symbol, order_id, order_client_id)
+        var res = self._client.cancel_order(category, symbol, order_id, order_client_id)
         if not fetch_full_info:
             return Order(
                 symbol=symbol,
@@ -305,10 +302,10 @@ struct Platform:
         base_coin: String = "",
         settle_coin: String = "",
     ) raises -> BatchCancelResult:
-        let res = self._client.cancel_orders(category, symbol, base_coin, settle_coin)
+        var res = self._client.cancel_orders(category, symbol, base_coin, settle_coin)
         var cancelled_orders = list[CancelOrderResult]()
         for i in range(len(res)):
-            let item = res[i]
+            var item = res[i]
             cancelled_orders.append(
                 CancelOrderResult(item.order_id, item.order_link_id)
             )
@@ -334,7 +331,7 @@ struct Platform:
         order_client_id: String = "",
         reduce_only: Bool = False,
     ) raises -> OrderResponse:
-        let new_order = Order(
+        var new_order = Order(
             symbol=symbol,
             order_type=order_type,
             order_client_id=order_client_id,
@@ -364,12 +361,12 @@ struct Platform:
         """
         Cancel all active orders
         """
-        let orders = self.fetch_orders(category, symbol)
+        var orders = self.fetch_orders(category, symbol)
         if len(orders) == 0:
             logi("There are no active orders; the cancellation operation is complete")
             return True
 
-        let res = self.cancel_orders(category, symbol)
+        var res = self.cancel_orders(category, symbol)
         for i in range(len(res.cancelled_orders)):
             logi("Cancellation returns: " + str(res.cancelled_orders[i]))
         return True
@@ -381,31 +378,31 @@ struct Platform:
         Close positions
         """
         logi("Close positions")
-        let positions = self.fetch_positions(category, symbol)
+        var positions = self.fetch_positions(category, symbol)
         if len(positions) == 0:
             logi("There are no open positions; the closure operation is complete")
             return True
 
         for i in range(len(positions)):
             # logi(str(positions[i]))
-            let pos = positions[i]
-            let size = Fixed(pos.size)
+            var pos = positions[i]
+            var size = Fixed(pos.size)
             if size.is_zero():
                 continue
             logi("Current position: " + str(pos))
             # Close position at market price
             var side = String("")
-            let order_type = String("Market")
-            let qty = str(size)
-            let price = ""
-            let position_idx: Int = pos.position_idx
+            var order_type = String("Market")
+            var qty = str(size)
+            var price = ""
+            var position_idx: Int = pos.position_idx
             if pos.position_idx == 0:
                 side = "Sell" if size > 0 else "Buy"
             elif pos.position_idx == 1:
                 side = "Sell"
             elif pos.position_idx == 2:
                 side = "Buy"
-            let order_client_id = self.generate_order_id()
+            var order_client_id = self.generate_order_id()
             logi(
                 "Place an order to close position "
                 + side
@@ -421,7 +418,7 @@ struct Platform:
                 + str(position_idx)
             )
             try:
-                let res = self.place_order(
+                var res = self.place_order(
                     category,
                     symbol,
                     side=side,

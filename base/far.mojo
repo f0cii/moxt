@@ -29,7 +29,7 @@ struct Far:
     @always_inline
     fn get_str(self, key: StringLiteral) -> String:
         var n: c_size_t = 0
-        let c_str = seq_far_get_string(
+        var c_str = seq_far_get_string(
             self.ptr,
             key.data()._as_scalar_pointer(),
             len(key),

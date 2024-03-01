@@ -84,7 +84,7 @@ struct HttpClient:
 
     fn __del__(owned self):
         logd("HttpClient.__del__")
-        let NULL = c_void_pointer.get_null()
+        var NULL = c_void_pointer.get_null()
         if self.ptr != NULL:
             seq_client_free(self.ptr)
             self.ptr = NULL
@@ -94,31 +94,31 @@ struct HttpClient:
         self._verbose = verbose
 
     fn delete(self, request_path: String, headers: Headers) -> HttpResponse:
-        let res = self.do_request(request_path, VERB_DELETE, headers, "")
+        var res = self.do_request(request_path, VERB_DELETE, headers, "")
         return res
 
     fn get(self, request_path: String, headers: Headers) -> HttpResponse:
-        let res = self.do_request(request_path, VERB_GET, headers, "")
+        var res = self.do_request(request_path, VERB_GET, headers, "")
         return res
 
     fn head(self, request_path: String, data: String, headers: Headers) -> HttpResponse:
-        let res = self.do_request(request_path, VERB_HEAD, headers, data)
+        var res = self.do_request(request_path, VERB_HEAD, headers, data)
         return res
 
     fn post(self, request_path: String, data: String, headers: Headers) -> HttpResponse:
-        let res = self.do_request(request_path, VERB_POST, headers, data)
+        var res = self.do_request(request_path, VERB_POST, headers, data)
         return res
 
     fn put(self, request_path: String, data: String, headers: Headers) -> HttpResponse:
-        let res = self.do_request(request_path, VERB_PUT, headers, data)
+        var res = self.do_request(request_path, VERB_PUT, headers, data)
         return res
 
     fn do_request(
         self, path: String, verb: Int, headers: Headers, body: String
     ) -> HttpResponse:
         var n: Int = 0
-        let buff = Pointer[UInt8].alloc(1024 * 100)
-        let status = seq_cclient_do_request(
+        var buff = Pointer[UInt8].alloc(1024 * 100)
+        var status = seq_cclient_do_request(
             self.ptr,
             path._buffer.data.value,
             len(path),
@@ -131,7 +131,7 @@ struct HttpClient:
             self._verbose,
         )
 
-        let s = c_str_to_string(buff, n)
+        var s = c_str_to_string(buff, n)
         buff.free()
 
         # print("s=" + s)

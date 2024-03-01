@@ -46,9 +46,9 @@ struct StringCache:
 
     @staticmethod
     fn set_string(s: String) -> Tuple[Int64, CString]:
-        let key = seq_get_next_cache_key()
-        let length = len(s)
-        let result = seq_set_string_in_cache(key, s._buffer.data.value, length)
+        var key = seq_get_next_cache_key()
+        var length = len(s)
+        var result = seq_set_string_in_cache(key, s._buffer.data.value, length)
         return Tuple[Int64, CString](key, CString(result, length))
 
     @staticmethod
@@ -82,15 +82,12 @@ struct MyStringCache:
         self._keys = list[Int64]()
 
     fn __del__(owned self):
-        try:
-            for key in self._keys:
-                _ = StringCache.free_string(key)
-        except err:
-            loge("MyStringCache error: " + str(err))
+        for key in self._keys:
+            _ = StringCache.free_string(key)
 
     fn set_string(inout self, s: String) -> CString:
-        let r = StringCache.set_string(s)
-        let key = r.get[0, Int64]()
-        let result = r.get[1, CString]()
+        var r = StringCache.set_string(s)
+        var key = r.get[0, Int64]()
+        var result = r.get[1, CString]()
         self._keys.append(key)
         return result

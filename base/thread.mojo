@@ -325,7 +325,7 @@ fn seq_photon_rwlock_unlock(rwlock: c_void_pointer) -> c_int:
 
 
 @value
-@register_passable("trivial")
+@register_passable
 struct iovec:
     var iov_base: c_void_pointer  # Pointer to data.
     var iov_len: c_size_t  # Length of data.
@@ -337,13 +337,13 @@ struct iovec:
         return Self {iov_base: base, iov_len: len}
 
     fn __init__(data: (DTypePointer[DType.uint8], Int)) -> Self:
-        let ptr = data.get[0, DTypePointer[DType.uint8]]()
-        let data_len = data.get[1, Int]()
-        let c_ptr = rebind[c_void_pointer, DTypePointer[DType.uint8]](ptr)
+        var ptr = data.get[0, DTypePointer[DType.uint8]]()
+        var data_len = data.get[1, Int]()
+        var c_ptr = rebind[c_void_pointer, DTypePointer[DType.uint8]](ptr)
         return Self {iov_base: c_ptr, iov_len: data_len}
 
     fn to_data(self) -> (DTypePointer[DType.uint8], Int):
-        let ptr = rebind[DTypePointer[DType.uint8]](self.iov_base)
+        var ptr = rebind[DTypePointer[DType.uint8]](self.iov_base)
         return (ptr, self.iov_len)
 
 
@@ -439,8 +439,8 @@ alias on_timer = fn () -> UInt64
 
 fn on_tc_timer(ptr: Int) raises -> UInt64:
     # print("on_tc_timer ptr=" + str(ptr))
-    let _timer_callback = unsafe.bitcast[on_timer_callback](ptr).load()
-    let ret = _timer_callback()
+    var _timer_callback = unsafe.bitcast[on_timer_callback](ptr).load()
+    var ret = _timer_callback()
     # print("on_tc_timer done")
     return ret
 
@@ -458,8 +458,8 @@ struct TimedClosureExecutor:
         callback: Pointer[on_timer_callback],
         repeating: Bool = True,
     ):
-        let callback_ptr = callback.__as_index()
-        let ptr = seq_photon_timed_closure_executor_new(
+        var callback_ptr = callback.__as_index()
+        var ptr = seq_photon_timed_closure_executor_new(
             default_timeout, on_tc_timer, callback_ptr, repeating
         )
         self._ptr.store(0, ptr)
@@ -470,7 +470,7 @@ struct TimedClosureExecutor:
 
     fn free(owned self):
         # logi("TimedClosureExecutor.free")
-        let ptr = self._ptr.load(0)
+        var ptr = self._ptr.load(0)
         seq_photon_timed_closure_executor_free(ptr)
         self._ptr.store(c_void_pointer.get_null())
 
@@ -532,7 +532,7 @@ struct ConditionVariable:
 
     fn wait_no_lock(self, timeout: UInt64 = -1) -> Int:
         logd("ConditionVariable.wait_no_lock")
-        let ret = seq_photon_condition_variable_wait_no_lock(self.ptr, timeout)
+        var ret = seq_photon_condition_variable_wait_no_lock(self.ptr, timeout)
         return int(ret)
 
     fn notify_one(self):
@@ -614,7 +614,7 @@ struct ArgDataRef:
         return Self {data: data}
 
     fn __init__(owned value: ArgData) -> Self:
-        let data = Pointer[ArgData].alloc(1)
+        var data = Pointer[ArgData].alloc(1)
         __get_address_as_uninit_lvalue(data.offset(0).address) = value
         return Self {data: data}
 
@@ -631,9 +631,9 @@ struct ArgDataRef:
 
     @staticmethod
     fn to_ptr(owned value: ArgData) -> c_void_pointer:
-        let data = Pointer[ArgData].alloc(1)
+        var data = Pointer[ArgData].alloc(1)
         __get_address_as_uninit_lvalue(data.offset(0).address) = value
-        let s = Self {data: data}
+        var s = Self {data: data}
         return seq_int_to_voidptr(to_mem_ref_ptr[Self](s))
 
     @staticmethod
@@ -648,13 +648,13 @@ struct ArgDataRef:
 
     @staticmethod
     fn from_ptr_as_value(ptr: Int) -> ArgData:
-        let value = mem_ref_ptr_to_value[Self](ptr)
+        var value = mem_ref_ptr_to_value[Self](ptr)
         return __get_address_as_lvalue(value.data.offset(0).address)
 
     @staticmethod
     fn from_ptr_as_owned_value(ptr: Int) -> ArgData:
-        let value = mem_ref_ptr_to_value[Self](ptr)
-        let data = __get_address_as_owned_value(value.data.offset(0).address)
+        var value = mem_ref_ptr_to_value[Self](ptr)
+        var data = __get_address_as_owned_value(value.data.offset(0).address)
         value.data.free()
         return data
 
@@ -665,8 +665,8 @@ struct ArgDataRef:
 
 
 fn __co_run(arg: c_void_pointer) raises -> c_void_pointer:
-    let ptr = seq_voidptr_to_int(arg)
-    let value = ArgDataRef.from_ptr_as_owned_value(ptr)
+    var ptr = seq_voidptr_to_int(arg)
+    var value = ArgDataRef.from_ptr_as_owned_value(ptr)
     _ = value.run()
     return c_void_pointer.get_null()
 
@@ -675,38 +675,38 @@ alias CoroFunction = fn () raises capturing -> None
 
 
 fn __co_entry(arg: c_void_pointer) raises -> c_void_pointer:
-    let ptr = seq_voidptr_to_int(arg)
+    var ptr = seq_voidptr_to_int(arg)
     unsafe.bitcast[CoroFunction](ptr).load()()
     return c_void_pointer.get_null()
 
 
 fn start_coro(fn_ptr: Pointer[CoroFunction]):
-    let index = fn_ptr.__as_index()
-    let ptr = seq_int_to_voidptr(index)
+    var index = fn_ptr.__as_index()
+    var ptr = seq_int_to_voidptr(index)
     seq_photon_thread_create_and_migrate_to_work_pool(__co_entry, ptr)
 
 
 fn start_coro(fn_index: Int):
-    let ptr = seq_int_to_voidptr(fn_index)
+    var ptr = seq_int_to_voidptr(fn_index)
     seq_photon_thread_create_and_migrate_to_work_pool(__co_entry, ptr)
 
 
 fn run_coro(f: CoroFunction):
-    let sem = Semaphore()
+    var sem = Semaphore()
     var value = ArgData()
     value["sem_ptr"] = sem.ptr_to_int()
 
     # @parameter
     fn co_run(arg: dict[HashableStr, String]) raises -> String:
-        let p = arg["sem_ptr"]
-        let ptr = strtoi(p)
+        var p = arg["sem_ptr"]
+        var ptr = strtoi(p)
         f()
-        let sem1 = Semaphore(ptr)
+        var sem1 = Semaphore(ptr)
         _ = sem1.signal(1)
         return ""
 
     value.set_run(co_run)
-    let ptr = ArgDataRef.to_ptr(value)
+    var ptr = ArgDataRef.to_ptr(value)
 
     seq_photon_thread_create_and_migrate_to_work_pool(__co_run, ptr)
 

@@ -1,5 +1,5 @@
 from os.atomic import Atomic
-from stdlib_extensions.builtins.string import __str_contains__
+from stdlib_extensions.builtins.string import __str_contains__, split
 from base.sj_ondemand import *
 from base.sj_dom import *
 from base.thread import *
@@ -51,7 +51,7 @@ struct Executor[T: BaseStrategy](Movable, Runable, IExecutor):
             access_key=config.access_key,
             secret_key=config.secret_key,
         )
-        let symbols = safe_split(config.symbols, ",")
+        var symbols = split(config.symbols, ",")
         var public_topics = String("")
         for sym in symbols:
             if public_topics != "":
@@ -65,7 +65,7 @@ struct Executor[T: BaseStrategy](Movable, Runable, IExecutor):
             category=config.category,
             topics=public_topics,  # "orderbook.1.BTCUSDT",
         )
-        let private_topic = "position,execution,order,wallet"
+        var private_topic = "position,execution,order,wallet"
         self._private_ws = BybitWS(
             is_private=True,
             testnet=config.testnet,
@@ -141,17 +141,17 @@ struct Executor[T: BaseStrategy](Movable, Runable, IExecutor):
             loge("on_exit error: " + str(err))
         logi("Executor.stop done")
 
-    fn _get_ptr[T: Movable](inout self) -> AnyPointer[T]:
-        # constrained[Self._check[T]() != -1, "not a union element type"]()
-        let ptr = Pointer.address_of(self).address
-        var result = AnyPointer[T]()
-        result.value = __mlir_op.`pop.pointer.bitcast`[
-            _type = __mlir_type[`!kgen.pointer<:`, Movable, ` `, T, `>`]
-        ](ptr)
-        return result
+    # fn _get_ptr[T: Movable](inout self) -> AnyPointer[T]:
+    #     # constrained[Self._check[T]() != -1, "not a union element type"]()
+    #     var ptr = Pointer.address_of(self).address
+    #     var result = AnyPointer[T]()
+    #     result.value = __mlir_op.`pop.pointer.bitcast`[
+    #         _type = __mlir_type[`!kgen.pointer<:`, Movable, ` `, T, `>`]
+    #     ](ptr)
+    #     return result
 
     fn get_private_on_message(inout self) -> on_message_callback:
-        let self_ptr = Reference(self).get_unsafe_pointer()
+        var self_ptr = Reference(self).get_unsafe_pointer()
 
         fn wrapper(data: c_char_pointer, data_len: Int):
             __get_address_as_lvalue(self_ptr.address).on_private_message(data, data_len)
@@ -159,21 +159,21 @@ struct Executor[T: BaseStrategy](Movable, Runable, IExecutor):
         return wrapper
 
     fn get_public_on_message(inout self) -> on_message_callback:
-        let self_ptr = Reference(self).get_unsafe_pointer()
+        var self_ptr = Reference(self).get_unsafe_pointer()
 
         fn wrapper(data: c_char_pointer, data_len: Int):
             __get_address_as_lvalue(self_ptr.address).on_public_message(data, data_len)
-            # let s = c_str_to_string(data, data_len)
+            # var s = c_str_to_string(data, data_len)
             # logd("get_public_on_message message: " + s)
 
         return wrapper
 
     fn on_private_message(inout self, data: c_char_pointer, data_len: Int):
-        let s = c_str_to_string(data, data_len)
+        var s = c_str_to_string(data, data_len)
         # logd("on_private_message message: " + s)
-        let parser = OndemandParser(ParserBufferSize)
+        var parser = OndemandParser(ParserBufferSize)
         var doc = parser.parse(s)
-        let topic = doc.get_str("topic")
+        var topic = doc.get_str("topic")
 
         if topic == "order":
             logi("order message: " + s)
@@ -195,13 +195,13 @@ struct Executor[T: BaseStrategy](Movable, Runable, IExecutor):
 
     fn on_public_message(inout self, data: c_char_pointer, data_len: Int):
         try:
-            let s = c_str_to_string(data, data_len)
+            var s = c_str_to_string(data, data_len)
             # logd("on_public_message message: " + s)
 
-            let parser = DomParser(ParserBufferSize)
+            var parser = DomParser(ParserBufferSize)
             var doc = parser.parse(s)
             # var doc = parser.parse(data, data_len)
-            let topic = doc.get_str("topic")
+            var topic = doc.get_str("topic")
 
             if __str_contains__("orderbook.", topic):
                 self.process_orderbook_message(doc)
@@ -216,22 +216,22 @@ struct Executor[T: BaseStrategy](Movable, Runable, IExecutor):
         # logd("process_orderbook_message")
         # {"topic":"orderbook.1.BTCUSDT","type":"snapshot","ts":1702645020909,"data":{"s":"BTCUSDT","b":[["42663.50","0.910"]],"a":[["42663.60","11.446"]],"u":2768099,"seq":108881526829},"cts":1702645020906}
         # {"topic":"orderbook.1.BTCUSDT","type":"snapshot","ts":1703834857207,"data":{"s":"BTCUSDT","b":[["42489.90","130.419"]],"a":[["42493.80","132.979"]],"u":326106,"seq":8817548764},"cts":1703834853055}
-        let type_ = doc.get_str("type")
-        let data = doc.get_object("data")
+        var type_ = doc.get_str("type")
+        var data = doc.get_object("data")
         # logd("type_: " + type_) # snapshot,delta
-        let symbol = data.get_str("s")
+        var symbol = data.get_str("s")
 
-        let a = data.get_array("a")
-        let a_iter = a.iter()
+        var a = data.get_array("a")
+        var a_iter = a.iter()
 
         var asks = list[OrderBookLevel]()
         var bids = list[OrderBookLevel]()
 
         while a_iter.has_element():
-            let a_obj = a_iter.get()
-            let a_arr = a_obj.array()
-            let price = a_arr.at_str(0)
-            let qty = a_arr.at_str(1)
+            var a_obj = a_iter.get()
+            var a_arr = a_obj.array()
+            var price = a_arr.at_str(0)
+            var qty = a_arr.at_str(1)
             # logd("price: " + str(price))
             # logd("qty: " + str(qty))
             asks.append(OrderBookLevel(price, qty))
@@ -240,14 +240,14 @@ struct Executor[T: BaseStrategy](Movable, Runable, IExecutor):
 
         _ = a ^
 
-        let b = data.get_array("b")
-        let b_iter = b.iter()
+        var b = data.get_array("b")
+        var b_iter = b.iter()
 
         while b_iter.has_element():
-            let b_obj = b_iter.get()
-            let b_arr = b_obj.array()
-            let price = b_arr.at_str(0)
-            let qty = b_arr.at_str(1)
+            var b_obj = b_iter.get()
+            var b_arr = b_obj.array()
+            var price = b_arr.at_str(0)
+            var qty = b_arr.at_str(1)
             # logd("price: " + str(price))
             # logd("qty: " + str(qty))
             bids.append(OrderBookLevel(Fixed(price), Fixed(qty)))
@@ -263,7 +263,7 @@ struct Executor[T: BaseStrategy](Movable, Runable, IExecutor):
             symbol, type_, asks, bids
         )
         if self.is_initialized():
-            let ob = __get_address_as_lvalue(self._platform.address).get_orderbook(
+            var ob = __get_address_as_lvalue(self._platform.address).get_orderbook(
                 symbol, 5
             )
             self._strategy.on_orderbook(ob)
@@ -271,35 +271,35 @@ struct Executor[T: BaseStrategy](Movable, Runable, IExecutor):
         # logd("process_orderbook_message done")
 
     fn process_order_message(inout self, inout doc: OndemandDocument) -> None:
-        let data = doc.get_array("data")
+        var data = doc.get_array("data")
 
-        let iter = data.iter()
+        var iter = data.iter()
         while iter.has_value():
-            let item = iter.get_object()
-            let posIdx = item.get_int("positionIdx")
-            let orderId = item.get_str("orderId")
-            let symbol = item.get_str("symbol")
-            let side = item.get_str("side")
-            let orderType = item.get_str("orderType")
-            let price = strtod(item.get_str("price"))
-            let qty = strtod(item.get_str("qty"))
-            let cumExecQty = strtod(item.get_str("cumExecQty"))
-            let orderStatus = item.get_str("orderStatus")
-            let createdTime = item.get_str("createdTime")
-            let updatedTime = item.get_str("updatedTime")
-            let avgPrice = strtod(item.get_str("avgPrice"))
-            let cumExecFee = strtod(item.get_str("cumExecFee"))
-            let tif = item.get_str("timeInForce")
-            let reduceOnly = item.get_bool("reduceOnly")
-            let orderLinkId = item.get_str("orderLinkId")
+            var item = iter.get_object()
+            var posIdx = item.get_int("positionIdx")
+            var orderId = item.get_str("orderId")
+            var symbol = item.get_str("symbol")
+            var side = item.get_str("side")
+            var orderType = item.get_str("orderType")
+            var price = strtod(item.get_str("price"))
+            var qty = strtod(item.get_str("qty"))
+            var cumExecQty = strtod(item.get_str("cumExecQty"))
+            var orderStatus = item.get_str("orderStatus")
+            var createdTime = item.get_str("createdTime")
+            var updatedTime = item.get_str("updatedTime")
+            var avgPrice = strtod(item.get_str("avgPrice"))
+            var cumExecFee = strtod(item.get_str("cumExecFee"))
+            var tif = item.get_str("timeInForce")
+            var reduceOnly = item.get_bool("reduceOnly")
+            var orderLinkId = item.get_str("orderLinkId")
 
-            # let order_info =
+            # var order_info =
             #     OrderInfo(posIdx, orderId, sym, side, orderType, price, qty,
             #             cumExecQty, orderStatus, createdTime, updatedTime,
             #             avgPrice, cumExecFee, tif, reduceOnly, orderLinkId)
             # logd("order_info: " + str(order_info))
 
-            let order = Order(
+            var order = Order(
                 symbol=symbol,
                 order_type=orderType,
                 order_client_id=orderLinkId,
@@ -319,30 +319,30 @@ struct Executor[T: BaseStrategy](Movable, Runable, IExecutor):
         _ = data ^
 
     fn process_position_message(inout self, inout doc: OndemandDocument) -> None:
-        let data = doc.get_array("data")
+        var data = doc.get_array("data")
 
         var positions = list[PositionInfo]()
 
-        let iter = data.iter()
+        var iter = data.iter()
         while iter.has_value():
-            let item = iter.get_object()
-            let posIdx = item.get_int("positionIdx")
-            let sym = item.get_str("symbol")
-            let side = item.get_str("side")
-            let size = item.get_str("size")
-            let avgPrice = item.get_str("entryPrice")
-            let positionValue = item.get_str("positionValue")
-            let leverage = item.get_str("leverage")
-            let markPrice = item.get_str("markPrice")
-            let positionMM = item.get_str("positionMM")
-            let positionIM = item.get_str("positionIM")
-            let takeProfit = item.get_str("takeProfit")
-            let stopLoss = item.get_str("stopLoss")
-            let unrealisedPnl = item.get_str("unrealisedPnl")
-            let cumRealisedPnl = item.get_str("cumRealisedPnl")
-            let createdTime = item.get_str("createdTime")
-            let updatedTime = item.get_str("updatedTime")
-            let position_info = PositionInfo(
+            var item = iter.get_object()
+            var posIdx = item.get_int("positionIdx")
+            var sym = item.get_str("symbol")
+            var side = item.get_str("side")
+            var size = item.get_str("size")
+            var avgPrice = item.get_str("entryPrice")
+            var positionValue = item.get_str("positionValue")
+            var leverage = item.get_str("leverage")
+            var markPrice = item.get_str("markPrice")
+            var positionMM = item.get_str("positionMM")
+            var positionIM = item.get_str("positionIM")
+            var takeProfit = item.get_str("takeProfit")
+            var stopLoss = item.get_str("stopLoss")
+            var unrealisedPnl = item.get_str("unrealisedPnl")
+            var cumRealisedPnl = item.get_str("cumRealisedPnl")
+            var createdTime = item.get_str("createdTime")
+            var updatedTime = item.get_str("updatedTime")
+            var position_info = PositionInfo(
                 posIdx,
                 sym,
                 side,

@@ -35,13 +35,13 @@ struct LocalPosition:
             self.log_position_change()
             return
 
-        let origin_qty = self.qty
-        let origin_avg_price = self.avg_price
+        var origin_qty = self.qty
+        var origin_avg_price = self.avg_price
 
-        let total_new = qty * price
-        let total_original = origin_qty * origin_avg_price
-        let total = total_new + total_original
-        let total_qty = self.qty + qty
+        var total_new = qty * price
+        var total_original = origin_qty * origin_avg_price
+        var total = total_new + total_original
+        var total_qty = self.qty + qty
 
         self.qty = total_qty
         self.avg_price = total / total_qty
@@ -54,17 +54,17 @@ struct LocalPosition:
         if self.qty.is_zero() or qty > self.qty:
             raise Error("[Position.reduce] insufficient quantity")
 
-        let origin_qty = self.qty
-        let origin_avg_price = self.avg_price
+        var origin_qty = self.qty
+        var origin_avg_price = self.avg_price
 
-        let total_original = origin_qty * origin_avg_price
-        let total_reduce = qty * price
-        let total_qty = self.qty - qty
+        var total_original = origin_qty * origin_avg_price
+        var total_reduce = qty * price
+        var total_qty = self.qty - qty
 
         if total_qty.is_zero():
             self.reset()
         else:
-            let total_remaining = total_original - total_reduce
+            var total_remaining = total_original - total_reduce
             self.qty = total_qty
             self.avg_price = total_remaining / total_qty
 

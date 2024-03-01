@@ -24,22 +24,22 @@ struct FlxValue(Sized):
     fn __init__(inout self, bytes: DTypePointer[DType.uint8], length: Int) raises:
         if length < 3:
             raise "Length should be at least 3, was: " + String(length)
-        let parent_byte_width = bytes.load(length - 1)
-        let packed_type = bytes.load(length - 2)
-        let offset = length - parent_byte_width.to_int() - 2
+        var parent_byte_width = bytes.load(length - 1)
+        var packed_type = bytes.load(length - 2)
+        var offset = length - parent_byte_width.to_int() - 2
         self._bytes = bytes.offset(offset)
         self._parent_byte_width = parent_byte_width
         self._byte_width = 1 << (packed_type & 3)
         self._type = ValueType(packed_type >> 2)
 
     fn __init__(inout self, bytes_and_length: (DTypePointer[DType.uint8], Int)) raises:
-        let bytes = bytes_and_length.get[0, DTypePointer[DType.uint8]]()
-        let length = bytes_and_length.get[1, Int]()
+        var bytes = bytes_and_length.get[0, DTypePointer[DType.uint8]]()
+        var length = bytes_and_length.get[1, Int]()
         if length < 3:
             raise "Length should be at least 3, was: " + String(length)
-        let parent_byte_width = bytes.load(length - 1)
-        let packed_type = bytes.load(length - 2)
-        let offset = length - parent_byte_width.to_int() - 2
+        var parent_byte_width = bytes.load(length - 1)
+        var packed_type = bytes.load(length - 2)
+        var offset = length - parent_byte_width.to_int() - 2
         self._bytes = bytes.offset(offset)
         self._parent_byte_width = parent_byte_width
         self._byte_width = 1 << (packed_type & 3)
@@ -56,15 +56,15 @@ struct FlxValue(Sized):
         if self.is_null():
             return 0
         if self.is_vec():
-            let p  = jump_to_indirect(self._bytes, self._parent_byte_width)
+            var p  = jump_to_indirect(self._bytes, self._parent_byte_width)
             return read_uint(p.offset(-self._byte_width.to_int()), self._byte_width) 
                     if not self._type.is_fixed_typed_vector() 
                     else self._type.fixed_typed_vector_element_size()
         if self._type == ValueType.String or self.is_blob() or self.is_map():
-            let p = jump_to_indirect(self._bytes, self._parent_byte_width)
+            var p = jump_to_indirect(self._bytes, self._parent_byte_width)
             return read_uint(p.offset(-self._byte_width.to_int()), self._byte_width)
         if self._type == ValueType.Key:
-            let p = jump_to_indirect(self._bytes, self._parent_byte_width)
+            var p = jump_to_indirect(self._bytes, self._parent_byte_width)
             var size = 0
             while p.offset(size).load() != 0:
                 size += 1
@@ -129,10 +129,10 @@ struct FlxValue(Sized):
         if self._type == ValueType.UInt:
             return read_uint(self._bytes, self._parent_byte_width)
         if self._type == ValueType.IndirectInt:
-            let p = jump_to_indirect(self._bytes, self._parent_byte_width)
+            var p = jump_to_indirect(self._bytes, self._parent_byte_width)
             return read_int(p, self._byte_width)
         if self._type == ValueType.IndirectUInt:
-            let p = jump_to_indirect(self._bytes, self._parent_byte_width)
+            var p = jump_to_indirect(self._bytes, self._parent_byte_width)
             return read_uint(p, self._byte_width)
         raise "Type is not an int or uint, type id: " + String(self._type.value)
 
@@ -141,7 +141,7 @@ struct FlxValue(Sized):
         if self._type == ValueType.Float:
             return read_float(self._bytes, self._parent_byte_width)
         if self._type == ValueType.IndirectFloat:
-            let p = jump_to_indirect(self._bytes, self._parent_byte_width)
+            var p = jump_to_indirect(self._bytes, self._parent_byte_width)
             return read_float(p, self._byte_width)
         raise "Type is not a float, type id: " + String(self._type.value)
 
@@ -154,21 +154,21 @@ struct FlxValue(Sized):
     @always_inline
     fn string(self) raises -> String:
         if self._type == ValueType.String:
-            let p = jump_to_indirect(self._bytes, self._parent_byte_width)
+            var p = jump_to_indirect(self._bytes, self._parent_byte_width)
             var size = read_uint(p.offset(-self._byte_width.to_int()), self._byte_width)
             var size_width = self._byte_width
             while p.offset(size).load() != 0:
                 size_width <<= 1
                 size = read_uint(p.offset(-size_width.to_int()), size_width)
-            let p1 = Pointer[Int8].alloc(size + 1)
+            var p1 = Pointer[Int8].alloc(size + 1)
             memcpy(p1, p.bitcast[DType.int8](), size + 1)
             return String(p1, size + 1)
         if self._type == ValueType.Key:
-            let p = jump_to_indirect(self._bytes, self._parent_byte_width)
+            var p = jump_to_indirect(self._bytes, self._parent_byte_width)
             var size = 0
             while p.offset(size).load() != 0:
                 size += 1
-            let p1 = Pointer[Int8].alloc(size + 1)
+            var p1 = Pointer[Int8].alloc(size + 1)
             memcpy(p1, p.bitcast[DType.int8](), size + 1)
             return String(p1, size + 1)
         raise "Type is not convertable to string, type id: " + String(self._type.value)
@@ -177,16 +177,16 @@ struct FlxValue(Sized):
     fn blob(self) raises -> (DTypePointer[DType.uint8], Int):
         if not self.is_blob():
             raise "Type is not blob, type id: " + String(self._type.value)
-        let p = jump_to_indirect(self._bytes, self._parent_byte_width)
-        let size = read_uint(p.offset(-self._byte_width.to_int()), self._byte_width)
+        var p = jump_to_indirect(self._bytes, self._parent_byte_width)
+        var size = read_uint(p.offset(-self._byte_width.to_int()), self._byte_width)
         return (p, size)
 
     @always_inline
     fn vec(self) raises -> FlxVecValue:
         if not self._type.is_a_vector():
             raise "Value is not a vector. Type id: " + String(self._type.value)
-        let p  = jump_to_indirect(self._bytes, self._parent_byte_width)
-        let size = read_uint(p.offset(-self._byte_width.to_int()), self._byte_width) 
+        var p  = jump_to_indirect(self._bytes, self._parent_byte_width)
+        var size = read_uint(p.offset(-self._byte_width.to_int()), self._byte_width) 
                     if not self._type.is_fixed_typed_vector() 
                     else self._type.fixed_typed_vector_element_size()
         return FlxVecValue(p, self._byte_width, self._type, size)
@@ -195,8 +195,8 @@ struct FlxValue(Sized):
     fn map(self) raises -> FlxMapValue:
         if self._type != ValueType.Map:
             raise "Value is not a map. Type id: " + String(self._type.value)
-        let p  = jump_to_indirect(self._bytes, self._parent_byte_width)
-        let size = read_uint(p.offset(-self._byte_width.to_int()), self._byte_width)
+        var p  = jump_to_indirect(self._bytes, self._parent_byte_width)
+        var size = read_uint(p.offset(-self._byte_width.to_int()), self._byte_width)
         return FlxMapValue(p, self._byte_width, size)
 
     @always_inline
@@ -234,9 +234,9 @@ struct FlxValue(Sized):
             return result
         if self.is_map():
             var result: String = "{"
-            let map = self.map()
-            let keys = map.keys()
-            let values = map.values()
+            var map = self.map()
+            var keys = map.keys()
+            var values = map.values()
             for i in range(self.__len__()):
                 result += '"' + keys[i].string() + '":' + values[i].json()
                 if i < self.__len__() - 1:
@@ -282,7 +282,7 @@ struct FlxVecValue(Sized):
                 self._type.fixed_typed_vector_element_type()
             )
         if self._type == ValueType.Vector:
-            let packed_type = self._bytes.offset(self._length * self._byte_width.to_int() + index).load()
+            var packed_type = self._bytes.offset(self._length * self._byte_width.to_int() + index).load()
             return FlxValue(
                 self._bytes.offset(index * self._byte_width.to_int()),
                 self._byte_width,
@@ -307,16 +307,16 @@ struct FlxMapValue(Sized):
 
     @always_inline
     fn __getitem__(self, key: String) raises -> FlxValue:
-        let index = self.key_index(key)
+        var index = self.key_index(key)
         if index < 0:
             raise "Key " + key + " could not be found"
         return self.values()[index]
 
     @always_inline
     fn keys(self) -> FlxVecValue:
-        let p1 = self._bytes.offset(self._byte_width.to_int() * -3)
-        let p2 = jump_to_indirect(p1, self._byte_width)
-        let byte_width = read_uint(p1.offset(self._byte_width.to_int()), self._byte_width)
+        var p1 = self._bytes.offset(self._byte_width.to_int() * -3)
+        var p2 = jump_to_indirect(p1, self._byte_width)
+        var byte_width = read_uint(p1.offset(self._byte_width.to_int()), self._byte_width)
         return FlxVecValue(p2, byte_width, ValueType.VectorKey, self._length)
     
     @always_inline
@@ -325,15 +325,15 @@ struct FlxMapValue(Sized):
 
     @always_inline
     fn key_index(self, key: String) raises -> Int:
-        let a = key._as_ptr().bitcast[DType.uint8]()
-        let keys = self.keys()
+        var a = key._as_ptr().bitcast[DType.uint8]()
+        var keys = self.keys()
         var low = 0
         var high = self._length - 1
         while low <= high:
-            let mid = (low + high) >> 1
-            let mid_key = keys[mid]
-            let b = jump_to_indirect(mid_key._bytes, mid_key._parent_byte_width)
-            let diff = cmp(a, b, len(key) + 1)
+            var mid = (low + high) >> 1
+            var mid_key = keys[mid]
+            var b = jump_to_indirect(mid_key._bytes, mid_key._parent_byte_width)
+            var diff = cmp(a, b, len(key) + 1)
             if diff == 0:
                 return mid
             if diff < 0:
@@ -422,7 +422,7 @@ fn read_float(bytes: DTypePointer[DType.uint8], byte_width: UInt8) raises -> Flo
 @always_inline
 fn cmp(a: DTypePointer[DType.uint8], b: DTypePointer[DType.uint8], length: Int) -> Int:
     for i in range(length):
-        let diff = a.load(i).to_int() - b.load(i).to_int()
+        var diff = a.load(i).to_int() - b.load(i).to_int()
         if diff != 0:
             return diff
     return 0

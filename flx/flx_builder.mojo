@@ -63,7 +63,7 @@ struct FlxMap[
         return FlxVec[dedup_string, dedup_key, dedup_keys_vec](buffer ^)
 
     fn up_to_map(owned self, ref_key: String = "") raises -> Self:
-        let depth = len(self.buffer._stack_is_vector)
+        var depth = len(self.buffer._stack_is_vector)
         if depth < 2:
             raise "This map is not nested, please call finish instead"
         self.buffer.end(ref_key)
@@ -76,7 +76,7 @@ struct FlxMap[
     ) raises -> FlxVec[dedup_string, dedup_key, dedup_keys_vec]:
         # TODO: investigate ownership transfer instead of copy
         var buffer = self.buffer
-        let depth = len(buffer._stack_is_vector)
+        var depth = len(buffer._stack_is_vector)
         if depth < 2:
             raise "This map is not nested, please call finish instead"
         buffer.end(ref_key)
@@ -148,7 +148,7 @@ struct FlxVec[
     ) raises -> FlxMap[dedup_string, dedup_key, dedup_keys_vec]:
         # TODO: investigate ownership transfer instead of copy
         var buffer = self.buffer
-        let depth = len(buffer._stack_is_vector)
+        var depth = len(buffer._stack_is_vector)
         if depth < 2:
             raise "This vec is not nested, please call finish instead"
         buffer.end(ref_key)
@@ -157,7 +157,7 @@ struct FlxVec[
         return FlxMap[dedup_string, dedup_key, dedup_keys_vec](buffer ^)
 
     fn up_to_vec(owned self, ref_key: String = "") raises -> Self:
-        let depth = len(self.buffer._stack_is_vector)
+        var depth = len(self.buffer._stack_is_vector)
         if depth < 2:
             raise "This vec is not nested, please call finish instead"
         self.buffer.end(ref_key)

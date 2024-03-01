@@ -17,9 +17,9 @@ from stdlib_extensions.builtins import dict, list, HashableInt
 
 
 def get_timestamp() -> String:
-    # let now = Morrow.now()
-    let now = Morrow.utcnow()
-    let t = now.isoformat("T", "milliseconds")
+    # var now = Morrow.now()
+    var now = Morrow.utcnow()
+    var t = now.isoformat("T", "milliseconds")
     # 2023-12-02T20:35:16.728Z
     # 2023-12-02T20:35:17.974+08:00Z
     return t + "Z"
@@ -522,15 +522,15 @@ struct OkxClient:
         https://www.okx.com/docs-v5/zh/#public-data-rest-api-get-instruments
         "SWAP"
         """
-        let path = "/api/v5/public/instruments"
+        var path = "/api/v5/public/instruments"
         var param = QueryParams()
         param["instType"] = inst_type
         param["uly"] = "ETH-USDT"
-        let res = self._request_with_params(c.GET, path, param, "")
+        var res = self._request_with_params(c.GET, path, param, "")
         print("-----------------")
         print(res.status)
         # print(res.get[1, String]())
-        let ss = res.body  # res.get[1, StringRef]()
+        var ss = res.body  # res.get[1, StringRef]()
         print(ss)
 
     fn _request(
@@ -543,17 +543,17 @@ struct OkxClient:
         var request_path_ = String(request_path)
         if method == c.GET:
             request_path_ += params.to_string()
-        let timestamp = get_timestamp()
+        var timestamp = get_timestamp()
         # if self.use_server_time:
         #     timestamp = self._get_timestamp()
         # body = json.dumps(params) if method == c.POST else ""
         # body = params if method == c.POST else ""
-        let headers: Headers
+        var headers: Headers
         if self.API_KEY != "":
-            let pre_hash_str = pre_hash(
+            var pre_hash_str = pre_hash(
                 timestamp, method, request_path_, body, self.debug
             )
-            let sign_str = hmac_sha256_b64(
+            var sign_str = hmac_sha256_b64(
                 pre_hash_str,
                 self.API_SECRET_KEY,
             )
@@ -577,7 +577,7 @@ struct OkxClient:
         # if self.debug == True:
         #     print('domain:',self.domain)
         #     print('url:',request_path)
-        let response: HttpResponse
+        var response: HttpResponse
         if method == c.GET:
             response = self.client.get(request_path_, headers=headers)
         elif method == c.POST:

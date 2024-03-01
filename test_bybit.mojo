@@ -28,60 +28,60 @@ from trade.config import load_config
 fn test_httpclient_perf():
     # https://api.bybit.com/v3/public/time
 
-    let base_url = "https://api.bybit.com"
-    let path = "/v3/public/time"
+    var base_url = "https://api.bybit.com"
+    var path = "/v3/public/time"
 
-    # let base_url = "https://pss.bdstatic.com"
-    # let path = "/static/superman/js/super_ext-a0b60bd05d.js"
+    # var base_url = "https://pss.bdstatic.com"
+    # var path = "/static/superman/js/super_ext-a0b60bd05d.js"
 
-    let client = HttpClient(base_url)
-    # let headers = SSMap()
+    var client = HttpClient(base_url)
+    # var headers = SSMap()
     var headers = Headers()
     headers["a"] = "aaaaaaaaaaaaaaaa"
     headers["b"] = "aaaaaaaaaaaaaaaa"
-    let res = client.get(path, headers)
+    var res = client.get(path, headers)
     logd("status: " + str(res.status))
     logd("body: " + res.body)
 
 
 fn test_websocket() raises:
     # https://socketsbay.com/test-websockets
-    # let base_url = "wss://socketsbay.com/wss/v2/1/demo/"
+    # var base_url = "wss://socketsbay.com/wss/v2/1/demo/"
 
-    # let host = "socketsbay.com"
-    # let port = "443"
-    # let path = "/wss/v2/1/demo/"
+    # var host = "socketsbay.com"
+    # var port = "443"
+    # var path = "/wss/v2/1/demo/"
 
     # wss://echo.websocket.org
-    # let host = "echo.websocket.org"
-    # let port = "443"
-    # let path = "/"
+    # var host = "echo.websocket.org"
+    # var port = "443"
+    # var path = "/"
 
     logd("test_websocket")
 
-    let testnet = False
-    let private = False
-    let category = "linear"
-    let host = "stream-testnet.bybit.com" if testnet else "stream.bybit.com"
-    let port = "443"
-    let path = "/v5/private" if private else "/v5/public/" + category
+    var testnet = False
+    var private = False
+    var category = "linear"
+    var host = "stream-testnet.bybit.com" if testnet else "stream.bybit.com"
+    var port = "443"
+    var path = "/v5/private" if private else "/v5/public/" + category
 
-    let ws = WebSocket(host=host, port=port, path=path)
-    let id = ws.get_id()
+    var ws = WebSocket(host=host, port=port, path=path)
+    var id = ws.get_id()
     var on_connect = ws.get_on_connect()
-    let on_connect_ptr = Pointer[on_connect_callback].address_of(
+    var on_connect_ptr = int(Pointer[on_connect_callback].address_of(
         on_connect
-    ).__as_index()
+    ))
     # print("on_connect_ptr: " + str(aon_connect_ptr))
     var on_heartbeat = ws.get_on_heartbeat()
-    let on_heartbeat_ptr = Pointer[on_heartbeat_callback].address_of(
+    var on_heartbeat_ptr = int(Pointer[on_heartbeat_callback].address_of(
         on_heartbeat
-    ).__as_index()
+    ))
     # print("on_heartbeat_ptr: " + str(on_heartbeat_ptr))
     var on_message = ws.get_on_message()
-    let on_message_ptr = Pointer[on_message_callback].address_of(
+    var on_message_ptr = int(Pointer[on_message_callback].address_of(
         on_message
-    ).__as_index()
+    ))
     # print("on_message_ptr: " + str(on_message_ptr))
     set_on_connect(id, on_connect_ptr)
     set_on_heartbeat(id, on_heartbeat_ptr)
@@ -95,7 +95,7 @@ fn test_websocket() raises:
 fn get_on_message() -> on_message_callback:
     # @parameter
     fn wrapper(data: c_char_pointer, data_len: Int):
-        let s = c_str_to_string(data, data_len)
+        var s = c_str_to_string(data, data_len)
         logi("get_on_message=" + s)
 
     return wrapper
@@ -112,14 +112,14 @@ fn test_bybitws() raises:
         topics="orderbook.1.BTCUSDT",
     )
 
-    # let id = ws.get_id()
+    # var id = ws.get_id()
     var on_connect = ws.get_on_connect()
     var on_heartbeat = ws.get_on_heartbeat()
     var on_message = get_on_message()
 
-    # let on_connect_ptr = Pointer[on_connect_callback].address_of(on_connect).__as_index()
-    # let on_heartbeat_ptr = Pointer[on_heartbeat_callback].address_of(on_heartbeat).__as_index()
-    # let on_message_ptr = Pointer[on_message_callback].address_of(on_message).__as_index()
+    # var on_connect_ptr = Pointer[on_connect_callback].address_of(on_connect).__as_index()
+    # var on_heartbeat_ptr = Pointer[on_heartbeat_callback].address_of(on_heartbeat).__as_index()
+    # var on_message_ptr = Pointer[on_message_callback].address_of(on_message).__as_index()
 
     # ws.set_on_connect(on_connect_ptr)
     ws.set_on_connect(on_connect)
@@ -146,11 +146,11 @@ fn sum_int_list(v: list[Int]) raises -> Int:
 
 
 fn test_bybitclient() raises:
-    let app_config = load_config("config.toml")
+    var app_config = load_config("config.toml")
 
-    let access_key = app_config.access_key
-    let secret_key = app_config.secret_key
-    let testnet = app_config.testnet
+    var access_key = app_config.access_key
+    var secret_key = app_config.secret_key
+    var testnet = app_config.testnet
     var client = BybitClient(
         testnet=testnet, access_key=access_key, secret_key=secret_key
     )
@@ -158,25 +158,25 @@ fn test_bybitclient() raises:
     client.set_verbose(True)
 
     # Preparation phase
-    # let server_time = client.fetch_public_time()
+    # var server_time = client.fetch_public_time()
     # logi(str(server_time))
     # _ = seq_photon_thread_sleep_ms(200)
 
-    let category = "linear"
-    # let symbol = "BTCUSDT"
-    let symbol = "XRPUSDT"
+    var category = "linear"
+    # var symbol = "BTCUSDT"
+    var symbol = "XRPUSDT"
 
-    let exchange_info = client.fetch_exchange_info(category, symbol)
+    var exchange_info = client.fetch_exchange_info(category, symbol)
     logi(str(exchange_info))
 
     # <ExchangeInfo: symbol=BTCUSDT, tick_size=0.10000000000000001, step_size=0.001>
 
-    # let kline = client.fetch_kline(category, symbol, interval="1", limit=5, start=0, end=0)
+    # var kline = client.fetch_kline(category, symbol, interval="1", limit=5, start=0, end=0)
     # for item in kline:
     #     logi(str(item))
 
     # test_orderbook_parse_body()
-    # let ob = client.fetch_orderbook(category, symbol, 5)
+    # var ob = client.fetch_orderbook(category, symbol, 5)
     # logi("-----asks-----")
     # for item in ob.asks:
     #     logi(str(item))
@@ -185,49 +185,49 @@ fn test_bybitclient() raises:
     # for item in ob.bids:
     #     logi(str(item))
 
-    # let res = client.switch_position_mode(category, symbol, "3")
+    # var res = client.switch_position_mode(category, symbol, "3")
     # logi("res=" + str(res))
     # retCode=1, retMsg=Open orders exist, so you cannot change position mode
 
-    # let res = client.set_leverage(category, symbol, "10", "10")
+    # var res = client.set_leverage(category, symbol, "10", "10")
     # logi("res=" + str(res))
 
-    let side = "Buy"
-    let order_type = "Limit"
-    let qty = "0.001"
-    let price = "3000"
+    var side = "Buy"
+    var order_type = "Limit"
+    var qty = "0.001"
+    var price = "3000"
 
-    # let res = client.place_order(category, symbol, side, order_type, qty, price, position_idx=1)
+    # var res = client.place_order(category, symbol, side, order_type, qty, price, position_idx=1)
     # logi("res=" + str(res))
     # retCode=1, retMsg=params error: The number of contracts exceeds minimum limit allowed
 
-    # let res = client.cancel_order(category, symbol, "4d822437-a502-49d6-8aa7-55a602920b3f")
+    # var res = client.cancel_order(category, symbol, "4d822437-a502-49d6-8aa7-55a602920b3f")
     # logi("res=" + str(res))
 
-    # let res = client.cancel_orders(category, symbol)
+    # var res = client.cancel_orders(category, symbol)
     # for item in res:
     #     logi("item=" + str(item))
 
-    # let res = client.fetch_balance("CONTRACT", "USDT")
+    # var res = client.fetch_balance("CONTRACT", "USDT")
     # for item in res:
     #     logi("item=" + str(item))
 
-    # let res = client.fetch_orders(category, symbol)
+    # var res = client.fetch_orders(category, symbol)
     # for item in res:
     #     logi("item=" + str(item))
 
-    # let res = client.fetch_positions(category, symbol)
+    # var res = client.fetch_positions(category, symbol)
     # for item in res:
     #     logi("item=" + str(item))
     # <PositionInfo: symbol=BTCUSDT, position_idx=1, side=Buy, size=0.015, avg_price=40869.30666667, position_value=613.0396, leverage=1.0, mark_price=42191.30, position_mm=0.0000075, position_im=6.130396, take_profit=0.00, stop_loss=0.00, unrealised_pnl=19.8299, cum_realised_pnl=838.09142572, created_time=1682125794703, updated_time=1706790560723>
 
     # Close position
-    # let side = "Buy"
-    # let order_type = "Limit"
-    # let qty = "0.001"
-    # let price = "3000"
+    # var side = "Buy"
+    # var order_type = "Limit"
+    # var qty = "0.001"
+    # var price = "3000"
 
-    # let res = client.place_order(category, symbol, "Sell", "Market", qty, "", position_idx=1)
+    # var res = client.place_order(category, symbol, "Sell", "Market", qty, "", position_idx=1)
     # logi("res=" + str(res))
 
     logi("Done!!!")
@@ -238,11 +238,11 @@ fn test_bybitclient() raises:
 
 
 fn test_bybit_perf() raises:
-    let app_config = load_config("config.toml")
+    var app_config = load_config("config.toml")
 
-    let access_key = app_config.access_key
-    let secret_key = app_config.secret_key
-    let testnet = app_config.testnet
+    var access_key = app_config.access_key
+    var secret_key = app_config.secret_key
+    var testnet = app_config.testnet
     var client = BybitClient(
         testnet=testnet, access_key=access_key, secret_key=secret_key
     )
@@ -250,35 +250,35 @@ fn test_bybit_perf() raises:
     client.set_verbose(True)
 
     # Preparation phase
-    let server_time = client.fetch_public_time()
+    var server_time = client.fetch_public_time()
     logi(str(server_time))
     _ = seq_photon_thread_sleep_ms(200)
 
-    let category = "linear"
-    let symbol = "BTCUSDT"
+    var category = "linear"
+    var symbol = "BTCUSDT"
 
-    let side = "Buy"
-    let order_type = "Limit"
-    let qty = "0.001"
-    let price = "10000"
+    var side = "Buy"
+    var order_type = "Limit"
+    var qty = "0.001"
+    var price = "10000"
 
     # Test order placement speed
-    let times = 30
+    var times = 30
     var order_times = list[Int]()  # Record the time taken for each order placement
     var cancel_times = list[Int]()  # Record the time taken for each order cancellation
 
-    let start_time = time_us()
+    var start_time = time_us()
 
     for i in range(times):
         # logi("i=" + str(i))
 
-        let order_start = time_us()
+        var order_start = time_us()
 
-        let res = client.place_order(
+        var res = client.place_order(
             category, symbol, side, order_type, qty, price, position_idx=1
         )
 
-        let order_end = time_us()
+        var order_end = time_us()
 
         logi(
             str(i)
@@ -289,13 +289,13 @@ fn test_bybit_perf() raises:
             + " us"
         )
 
-        let order_id = res.order_id
+        var order_id = res.order_id
 
-        let cancel_start = time_us()
+        var cancel_start = time_us()
 
-        let res1 = client.cancel_order(category, symbol, order_id)
+        var res1 = client.cancel_order(category, symbol, order_id)
 
-        let cancel_end = time_us()
+        var cancel_end = time_us()
 
         logi(
             str(i)
@@ -311,9 +311,9 @@ fn test_bybit_perf() raises:
 
         _ = seq_photon_thread_sleep_ms(500)
 
-    let end_time = time_us()
+    var end_time = time_us()
 
-    let total_time = end_time - start_time
+    var total_time = end_time - start_time
 
     logi("Total time consumed:" + str(total_time) + " us")
 
@@ -351,7 +351,7 @@ fn photon_handle_term(sig: c_int) raises -> None:
 
 fn main() raises:
     _ = seq_ct_init()
-    let ret = seq_photon_init_default()
+    var ret = seq_photon_init_default()
     seq_init_photon_work_pool(2)
     seq_init_log(LOG_LEVEL_DBG, "")
     # seq_init_log(LOG_LEVEL_OFF, "")
@@ -367,13 +367,13 @@ fn main() raises:
     var hoc = ObjectContainer[OnHeartbeatWrapper]()
     var moc = ObjectContainer[OnMessageWrapper]()
 
-    let coc_ref = Reference(coc).get_unsafe_pointer()
-    let hoc_ref = Reference(hoc).get_unsafe_pointer()
-    let moc_ref = Reference(moc).get_unsafe_pointer()
+    var coc_ref = Reference(coc).get_unsafe_pointer()
+    var hoc_ref = Reference(hoc).get_unsafe_pointer()
+    var moc_ref = Reference(moc).get_unsafe_pointer()
 
-    set_global_pointer(WS_ON_CONNECT_WRAPPER_PTR_KEY, coc_ref.__as_index())
-    set_global_pointer(WS_ON_HEARTBEAT_WRAPPER_PTR_KEY, hoc_ref.__as_index())
-    set_global_pointer(WS_ON_MESSAGE_WRAPPER_PTR_KEY, moc_ref.__as_index())
+    set_global_pointer(WS_ON_CONNECT_WRAPPER_PTR_KEY, int(coc_ref))
+    set_global_pointer(WS_ON_HEARTBEAT_WRAPPER_PTR_KEY, int(hoc_ref))
+    set_global_pointer(WS_ON_MESSAGE_WRAPPER_PTR_KEY, int(moc_ref))
 
     # while True:
     # test_httpclient_perf()

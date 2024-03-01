@@ -13,9 +13,9 @@ struct Str(Stringable):
     var size: Int
 
     fn __init__(value: StringLiteral) -> Str:
-        let l = len(value)
-        let s = String(value)
-        let p = Pointer[Int8].alloc(l)
+        var l = len(value)
+        var s = String(value)
+        var p = Pointer[Int8].alloc(l)
 
         for i in range(l):
             p.store(i, s._buffer[i])
@@ -23,8 +23,8 @@ struct Str(Stringable):
         return Str(p, l)
 
     fn __init__(value: String) -> Str:
-        let l = len(value)
-        let p = Pointer[Int8].alloc(l)
+        var l = len(value)
+        var p = Pointer[Int8].alloc(l)
 
         for i in range(l):
             p.store(i, value._buffer[i])
@@ -32,9 +32,9 @@ struct Str(Stringable):
         return Str(p, l)
 
     fn __init__(value: StringRef) -> Str:
-        let l = len(value)
-        let s = String(value)
-        let p = Pointer[Int8].alloc(l)
+        var l = len(value)
+        var s = String(value)
+        var p = Pointer[Int8].alloc(l)
 
         for i in range(l):
             p.store(i, s._buffer[i])
@@ -59,7 +59,7 @@ struct Str(Stringable):
         return not self.__eq__(other)
 
     fn to_string(self) -> String:
-        let ptr = Pointer[Int8]().alloc(self.size)
+        var ptr = Pointer[Int8]().alloc(self.size)
         memcpy(ptr, self.data, self.size)
         return String(ptr, self.size + 1)
 

@@ -59,7 +59,7 @@ fn set_on_connect(id: Int, ptr: Int) -> None:
 fn set_on_heartbeat(id: Int, ptr: Int) -> None:
     if id == 0:
         return
-    let id_ = id + 1
+    var id_ = id + 1
     logd("set_on_heartbeat id=" + str(id_) + ", ptr=" + str(ptr))
     seq_set_global_int(id_, ptr)
 
@@ -67,38 +67,38 @@ fn set_on_heartbeat(id: Int, ptr: Int) -> None:
 fn set_on_message(id: Int, ptr: Int) -> None:
     if id == 0:
         return
-    let id_ = id + 2
+    var id_ = id + 2
     logd("set_on_message id=" + str(id_) + ", ptr=" + str(ptr))
     seq_set_global_int(id_, ptr)
 
 
 fn emit_on_connect(id: Int) -> None:
-    let ptr = seq_get_global_int(id)
+    var ptr = seq_get_global_int(id)
     if ptr == 0:
         logd("emit_on_connect nil")
         return
-    let pointer = AnyPointer[OnConnectWrapper].__from_index(ptr)
+    var pointer = AnyPointer[OnConnectWrapper].__from_index(ptr)
     __get_address_as_lvalue(pointer.value)()
 
 
 fn emit_on_heartbeat(id: Int) -> None:
-    let id_ = id + 1
-    let ptr = seq_get_global_int(id_)
+    var id_ = id + 1
+    var ptr = seq_get_global_int(id_)
     if ptr == 0:
         logd("emit_on_heartbeat nil")
         return
-    let pointer = AnyPointer[OnHeartbeatWrapper].__from_index(ptr)
+    var pointer = AnyPointer[OnHeartbeatWrapper].__from_index(ptr)
     __get_address_as_lvalue(pointer.value)()
 
 
 fn emit_on_message(id: Int, data: c_char_pointer, data_len: c_size_t) -> None:
-    # let s = c_str_to_string(data, data_len)
-    let id_ = id + 2
-    let ptr = seq_get_global_int(id_)
+    # var s = c_str_to_string(data, data_len)
+    var id_ = id + 2
+    var ptr = seq_get_global_int(id_)
     if ptr == 0:
         logd("emit_on_message nil")
         return
-    let pointer = AnyPointer[OnMessageWrapper].__from_index(ptr)
+    var pointer = AnyPointer[OnMessageWrapper].__from_index(ptr)
     __get_address_as_lvalue(pointer.value)(data, data_len)
 
 
@@ -113,10 +113,10 @@ struct WebSocket:
         path: String,
         tls_version: Int = TLS1_3_VERSION,
     ) raises:
-        let host_ = to_schar_ptr(host)
-        let port_ = to_schar_ptr(port)
-        let path_ = to_schar_ptr(path)
-        let ptr = seq_websocket_new(
+        var host_ = to_schar_ptr(host)
+        var port_ = to_schar_ptr(port)
+        var path_ = to_schar_ptr(path)
+        var ptr = seq_websocket_new(
             host_,
             port_,
             path_,
@@ -137,7 +137,7 @@ struct WebSocket:
         return self._id
 
     fn get_on_connect(self) -> on_connect_callback:
-        let self_ptr = Reference(self).get_unsafe_pointer()
+        var self_ptr = Reference(self).get_unsafe_pointer()
 
         fn wrapper():
             __get_address_as_lvalue(self_ptr.address).on_connect()
@@ -145,7 +145,7 @@ struct WebSocket:
         return wrapper
 
     fn get_on_heartbeat(self) -> on_heartbeat_callback:
-        let self_ptr = Reference(self).get_unsafe_pointer()
+        var self_ptr = Reference(self).get_unsafe_pointer()
 
         fn wrapper():
             __get_address_as_lvalue(self_ptr.address).on_heartbeat()
@@ -153,7 +153,7 @@ struct WebSocket:
         return wrapper
 
     fn get_on_message(self) -> on_message_callback:
-        let self_ptr = Reference(self).get_unsafe_pointer()
+        var self_ptr = Reference(self).get_unsafe_pointer()
 
         fn wrapper(data: c_char_pointer, data_len: Int):
             __get_address_as_lvalue(self_ptr.address).on_message(data, data_len)
@@ -167,7 +167,7 @@ struct WebSocket:
         logd("WebSocket.on_heartbeat")
 
     fn on_message(self, data: c_char_pointer, data_len: Int) -> None:
-        let s = String(data, data_len)
+        var s = String(data, data_len)
         logd("WebSocket::on_message: " + s)
 
     fn release(self) -> None:
@@ -189,14 +189,14 @@ struct WebSocket:
 
 fn websocket_connect_callback(ws: c_void_pointer) raises -> None:
     # logd("websocket_connect_callback")
-    let id = seq_voidptr_to_int(ws)
+    var id = seq_voidptr_to_int(ws)
     emit_on_connect(id)
     # logd("websocket_connect_callback done")
 
 
 fn websocket_heartbeat_callback(ws: c_void_pointer) raises -> None:
     # logd("websocket_heartbeat_callback")
-    let id = seq_voidptr_to_int(ws)
+    var id = seq_voidptr_to_int(ws)
     emit_on_heartbeat(id)
     # logd("websocket_heartbeat_callback done")
 
@@ -205,7 +205,7 @@ fn websocket_message_callback(
     ws: c_void_pointer, data: c_char_pointer, data_len: c_size_t
 ) raises -> None:
     # logd("websocket_message_callback")
-    let id = seq_voidptr_to_int(ws)
+    var id = seq_voidptr_to_int(ws)
     emit_on_message(id, data, data_len)
 
 

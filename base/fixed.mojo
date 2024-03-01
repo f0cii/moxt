@@ -70,7 +70,7 @@ struct Fixed(Stringable):
         return Self {_value: int(FIXED_SCALE_F * v)}
 
     fn __init__(v: String) -> Self:
-        let v_ = seq_fixed12_new_string(v._buffer.data.value, len(v))
+        var v_ = seq_fixed12_new_string(v._buffer.data.value, len(v))
         return Self {
             _value: v_,
         }
@@ -102,29 +102,29 @@ struct Fixed(Stringable):
 
     @always_inline
     fn to_string(self) -> String:
-        let ptr = Pointer[c_char].alloc(17)
-        let n = seq_fixed12_to_string(self._value, ptr)
-        let s = c_str_to_string(ptr, n)
+        var ptr = Pointer[c_char].alloc(17)
+        var n = seq_fixed12_to_string(self._value, ptr)
+        var s = c_str_to_string(ptr, n)
         ptr.free()
         return s
 
     @always_inline
     fn round_to_fractional(self, scale: Int) -> Self:
-        let v = seq_fixed_round_to_fractional(self._value, scale)
+        var v = seq_fixed_round_to_fractional(self._value, scale)
         return Self {
             _value: v,
         }
 
     @always_inline
     fn round(self, decimal_places: Int) -> Self:
-        let v = seq_fixed_round(self._value, decimal_places)
+        var v = seq_fixed_round(self._value, decimal_places)
         return Self {
             _value: v,
         }
 
     @always_inline
     fn abs(self) -> Self:
-        let v = -self._value if self._value < 0 else self._value
+        var v = -self._value if self._value < 0 else self._value
         return Self {_value: v}
 
     fn __eq__(self, other: Self) -> Bool:
@@ -167,7 +167,7 @@ struct Fixed(Stringable):
 
     # Customizing multiplication
     fn __mul__(self, other: Self) -> Self:
-        let v = seq_fixed_mul(self._value, other._value)
+        var v = seq_fixed_mul(self._value, other._value)
         return Self {_value: v}
 
     # Customizing *=
@@ -176,7 +176,7 @@ struct Fixed(Stringable):
 
     # Customizing division
     fn __truediv__(self, other: Self) -> Self:
-        let v = seq_fixed_truediv(self._value, other._value)
+        var v = seq_fixed_truediv(self._value, other._value)
         return Self {_value: v}
 
     # Customizing /=

@@ -186,7 +186,7 @@ struct SonicDocument:
 
     @always_inline
     fn add_string(inout self, key: StringLiteral, value: String) raises -> None:
-        let v = self._sc.set_string(value)
+        var v = self._sc.set_string(value)
         seq_sonic_json_document_add_string(
             self._doc,
             self._alloc,
@@ -198,8 +198,8 @@ struct SonicDocument:
 
     @always_inline
     fn to_string(self, buff_size: Int = 1024) -> String:
-        let result = Pointer[c_schar].alloc(buff_size)
-        let n = seq_sonic_json_document_to_string(self._doc, result)
-        let result_str = c_str_to_string(result, n)
+        var result = Pointer[c_schar].alloc(buff_size)
+        var n = seq_sonic_json_document_to_string(self._doc, result)
+        var result_str = c_str_to_string(result, n)
         result.free()
         return result_str

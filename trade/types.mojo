@@ -11,7 +11,7 @@ fn list_to_str[T: StringableCollectionElement](input_list: list[T]) -> String:
     try:
         var result: String = "["
         for i in range(len(input_list)):
-            let repr = "'" + str(input_list[i]) + "'"
+            var repr = "'" + str(input_list[i]) + "'"
             if i != len(input_list) - 1:
                 result += repr + ", "
             else:
@@ -27,7 +27,7 @@ struct OrderType:
 
 
 @value
-@register_passable("trivial")
+@register_passable
 struct OrderStatus(Stringable):
     var value: UInt8
     alias empty = OrderStatus(0)  # Empty order
@@ -74,7 +74,7 @@ struct OrderStatus(Stringable):
 
 
 @value
-@register_passable("trivial")
+@register_passable
 struct PositionIdx(Stringable, Intable):
     var value: UInt8
     alias single_side = PositionIdx(0)  # Unidirectional position

@@ -18,6 +18,13 @@ def assert_equal(a: Int, b: Int):
         raise Error("Expected " + String(a) + " to be equal to " + String(b))
 
 
+def assert_equal[T: Stringable, U: Stringable](a: T, b: U):
+    if str(a) != str(b):
+        raise Error(
+            "Expected both to be equal.\n     got: " + str(a) + "\nExpected: " + str(b)
+        )
+
+
 def assert_true(value: Bool, message: String):
     if not value:
         raise Error(message)

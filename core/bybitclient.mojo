@@ -36,7 +36,7 @@ struct BybitClient:
         self.testnet = testnet
         self.access_key = access_key
         self.secret_key = secret_key
-        let base_url = "https://api-testnet.bybit.com" if self.testnet else "https://api.bybit.com"
+        var base_url = "https://api-testnet.bybit.com" if self.testnet else "https://api.bybit.com"
         self.client = HttpClient(base_url, tlsv13_client)
 
     fn __moveinit__(inout self, owned existing: Self):
@@ -44,7 +44,7 @@ struct BybitClient:
         self.testnet = existing.testnet
         self.access_key = existing.access_key
         self.secret_key = existing.secret_key
-        let base_url = "https://api-testnet.bybit.com" if self.testnet else "https://api.bybit.com"
+        var base_url = "https://api-testnet.bybit.com" if self.testnet else "https://api.bybit.com"
         self.client = existing.client ^
         logd("BybitClient.__moveinit__ done")
 
@@ -52,7 +52,7 @@ struct BybitClient:
         self.client.set_verbose(verbose)
 
     fn fetch_public_time(self) raises -> ServerTime:
-        let ret = self.do_get("/v3/public/time", "", False)
+        var ret = self.do_get("/v3/public/time", "", False)
         if ret.status != 200:
             raise Error("error status=" + str(ret.status))
 
@@ -60,17 +60,17 @@ struct BybitClient:
         logd("body: " + str(ret.body))
 
         # {"retCode":0,"retMsg":"OK","result":{"timeSecond":"1696233582","timeNano":"1696233582169993116"},"retExtInfo":{},"time":1696233582169}
-        let parser = OndemandParser(ParserBufferSize)
-        let doc = parser.parse(ret.body)
-        let ret_code = doc.get_int("retCode")
-        let ret_msg = doc.get_str("retMsg")
+        var parser = OndemandParser(ParserBufferSize)
+        var doc = parser.parse(ret.body)
+        var ret_code = doc.get_int("retCode")
+        var ret_msg = doc.get_str("retMsg")
         if ret_code != 0:
             raise Error("error retCode=" + str(ret_code) + ", retMsg=" + str(ret_msg))
 
-        let result = doc.get_object("result")
+        var result = doc.get_object("result")
 
-        let time_second = atol(result.get_str("timeSecond"))
-        let time_nano = atol(result.get_str("timeNano"))
+        var time_second = atol(result.get_str("timeSecond"))
+        var time_nano = atol(result.get_str("timeNano"))
 
         _ = doc ^
         _ = parser ^
@@ -83,9 +83,9 @@ struct BybitClient:
         var query_values = QueryParams()
         query_values["category"] = category
         query_values["symbol"] = symbol
-        let query_str = query_values.to_string()
+        var query_str = query_values.to_string()
         logi("query_str: " + query_str)
-        let ret = self.do_get("/v5/market/instruments-info", query_str, False)
+        var ret = self.do_get("/v5/market/instruments-info", query_str, False)
         if ret.status != 200:
             raise Error("error status=" + str(ret.status))
 
@@ -96,23 +96,23 @@ struct BybitClient:
         var tick_size: Float64 = 0
         var stepSize: Float64 = 0
 
-        let parser = OndemandParser(ParserBufferSize)
-        let doc = parser.parse(ret.body)
-        let ret_code = doc.get_int("retCode")
-        let ret_msg = doc.get_str("retMsg")
+        var parser = OndemandParser(ParserBufferSize)
+        var doc = parser.parse(ret.body)
+        var ret_code = doc.get_int("retCode")
+        var ret_msg = doc.get_str("retMsg")
         if ret_code != 0:
             raise Error("error retCode=" + str(ret_code) + ", retMsg=" + str(ret_msg))
 
-        let result = doc.get_object("result")
-        let result_list = result.get_array("list")
+        var result = doc.get_object("result")
+        var result_list = result.get_array("list")
         if result_list.__len__() == 0:
             raise Error("error list length is 0")
 
-        let list_iter = result_list.iter()
+        var list_iter = result_list.iter()
 
         while list_iter.has_value():
-            let obj = list_iter.get()
-            let symbol_ = obj.get_str("symbol")
+            var obj = list_iter.get()
+            var symbol_ = obj.get_str("symbol")
             # if symbol.upper() != symbol_.upper():
             # logd("symbol_: " + symbol_ + " symbol: " + symbol)
             if str(symbol) != symbol_:
@@ -120,9 +120,9 @@ struct BybitClient:
                 list_iter.step()
                 continue
 
-            let priceFilter = obj.get_object("priceFilter")
+            var priceFilter = obj.get_object("priceFilter")
             tick_size = strtod(priceFilter.get_str("tickSize"))
-            let lotSizeFilter = obj.get_object("lotSizeFilter")
+            var lotSizeFilter = obj.get_object("lotSizeFilter")
             stepSize = strtod(lotSizeFilter.get_str("qtyStep"))
 
             # logi("tick_size: " + str(tick_size))
@@ -158,8 +158,8 @@ struct BybitClient:
             query_values["start"] = str(start)
         if end > 0:
             query_values["end"] = str(end)
-        let query_str = query_values.to_string()
-        let ret = self.do_get("/v5/market/kline", query_str, False)
+        var query_str = query_values.to_string()
+        var ret = self.do_get("/v5/market/kline", query_str, False)
         if ret.status != 200:
             raise Error("error status=" + str(ret.status))
 
@@ -168,29 +168,29 @@ struct BybitClient:
 
         var res = list[KlineItem]()
 
-        let parser = DomParser(ParserBufferSize)
-        let doc = parser.parse(ret.body)
-        let ret_code = doc.get_int("retCode")
-        let ret_msg = doc.get_str("retMsg")
+        var parser = DomParser(ParserBufferSize)
+        var doc = parser.parse(ret.body)
+        var ret_code = doc.get_int("retCode")
+        var ret_msg = doc.get_str("retMsg")
         if ret_code != 0:
             raise Error("error retCode=" + str(ret_code) + ", retMsg=" + ret_msg)
 
-        let result = doc.get_object("result")
-        let result_list = result.get_array("list")
+        var result = doc.get_object("result")
+        var result_list = result.get_array("list")
 
-        let list_iter = result_list.iter()
+        var list_iter = result_list.iter()
 
         while list_iter.has_element():
-            let obj = list_iter.get()
-            let i_arr_list = obj.array()
+            var obj = list_iter.get()
+            var i_arr_list = obj.array()
 
-            let timestamp = strtoi(i_arr_list.at_str(0))
-            let open_ = strtod(i_arr_list.at_str(1))
-            let high = strtod(i_arr_list.at_str(2))
-            let low = strtod(i_arr_list.at_str(3))
-            let close = strtod(i_arr_list.at_str(4))
-            let volume = strtod(i_arr_list.at_str(5))
-            let turnover = strtod(i_arr_list.at_str(6))
+            var timestamp = strtoi(i_arr_list.at_str(0))
+            var open_ = strtod(i_arr_list.at_str(1))
+            var high = strtod(i_arr_list.at_str(2))
+            var low = strtod(i_arr_list.at_str(3))
+            var close = strtod(i_arr_list.at_str(4))
+            var volume = strtod(i_arr_list.at_str(5))
+            var turnover = strtod(i_arr_list.at_str(6))
 
             res.append(
                 KlineItem(
@@ -224,8 +224,8 @@ struct BybitClient:
         query_values["symbol"] = symbol
         if limit > 0:
             query_values["limit"] = str(limit)
-        let query_str = query_values.to_string()
-        let ret = self.do_get("/v5/market/orderbook", query_str, False)
+        var query_str = query_values.to_string()
+        var ret = self.do_get("/v5/market/orderbook", query_str, False)
         if ret.status != 200:
             raise Error("error status=" + str(ret.status))
 
@@ -248,24 +248,24 @@ struct BybitClient:
         var asks = list[OrderBookItem]()
         var bids = list[OrderBookItem]()
 
-        let parser = DomParser(ParserBufferSize)
-        let doc = parser.parse(ret.body)
-        let ret_code = doc.get_int("retCode")
-        let ret_msg = doc.get_str("retMsg")
+        var parser = DomParser(ParserBufferSize)
+        var doc = parser.parse(ret.body)
+        var ret_code = doc.get_int("retCode")
+        var ret_msg = doc.get_str("retMsg")
         if ret_code != 0:
             raise Error("error retCode=" + str(ret_code) + ", retMsg=" + ret_msg)
 
-        let result = doc.get_object("result")
-        let a_list = result.get_array("a")
+        var result = doc.get_object("result")
+        var a_list = result.get_array("a")
 
-        let list_iter_a = a_list.iter()
+        var list_iter_a = a_list.iter()
 
         while list_iter_a.has_element():
-            let obj = list_iter_a.get()
-            let i_arr_list = obj.array()
+            var obj = list_iter_a.get()
+            var i_arr_list = obj.array()
 
-            let price = strtod(i_arr_list.at_str(0))
-            let qty = strtod(i_arr_list.at_str(1))
+            var price = strtod(i_arr_list.at_str(0))
+            var qty = strtod(i_arr_list.at_str(1))
 
             asks.append(OrderBookItem(price, qty))
             _ = obj ^
@@ -273,16 +273,16 @@ struct BybitClient:
 
         _ = a_list ^
 
-        let b_list = result.get_array("b")
+        var b_list = result.get_array("b")
 
-        let list_iter_b = b_list.iter()
+        var list_iter_b = b_list.iter()
 
         while list_iter_b.has_element():
-            let obj = list_iter_b.get()
-            let i_arr_list = obj.array()
+            var obj = list_iter_b.get()
+            var i_arr_list = obj.array()
 
-            let price = strtod(i_arr_list.at_str(0))
-            let qty = strtod(i_arr_list.at_str(1))
+            var price = strtod(i_arr_list.at_str(0))
+            var qty = strtod(i_arr_list.at_str(1))
 
             bids.append(OrderBookItem(price, qty))
 
@@ -307,11 +307,11 @@ struct BybitClient:
         yy_doc.add_str("category", category)
         yy_doc.add_str("symbol", symbol)
         yy_doc.add_str("mode", mode)
-        let body_str = yy_doc.mut_write()
+        var body_str = yy_doc.mut_write()
 
         # logi("body=" + body_str)
         # {"category":"linear","symbol":"BTCUSDT","mode":"0"}
-        let ret = self.do_post("/v5/position/switch-mode", body_str, True)
+        var ret = self.do_post("/v5/position/switch-mode", body_str, True)
         # print(ret)
         if ret.status != 200:
             raise Error("error status=" + str(ret.status))
@@ -325,10 +325,10 @@ struct BybitClient:
 
         # logi(ret.body)
 
-        let parser = DomParser(ParserBufferSize)
-        let doc = parser.parse(ret.body)
-        let ret_code = doc.get_int("retCode")
-        let ret_msg = doc.get_str("retMsg")
+        var parser = DomParser(ParserBufferSize)
+        var doc = parser.parse(ret.body)
+        var ret_code = doc.get_int("retCode")
+        var ret_msg = doc.get_str("retMsg")
         if ret_code != 0:
             raise Error("error retCode=" + str(ret_code) + ", retMsg=" + ret_msg)
 
@@ -352,11 +352,11 @@ struct BybitClient:
         yy_doc.add_str("symbol", symbol)
         yy_doc.add_str("buyLeverage", buy_leverage)
         yy_doc.add_str("sellLeverage", sell_leverage)
-        let body_str = yy_doc.mut_write()
+        var body_str = yy_doc.mut_write()
 
         # print(body_str)
 
-        let ret = self.do_post("/v5/position/set-leverage", body_str, True)
+        var ret = self.do_post("/v5/position/set-leverage", body_str, True)
         # print(ret)
         if ret.status != 200:
             raise Error("error status=" + str(ret.status))
@@ -367,10 +367,10 @@ struct BybitClient:
         # * {"retCode":110043,"retMsg":"Set leverage not modified","result":{},"retExtInfo":{},"time":1701874812321}
         # */
 
-        let parser = DomParser(ParserBufferSize)
-        let doc = parser.parse(ret.body)
-        let ret_code = doc.get_int("retCode")
-        let ret_msg = doc.get_str("retMsg")
+        var parser = DomParser(ParserBufferSize)
+        var doc = parser.parse(ret.body)
+        var ret_code = doc.get_int("retCode")
+        var ret_msg = doc.get_str("retMsg")
         if ret_code != 0:
             raise Error("error retCode=" + str(ret_code) + ", retMsg=" + ret_msg)
 
@@ -411,11 +411,11 @@ struct BybitClient:
             yy_doc.add_str("orderLinkId", order_link_id)
         if reduce_only:
             yy_doc.add_str("reduceOnly", "true")
-        let body_str = yy_doc.mut_write()
+        var body_str = yy_doc.mut_write()
 
         # print(body_str)
 
-        let ret = self.do_post("/v5/order/create", body_str, True)
+        var ret = self.do_post("/v5/order/create", body_str, True)
         # print(ret)
         if ret.status != 200:
             raise Error("error status=" + str(ret.status))
@@ -430,16 +430,16 @@ struct BybitClient:
 
         # print(ret.body)
 
-        let parser = DomParser(ParserBufferSize)
-        let doc = parser.parse(ret.body)
-        let ret_code = doc.get_int("retCode")
-        let ret_msg = doc.get_str("retMsg")
+        var parser = DomParser(ParserBufferSize)
+        var doc = parser.parse(ret.body)
+        var ret_code = doc.get_int("retCode")
+        var ret_msg = doc.get_str("retMsg")
         if ret_code != 0:
             raise Error("error retCode=" + str(ret_code) + ", retMsg=" + ret_msg)
 
-        let result = doc.get_object("result")
-        let _order_id = result.get_str("orderId")
-        let _order_link_id = result.get_str("orderLinkId")
+        var result = doc.get_object("result")
+        var _order_id = result.get_str("orderId")
+        var _order_link_id = result.get_str("orderLinkId")
 
         _ = result ^
         _ = doc ^
@@ -464,11 +464,11 @@ struct BybitClient:
             yy_doc.add_str("orderId", order_id)
         if order_link_id != "":
             yy_doc.add_str("orderLinkId", order_link_id)
-        let body_str = yy_doc.mut_write()
+        var body_str = yy_doc.mut_write()
 
         # print(body_str)
 
-        let ret = self.do_post("/v5/order/cancel", body_str, True)
+        var ret = self.do_post("/v5/order/cancel", body_str, True)
         # print(ret)
         if ret.status != 200:
             raise Error("error status=" + str(ret.status))
@@ -479,16 +479,16 @@ struct BybitClient:
         # * {"retCode":110001,"retMsg":"Order does not exist","result":{},"retExtInfo":{},"time":1689203937336}
         # * {"retCode":0,"retMsg":"OK","result":{"orderId":"1c64212f-8b16-4d4b-90c1-7a4cb55f240a","orderLinkId":""},"retExtInfo":{},"time":1689204723386}
 
-        let parser = DomParser(ParserBufferSize)
-        let doc = parser.parse(ret.body)
-        let ret_code = doc.get_int("retCode")
-        let ret_msg = doc.get_str("retMsg")
+        var parser = DomParser(ParserBufferSize)
+        var doc = parser.parse(ret.body)
+        var ret_code = doc.get_int("retCode")
+        var ret_msg = doc.get_str("retMsg")
         if ret_code != 0:
             raise Error("error retCode=" + str(ret_code) + ", retMsg=" + ret_msg)
 
-        let result = doc.get_object("result")
-        let _order_id = result.get_str("orderId")
-        let _order_link_id = result.get_str("orderLinkId")
+        var result = doc.get_object("result")
+        var _order_id = result.get_str("orderId")
+        var _order_link_id = result.get_str("orderLinkId")
 
         _ = result ^
         _ = doc ^
@@ -513,11 +513,11 @@ struct BybitClient:
             yy_doc.add_str("baseCoin", base_coin)
         if settle_coin != "":
             yy_doc.add_str("settleCoin", settle_coin)
-        let body_str = yy_doc.mut_write()
+        var body_str = yy_doc.mut_write()
 
         # print(body_str)
 
-        let ret = self.do_post("/v5/order/cancel-all", body_str, True)
+        var ret = self.do_post("/v5/order/cancel-all", body_str, True)
         # print(ret)
         if ret.status != 200:
             raise Error("error status=" + str(ret.status))
@@ -527,22 +527,22 @@ struct BybitClient:
         # * {"retCode":0,"retMsg":"OK","result":{"list":[]},"retExtInfo":{},"time":1687612231164}
         var res = list[OrderResponse]()
 
-        let parser = DomParser(ParserBufferSize)
-        let doc = parser.parse(ret.body)
-        let ret_code = doc.get_int("retCode")
-        let ret_msg = doc.get_str("retMsg")
+        var parser = DomParser(ParserBufferSize)
+        var doc = parser.parse(ret.body)
+        var ret_code = doc.get_int("retCode")
+        var ret_msg = doc.get_str("retMsg")
         if ret_code != 0:
             raise Error("error retCode=" + str(ret_code) + ", retMsg=" + ret_msg)
 
-        let result = doc.get_object("result")
-        let a_list = result.get_array("list")
+        var result = doc.get_object("result")
+        var a_list = result.get_array("list")
 
-        let list_iter_a = a_list.iter()
+        var list_iter_a = a_list.iter()
         while list_iter_a.has_element():
-            let obj = list_iter_a.get()
+            var obj = list_iter_a.get()
 
-            let order_id = obj.get_str("orderId")
-            let order_link_id = obj.get_str("orderLinkId")
+            var order_id = obj.get_str("orderId")
+            var order_link_id = obj.get_str("orderLinkId")
             res.append(OrderResponse(order_id=order_id, order_link_id=order_link_id))
 
             list_iter_a.step()
@@ -558,13 +558,13 @@ struct BybitClient:
         self, account_type: String, coin: String
     ) raises -> list[BalanceInfo]:
         """
-        Fetch wallet balance
+        Fetch walvar balance
         """
         var query_values = QueryParams()
         query_values["accountType"] = account_type
         query_values["coin"] = coin
-        let query_str = query_values.to_string()
-        let ret = self.do_get("/v5/account/wallet-balance", query_str, True)
+        var query_str = query_values.to_string()
+        var ret = self.do_get("/v5/account/wallet-balance", query_str, True)
         if ret.status != 200:
             raise Error("error status=" + str(ret.status))
 
@@ -573,36 +573,36 @@ struct BybitClient:
         # {"retCode":0,"retMsg":"OK","result":{"list":[{"accountType":"CONTRACT","accountIMRate":"","accountMMRate":"","totalEquity":"","totalWalletBalance":"","totalMarginBalance":"","totalAvailableBalance":"","totalPerpUPL":"","totalInitialMargin":"","totalMaintenanceMargin":"","accountLTV":"","coin":[{"coin":"USDT","equity":"20.21","usdValue":"","walletBalance":"20.21","borrowAmount":"","availableToBorrow":"","availableToWithdraw":"20.21","accruedInterest":"","totalOrderIM":"0","totalPositionIM":"0","totalPositionMM":"","unrealisedPnl":"0","cumRealisedPnl":"0"}]}]},"retExtInfo":{},"time":1687608906096}
         var res = list[BalanceInfo]()
 
-        let parser = OndemandParser(ParserBufferSize)
-        let doc = parser.parse(ret.body)
+        var parser = OndemandParser(ParserBufferSize)
+        var doc = parser.parse(ret.body)
 
-        let ret_code = doc.get_int("retCode")
-        let ret_msg = doc.get_str("retMsg")
+        var ret_code = doc.get_int("retCode")
+        var ret_msg = doc.get_str("retMsg")
         if ret_code != 0:
             raise Error("error retCode=" + str(ret_code) + ", retMsg=" + ret_msg)
 
-        let result_list = doc.get_object("result").get_array("list")
-        let list_iter = result_list.iter()
+        var result_list = doc.get_object("result").get_array("list")
+        var list_iter = result_list.iter()
 
         while list_iter.has_value():
-            let obj = list_iter.get()
-            let account_type = obj.get_str("accountType")
+            var obj = list_iter.get()
+            var account_type = obj.get_str("accountType")
             # logi("account_type=" + account_type)
             if account_type == "CONTRACT":
-                let coin_list = obj.get_array("coin")
-                let coin_iter = coin_list.iter()
+                var coin_list = obj.get_array("coin")
+                var coin_iter = coin_list.iter()
                 while coin_iter.has_value():
-                    let coin_obj = coin_iter.get()
-                    let coin_name = coin_obj.get_str("coin")
+                    var coin_obj = coin_iter.get()
+                    var coin_name = coin_obj.get_str("coin")
                     if coin_name == coin:
                         # logi("coin_name: " + coin_name)
-                        let equity = strtod(coin_obj.get_str("equity"))
-                        let available_to_withdraw = strtod(
+                        var equity = strtod(coin_obj.get_str("equity"))
+                        var available_to_withdraw = strtod(
                             coin_obj.get_str("availableToWithdraw")
                         )
-                        let wallet_balance = strtod(coin_obj.get_str("walletBalance"))
-                        let total_order_im = strtod(coin_obj.get_str("totalOrderIM"))
-                        let total_position_im = strtod(
+                        var wallet_balance = strtod(coin_obj.get_str("walletBalance"))
+                        var total_order_im = strtod(coin_obj.get_str("totalOrderIM"))
+                        var total_position_im = strtod(
                             coin_obj.get_str("totalPositionIM")
                         )
                         res.append(
@@ -651,9 +651,9 @@ struct BybitClient:
             query_values["limit"] = str(limit)
         if cursor != "":
             query_values["cursor"] = cursor
-        let query_str = query_values.to_string()
+        var query_str = query_values.to_string()
         logd("query_str: " + query_str)
-        let ret = self.do_get("/v5/order/realtime", query_str, True)
+        var ret = self.do_get("/v5/order/realtime", query_str, True)
         if ret.status != 200:
             raise Error("error status=" + str(ret.status) + " body=" + str(ret.body))
 
@@ -661,37 +661,37 @@ struct BybitClient:
         # {"retCode":10002,"retMsg":"invalid request, please check your server timestamp or recv_window param. req_timestamp[1696396708819],server_timestamp[1696396707813],recv_window[15000]","result":{},"retExtInfo":{},"time":1696396707814}
         var res = list[OrderInfo]()
 
-        let parser = DomParser(ParserBufferSize)
-        let doc = parser.parse(ret.body)
+        var parser = DomParser(ParserBufferSize)
+        var doc = parser.parse(ret.body)
 
-        let ret_code = doc.get_int("retCode")
-        let ret_msg = doc.get_str("retMsg")
+        var ret_code = doc.get_int("retCode")
+        var ret_msg = doc.get_str("retMsg")
         if ret_code != 0:
             raise Error("error retCode=" + str(ret_code) + ", retMsg=" + ret_msg)
 
-        let result = doc.get_object("result")
-        let result_list = result.get_array("list")
+        var result = doc.get_object("result")
+        var result_list = result.get_array("list")
 
-        let list_iter = result_list.iter()
+        var list_iter = result_list.iter()
 
         while list_iter.has_element():
-            let i = list_iter.get()
-            let position_idx = i.get_int("positionIdx")
-            let order_id = i.get_str("orderId")
-            let _symbol = i.get_str("symbol")
-            let side = i.get_str("side")
-            let order_type = i.get_str("orderType")
-            let price = strtod(i.get_str("price"))
-            let qty = strtod(i.get_str("qty"))
-            let cum_exec_qty = strtod(i.get_str("cumExecQty"))
-            let order_status = i.get_str("orderStatus")
-            let created_time = i.get_str("createdTime")
-            let updated_time = i.get_str("updatedTime")
-            let avg_price = strtod(i.get_str("avgPrice"))
-            let cum_exec_fee = strtod(i.get_str("cumExecFee"))
-            let time_in_force = i.get_str("timeInForce")
-            let reduce_only = i.get_bool("reduceOnly")
-            let order_link_id = i.get_str("orderLinkId")
+            var i = list_iter.get()
+            var position_idx = i.get_int("positionIdx")
+            var order_id = i.get_str("orderId")
+            var _symbol = i.get_str("symbol")
+            var side = i.get_str("side")
+            var order_type = i.get_str("orderType")
+            var price = strtod(i.get_str("price"))
+            var qty = strtod(i.get_str("qty"))
+            var cum_exec_qty = strtod(i.get_str("cumExecQty"))
+            var order_status = i.get_str("orderStatus")
+            var created_time = i.get_str("createdTime")
+            var updated_time = i.get_str("updatedTime")
+            var avg_price = strtod(i.get_str("avgPrice"))
+            var cum_exec_fee = strtod(i.get_str("cumExecFee"))
+            var time_in_force = i.get_str("timeInForce")
+            var reduce_only = i.get_bool("reduceOnly")
+            var order_link_id = i.get_str("orderLinkId")
 
             res.append(
                 OrderInfo(
@@ -761,27 +761,27 @@ struct BybitClient:
             query_values["cursor"] = cursor
         var query_str = query_values.to_string()
         loge("query_str=" + query_str)
-        let ret = self.do_get("/v5/order/history", query_str, True)
+        var ret = self.do_get("/v5/order/history", query_str, True)
         if ret.status != 200:
             raise Error("error status=[" + str(ret.status) + "]")
 
         # print(ret.body)
 
-        let res = list[OrderInfo]()
+        var res = list[OrderInfo]()
 
-        let parser = DomParser(ParserBufferSize)
-        let doc = parser.parse(ret.body)
-        let ret_code = doc.get_int("retCode")
-        let ret_msg = doc.get_str("retMsg")
+        var parser = DomParser(ParserBufferSize)
+        var doc = parser.parse(ret.body)
+        var ret_code = doc.get_int("retCode")
+        var ret_msg = doc.get_str("retMsg")
         if ret_code != 0:
             raise Error("error retCode=" + str(ret_code) + ", retMsg=" + ret_msg)
 
-        let result = doc.get_object("result")
-        let a_list = result.get_array("list")
+        var result = doc.get_object("result")
+        var a_list = result.get_array("list")
 
-        let list_iter_a = a_list.iter()
+        var list_iter_a = a_list.iter()
         while list_iter_a.has_element():
-            let i = list_iter_a.get()
+            var i = list_iter_a.get()
 
             # position_idx: int   # positionIdx
             # order_id: StringLiteral       # orderId
@@ -799,22 +799,22 @@ struct BybitClient:
             # time_in_force: StringLiteral  # timeInForce
             # reduce_only: bool   # reduceOnly
             # order_link_id: StringLiteral  # orderLinkId
-            let position_idx = i["positionIdx"].int()
-            let order_id = i["orderId"].str()
-            let _symbol = i["symbol"].str()
-            let side = i["side"].str()
-            let order_type = i["orderType"].str()
-            let price = strtod(i["price"].str())
-            let qty = strtod(i["qty"].str())
-            let cum_exec_qty = strtod(i["cumExecQty"].str())
-            let order_status = i["orderStatus"].str()
-            let created_time = i["createdTime"].str()
-            let updated_time = i["updatedTime"].str()
-            let avg_price = strtod(i["avgPrice"].str())
-            let cum_exec_fee = strtod(i["cumExecFee"].str())
-            let time_in_force = i["timeInForce"].str()
-            let reduce_only = i["reduceOnly"].bool()
-            let order_link_id = i["orderLinkId"].str()
+            var position_idx = i["positionIdx"].int()
+            var order_id = i["orderId"].str()
+            var _symbol = i["symbol"].str()
+            var side = i["side"].str()
+            var order_type = i["orderType"].str()
+            var price = strtod(i["price"].str())
+            var qty = strtod(i["qty"].str())
+            var cum_exec_qty = strtod(i["cumExecQty"].str())
+            var order_status = i["orderStatus"].str()
+            var created_time = i["createdTime"].str()
+            var updated_time = i["updatedTime"].str()
+            var avg_price = strtod(i["avgPrice"].str())
+            var cum_exec_fee = strtod(i["cumExecFee"].str())
+            var time_in_force = i["timeInForce"].str()
+            var reduce_only = i["reduceOnly"].bool()
+            var order_link_id = i["orderLinkId"].str()
 
             res.append(
                 OrderInfo(
@@ -853,8 +853,8 @@ struct BybitClient:
         query_values["category"] = category
         query_values["symbol"] = symbol
         # baseCoin, settleCoin, limit, cursor
-        let query_str = query_values.to_string()
-        let ret = self.do_get("/v5/position/list", query_str, True)
+        var query_str = query_values.to_string()
+        var ret = self.do_get("/v5/position/list", query_str, True)
         if ret.status != 200:
             raise Error("error status=[" + str(ret.status) + "]")
 
@@ -863,21 +863,21 @@ struct BybitClient:
         # logi(ret.body)
 
         var res = list[PositionInfo]()
-        let parser = DomParser(ParserBufferSize)
-        let doc = parser.parse(ret.body)
-        let ret_code = doc.get_int("retCode")
-        let ret_msg = doc.get_str("retMsg")
+        var parser = DomParser(ParserBufferSize)
+        var doc = parser.parse(ret.body)
+        var ret_code = doc.get_int("retCode")
+        var ret_msg = doc.get_str("retMsg")
         if ret_code != 0:
             raise Error("error retCode=" + str(ret_code) + ", retMsg=" + ret_msg)
 
-        let result = doc.get_object("result")
-        let a_list = result.get_array("list")
+        var result = doc.get_object("result")
+        var a_list = result.get_array("list")
 
-        let list_iter_a = a_list.iter()
+        var list_iter_a = a_list.iter()
         while list_iter_a.has_element():
-            let i = list_iter_a.get()
+            var i = list_iter_a.get()
 
-            let _symbol = i["symbol"].str()
+            var _symbol = i["symbol"].str()
             if _symbol != symbol:
                 list_iter_a.step()
                 continue
@@ -913,26 +913,26 @@ struct BybitClient:
             #     "updatedTime": "1694995200083"
             # }
 
-            let _position_idx = i["positionIdx"].int()
+            var _position_idx = i["positionIdx"].int()
             # _risk_id = i["riskId"].int()
-            let _side = i["side"].str()
-            let _size = i["size"].str()
-            let _avg_price = i["avgPrice"].str()
-            let _position_value = i["positionValue"].str()
-            let _leverage = i["leverage"].str()
-            let _mark_price = i["markPrice"].str()
+            var _side = i["side"].str()
+            var _size = i["size"].str()
+            var _avg_price = i["avgPrice"].str()
+            var _position_value = i["positionValue"].str()
+            var _leverage = i["leverage"].str()
+            var _mark_price = i["markPrice"].str()
             # _liq_price = i["liqPrice"].str()
             # _bust_price = i["bustPrice"].str()
-            let _position_mm = i["positionMM"].str()
-            let _position_im = i["positionIM"].str()
-            let _take_profit = i["takeProfit"].str()
-            let _stop_loss = i["stopLoss"].str()
-            let _unrealised_pnl = i["unrealisedPnl"].str()
-            let _cum_realised_pnl = i["cumRealisedPnl"].str()
+            var _position_mm = i["positionMM"].str()
+            var _position_im = i["positionIM"].str()
+            var _take_profit = i["takeProfit"].str()
+            var _stop_loss = i["stopLoss"].str()
+            var _unrealised_pnl = i["unrealisedPnl"].str()
+            var _cum_realised_pnl = i["cumRealisedPnl"].str()
             # _seq = i["seq"].int()
-            let _created_time = i["createdTime"].str()
-            let _updated_time = i["updatedTime"].str()
-            let pos = PositionInfo(
+            var _created_time = i["createdTime"].str()
+            var _updated_time = i["updatedTime"].str()
+            var pos = PositionInfo(
                 position_idx=_position_idx,
                 symbol=_symbol,
                 side=_side,
@@ -966,13 +966,13 @@ struct BybitClient:
     ) raises -> None:
         if not sign:
             return
-        let time_ms_str = str(time_ns() / 1e6)
-        let recv_window_str = "15000"
+        var time_ms_str = str(time_ns() / 1e6)
+        var recv_window_str = "15000"
         # logd("do_sign: " + data)
-        let payload = data
+        var payload = data
         # logd("do_sign: " + data)
-        let param_str = time_ms_str + self.access_key + recv_window_str + payload
-        let sign_str = hmac_sha256_hex(param_str, self.secret_key)
+        var param_str = time_ms_str + self.access_key + recv_window_str + payload
+        var sign_str = hmac_sha256_hex(param_str, self.secret_key)
         headers["X-BAPI-API-KEY"] = self.access_key
         headers["X-BAPI-TIMESTAMP"] = time_ms_str
         headers["X-BAPI-SIGN"] = sign_str
@@ -983,17 +983,17 @@ struct BybitClient:
     ) raises -> HttpResponse:
         var headers = Headers()
         # headers["Connection"] = "Keep-Alive"
-        let param_ = param
+        var param_ = param
         self.do_sign(headers, param, sign)
 
-        let request_path: String
+        var request_path: String
         if param != "":
             request_path = str(path) + "?" + param_
         else:
             request_path = path
         # logd("request_path: " + request_path)
         # logd("param: " + param_)
-        let res = self.client.get(request_path, headers=headers)
+        var res = self.client.get(request_path, headers=headers)
         logd("res.status=" + str(res.status) + " body=" + res.body)
         return res
 
@@ -1004,7 +1004,7 @@ struct BybitClient:
         # headers["Connection"] = "Keep-Alive"
         headers["Content-Type"] = "application/json"
         self.do_sign(headers, body, sign)
-        let res = self.client.post(path, data=body, headers=headers)
+        var res = self.client.post(path, data=body, headers=headers)
         logd("res.status=" + str(res.status) + " body=" + res.body)
         return res
 

@@ -30,7 +30,7 @@ struct SmartGridStrategy(BaseStrategy):
         self.platform = Platform(config)
         self.grid = GridInfo()
         self.category = config.category
-        self.symbols = safe_split(config.symbols, ",")
+        self.symbols = split(config.symbols, ",")
         self.symbol = self.symbols[0]
         self.tick_size = Fixed.zero
         self.step_size = Fixed.zero
@@ -72,35 +72,35 @@ struct SmartGridStrategy(BaseStrategy):
         # Close positions
         _ = self.platform.close_positions_enhanced(self.category, self.symbol)
 
-        let exchange_info = self.platform.fetch_exchange_info(
+        var exchange_info = self.platform.fetch_exchange_info(
             self.category, self.symbol
         )
         logi(str(exchange_info))
 
-        let tick_size = Fixed(exchange_info.tick_size)
-        let step_size = Fixed(exchange_info.step_size)
+        var tick_size = Fixed(exchange_info.tick_size)
+        var step_size = Fixed(exchange_info.step_size)
         # logi("tick_size: " + str(tick_size))
         # logi("step_size: " + str(step_size))
         # self.tick_size.copy_from(tick_size)
         # self.step_size.copy_from(step_size)
         self.tick_size = tick_size
         self.step_size = step_size
-        let dp = decimal_places(tick_size.to_float())
+        var dp = decimal_places(tick_size.to_float())
 
         # fetch orderbook
-        let ob = self.platform.fetch_orderbook(self.category, self.symbol, 5)
+        var ob = self.platform.fetch_orderbook(self.category, self.symbol, 5)
         if len(ob.asks) == 0 or len(ob.bids) == 0:
             raise Error("Failed to fetch orderbook")
 
-        let ask = Fixed(ob.asks[0].price)
-        let bid = Fixed(ob.bids[0].price)
+        var ask = Fixed(ob.asks[0].price)
+        var bid = Fixed(ob.bids[0].price)
         logi("ask=" + str(ask) + " bid=" + str(bid))
-        let mid = (ask + bid) / Fixed(2)
+        var mid = (ask + bid) / Fixed(2)
         logi("mid=" + str(mid))
-        let base_price = mid.round(dp)
+        var base_price = mid.round(dp)
         logi("base_price=" + str(base_price))
-        let grid_interval = Fixed(self.grid_interval)
-        let price_range = Fixed("0.15")
+        var grid_interval = Fixed(self.grid_interval)
+        var price_range = Fixed("0.15")
         logi("grid_interval=" + str(grid_interval))
         logi("price_range=" + str(price_range))
         logi("tick_size=" + str(tick_size))
@@ -121,22 +121,22 @@ struct SmartGridStrategy(BaseStrategy):
 
     fn on_tick(inout self) raises:
         # logd("SmartGridStrategy.on_tick")
-        let ob = self.platform.get_orderbook(self.symbol, 5)
+        var ob = self.platform.get_orderbook(self.symbol, 5)
         if len(ob.asks) == 0 or len(ob.bids) == 0:
             logw("Order book lacks buy and sell orders")
             return
 
-        let ask = ob.asks[0]
-        let bid = ob.bids[0]
+        var ask = ob.asks[0]
+        var bid = ob.bids[0]
 
-        let cell_profits = self.calculate_cell_profits(
+        var cell_profits = self.calculate_cell_profits(
             ask.price, bid.price, PositionIdx.both_side_buy
         )
         # Evaluate stop-loss condition for individual grid
         for index in range(len(cell_profits)):
-            let item = cell_profits[index]
-            let level = item.get[0, Int]()
-            let profit = item.get[1, Fixed]()
+            var item = cell_profits[index]
+            var level = item.get[0, Int]()
+            var profit = item.get[1, Fixed]()
             if profit <= -self.cell_sl_percent.to_float():
                 logi(
                     "Trigger stop-loss for individual grid, halt trading for grid "
@@ -144,8 +144,8 @@ struct SmartGridStrategy(BaseStrategy):
                 )
                 self.stop_cell_trading(level)
 
-        let mid = (ask.price + bid.price) / Fixed(2)
-        let current_cell_level = self.grid.get_cell_level_by_price(mid)
+        var mid = (ask.price + bid.price) / Fixed(2)
+        var current_cell_level = self.grid.get_cell_level_by_price(mid)
         # logi("current_cell_level=" + str(current_cell_level))
 
         self.place_buy_orders(current_cell_level)
@@ -174,7 +174,7 @@ struct SmartGridStrategy(BaseStrategy):
         var cell_profits = list[Tuple[Int, Fixed]]()
 
         for index in range(len(self.grid.cells)):
-            let cell = self.grid.cells[index]
+            var cell = self.grid.cells[index]
             # Calculate the floating loss for each grid and add it to the list
             cell_profits.append(
                 (index, cell.calculate_profit_percentage(ask, bid, position_idx))
@@ -192,10 +192,10 @@ struct SmartGridStrategy(BaseStrategy):
             "Execute stop-loss strategy for individual grid, halting trading for grid "
             + str(index)
         )
-        let cell = self.grid.cells[index]
+        var cell = self.grid.cells[index]
         # Cancel take-profit order
         if cell.long_tp_cid != "":
-            let res = self.platform.cancel_order(
+            var res = self.platform.cancel_order(
                 self.category, self.symbol, order_client_id=cell.long_tp_cid
             )
             logi("Cancel take-profit order returns: " + str(res))
@@ -203,8 +203,8 @@ struct SmartGridStrategy(BaseStrategy):
 
     fn place_buy_orders(inout self, current_cell_level: Int) raises:
         for index in range(len(self.grid.cells)):
-            # let cell = self.grid.cells[index]
-            let cell_ptr = self.grid.cells.unsafe_get(index)
+            # var cell = self.grid.cells[index]
+            var cell_ptr = self.grid.cells.unsafe_get(index)
             if self.is_within_buy_range(
                 __get_address_as_lvalue(cell_ptr.value), current_cell_level
             ):
@@ -214,7 +214,7 @@ struct SmartGridStrategy(BaseStrategy):
     fn is_within_buy_range(
         self, inout cell: GridCellInfo, current_cell_level: Int
     ) -> Bool:
-        let buy_range = 3  # Define the range of buy orders, which can be adjusted according to actual circumstances
+        var buy_range = 3  # Define the range of buy orders, which can be adjusted according to actual circumstances
         return current_cell_level - buy_range <= cell.level <= current_cell_level
 
     fn place_buy_order(inout self, index: Int, inout cell: GridCellInfo) raises:
@@ -224,12 +224,12 @@ struct SmartGridStrategy(BaseStrategy):
         if cell.long_open_status != OrderStatus.empty:
             return
 
-        let side = String("Buy")
-        let order_type = String("Limit")
-        let qty = self.order_qty
-        let price = str(cell.price)
-        let position_idx: Int = int(PositionIdx.both_side_buy)
-        let order_client_id = self.platform.generate_order_id()
+        var side = String("Buy")
+        var order_type = String("Limit")
+        var qty = self.order_qty
+        var price = str(cell.price)
+        var position_idx: Int = int(PositionIdx.both_side_buy)
+        var order_client_id = self.platform.generate_order_id()
         logi(
             "Place order "
             + side
@@ -243,7 +243,7 @@ struct SmartGridStrategy(BaseStrategy):
             + " position_idx="
             + str(position_idx)
         )
-        let res = self.platform.place_order(
+        var res = self.platform.place_order(
             self.category,
             self.symbol,
             side=side,
@@ -263,7 +263,7 @@ struct SmartGridStrategy(BaseStrategy):
         Place a take-profit order
         """
         for index in range(len(self.grid.cells)):
-            let cell = self.grid.cells[index]
+            var cell = self.grid.cells[index]
             if cell.long_open_status == OrderStatus.filled:
                 if cell.long_tp_cid == "":
                     logi("Place a take-profit order")
@@ -273,13 +273,13 @@ struct SmartGridStrategy(BaseStrategy):
                     self.reset_cell(index, PositionIdx.both_side_buy)
 
     fn place_tp_order(inout self, index: Int, cell: GridCellInfo) raises:
-        let side = String("Sell")
-        let order_type = String("Limit")
-        let qty = str(cell.long_open_quantity)
-        let price = str(self.grid.get_price_by_level(cell.level + 1))
+        var side = String("Sell")
+        var order_type = String("Limit")
+        var qty = str(cell.long_open_quantity)
+        var price = str(self.grid.get_price_by_level(cell.level + 1))
         logi("Place a take-profit order: " + str(cell.price) + ">" + price)
-        let position_idx: Int = int(PositionIdx.both_side_buy)
-        let order_client_id = self.platform.generate_order_id()
+        var position_idx: Int = int(PositionIdx.both_side_buy)
+        var order_client_id = self.platform.generate_order_id()
         logi(
             "Place take-profit order "
             + side
@@ -293,7 +293,7 @@ struct SmartGridStrategy(BaseStrategy):
             + " position_idx="
             + str(position_idx)
         )
-        let res = self.platform.place_order(
+        var res = self.platform.place_order(
             self.category,
             self.symbol,
             side=side,
@@ -310,10 +310,10 @@ struct SmartGridStrategy(BaseStrategy):
 
     fn reset_cell(inout self, index: Int, position_idx: PositionIdx) raises:
         if position_idx == PositionIdx.both_side_buy:
-            let cids = self.grid.cells[index].reset_long_side()
+            var cids = self.grid.cells[index].reset_long_side()
             self.platform.delete_orders_from_cache(cids)
         elif position_idx == PositionIdx.both_side_sell:
-            let cids = self.grid.cells[index].reset_short_side()
+            var cids = self.grid.cells[index].reset_short_side()
             self.platform.delete_orders_from_cache(cids)
 
     fn on_orderbook(inout self, ob: OrderBookLite) raises:
@@ -343,8 +343,8 @@ struct SmartGridStrategy(BaseStrategy):
         self.rwlock.lock()
 
         for i in range(len(self.grid.cells)):
-            let cell = self.grid.cells[i]
-            let order_client_id = order.order_client_id
+            var cell = self.grid.cells[i]
+            var order_client_id = order.order_client_id
             if cell.long_open_cid == order_client_id:
                 self.grid.cells[i].long_open_status = order.status
                 break

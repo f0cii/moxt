@@ -118,7 +118,7 @@ fn strlen(s: Pointer[c_schar]) -> c_size_t:
 
 fn to_char_ptr(s: String) -> Pointer[c_char]:
     """Only ASCII-based strings."""
-    let ptr = Pointer[c_char]().alloc(len(s) + 1)
+    var ptr = Pointer[c_char]().alloc(len(s) + 1)
     for i in range(len(s)):
         ptr.store(i, ord(s[i]))
     ptr.store(len(s), ord("\0"))
@@ -127,7 +127,7 @@ fn to_char_ptr(s: String) -> Pointer[c_char]:
 
 fn to_schar_ptr(s: String) -> Pointer[c_schar]:
     """Only ASCII-based strings."""
-    let ptr = Pointer[c_schar]().alloc(len(s) + 1)
+    var ptr = Pointer[c_schar]().alloc(len(s) + 1)
     for i in range(len(s)):
         ptr.store(i, ord(s[i]))
     ptr.store(len(s), ord("\0"))
@@ -143,36 +143,36 @@ fn c_str_to_string_raw(s: Pointer[UInt8], n: Int) -> String:
 
 
 fn c_str_to_string(s: Pointer[c_schar], n: Int) -> String:
-    let size = n + 1
-    let ptr = Pointer[Int8]().alloc(size)
+    var size = n + 1
+    var ptr = Pointer[Int8]().alloc(size)
     memset_zero(ptr.offset(n), 1)
     memcpy(ptr, s, n)
     return String(ptr, size)
 
 
 fn c_str_to_string(s: Pointer[c_char], n: Int) -> String:
-    let size = n + 1
-    let ptr = Pointer[UInt8]().alloc(size)
+    var size = n + 1
+    var ptr = Pointer[UInt8]().alloc(size)
     memset_zero(ptr.offset(n), 1)
     memcpy(ptr, s, n)
     return String(ptr.bitcast[Int8](), size)
 
 
 fn to_string_ref(s: String) -> StringRef:
-    let slen = len(s)
-    let ptr = Pointer[Int8]().alloc(slen)
+    var slen = len(s)
+    var ptr = Pointer[Int8]().alloc(slen)
     memcpy(ptr, s._buffer.data.value, slen)
-    let s_ref = StringRef(ptr.bitcast[__mlir_type.`!pop.scalar<si8>`]().address, slen)
+    var s_ref = StringRef(ptr.bitcast[__mlir_type.`!pop.scalar<si8>`]().address, slen)
     return s_ref
 
 
 fn to_string_ref(data: Pointer[Int8], data_len: Int) -> StringRef:
-    let ptr = Pointer[Int8]().alloc(data_len)
+    var ptr = Pointer[Int8]().alloc(data_len)
     memcpy(ptr, data, data_len)
     return StringRef(ptr.bitcast[__mlir_type.`!pop.scalar<si8>`]().address, data_len)
 
 
 fn to_string_ref(data: Pointer[UInt8], data_len: Int) -> StringRef:
-    let ptr = Pointer[Int8]().alloc(data_len)
+    var ptr = Pointer[Int8]().alloc(data_len)
     memcpy(ptr, data.bitcast[Int8](), data_len)
     return StringRef(ptr.bitcast[__mlir_type.`!pop.scalar<si8>`]().address, data_len)

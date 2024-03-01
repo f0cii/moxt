@@ -16,7 +16,7 @@ struct Queue[T: CollectionElement](Sized):
         self.begin = 0
 
     fn __init__(inout self, capacity: Int):
-        self.items = DynamicVector[T](capacity)
+        self.items = DynamicVector[T](capacity=capacity)
         self.begin = 0
 
     @always_inline
@@ -46,6 +46,6 @@ struct Queue[T: CollectionElement](Sized):
     fn dequeue(inout self) -> Optional[T]:
         if len(self) == 0:
             return Optional[T](None)
-        let item = self.items[self.begin]
+        var item = self.items[self.begin]
         self.remove_front()
         return item

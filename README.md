@@ -44,13 +44,13 @@ To ensure optimal performance and compatibility, please make sure your system me
 
 - Operating System: Ubuntu 20.04+ (amd64)
 - Python Environment: Python 3.9+ is required. It is recommended to manage it using [Miniconda](https://docs.anaconda.com/free/miniconda/index.html).
-- Mojo Programming Language Version: 0.7.0
+- Mojo Programming Language Version: 24.1.0
 
-For information on how to install Mojo 0.7.0, please refer to the [Mojo Official Installation Guide](https://docs.modular.com/mojo/manual/get-started/). Make sure you are using the supported version of the operating system to avoid compatibility issues.
+For information on how to install Mojo 24.1.0, please refer to the [Mojo Official Installation Guide](https://docs.modular.com/mojo/manual/get-started/). Make sure you are using the supported version of the operating system to avoid compatibility issues.
 
 ## Installation
 
-Before starting, make sure you have installed the Mojo programming language (version 0.7.0) and all necessary dependencies according to the system requirements. Next, you can install and configure this quantitative trading library by following the steps below:
+Before starting, make sure you have installed the Mojo programming language (version 24.1.0) and all necessary dependencies according to the system requirements. Next, you can install and configure this quantitative trading library by following the steps below:
 
 1. Clone the Project
 

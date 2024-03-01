@@ -39,7 +39,7 @@ fn seq_set_global_string(id: Int, s: String) -> None:
 # Retrieve global string value
 fn seq_get_global_string(id: Int) -> String:
     var s_len: c_size_t = 0
-    let s = external_call[
+    var s = external_call[
         "seq_get_global_string", c_char_pointer, Int, Pointer[c_size_t]
     ](id, Pointer.address_of(s_len))
     return c_str_to_string(s, s_len)
@@ -74,16 +74,16 @@ fn seq_photon_init_default() -> Int:
 
 
 fn seq_nanoid() -> String:
-    let result = Pointer[Int8].alloc(32)
-    let n = external_call["seq_nanoid", c_size_t, c_char_pointer](result)
+    var result = Pointer[Int8].alloc(32)
+    var n = external_call["seq_nanoid", c_size_t, c_char_pointer](result)
     return c_str_to_string(result, n)
 
 
-# let LOG_LEVEL_DBG: UInt8 = 0
-# let LOG_LEVEL_INF: UInt8 = 1
-# let LOG_LEVEL_WRN: UInt8 = 2
-# let LOG_LEVEL_ERR: UInt8 = 3
-# let LOG_LEVEL_OFF: UInt8 = 4
+# var LOG_LEVEL_DBG: UInt8 = 0
+# var LOG_LEVEL_INF: UInt8 = 1
+# var LOG_LEVEL_WRN: UInt8 = 2
+# var LOG_LEVEL_ERR: UInt8 = 3
+# var LOG_LEVEL_OFF: UInt8 = 4
 alias LOG_LEVEL_DBG = 0
 alias LOG_LEVEL_INF = 1
 alias LOG_LEVEL_WRN = 2

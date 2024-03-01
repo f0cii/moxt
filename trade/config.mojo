@@ -54,11 +54,11 @@ struct AppConfig(Stringable):
 
 
 fn load_config(filename: String) raises -> AppConfig:
-    let py = Python.import_module("builtins")
-    let tomli = Python.import_module("tomli")
-    let tmp_file = Path(filename)
-    let s = tmp_file.read_text()
-    let dict = tomli.loads(s)
+    var py = Python.import_module("builtins")
+    var tomli = Python.import_module("tomli")
+    var tmp_file = Path(filename)
+    var s = tmp_file.read_text()
+    var dict = tomli.loads(s)
     var config = AppConfig()
     config.testnet = str_to_bool(str(dict["testnet"]))
     config.access_key = str(dict["access_key"])
@@ -67,13 +67,13 @@ fn load_config(filename: String) raises -> AppConfig:
     config.symbols = str(dict["symbols"])
     config.depth = strtoi(str(dict["depth"]))
     config.strategy = str(dict["strategy"]["name"])
-    let params = dict["params"]
-    let iterator = py.iter(params)
+    var params = dict["params"]
+    var iterator = py.iter(params)
     var index = 0
-    let count = int(params.__len__())
+    var count = int(params.__len__())
     while index < count:
-        let name = py.next(iterator)
-        let value = params[name]
+        var name = py.next(iterator)
+        var value = params[name]
         # print(name, value)
         config.params[str(name)] = str(value)
         index += 1
@@ -81,7 +81,7 @@ fn load_config(filename: String) raises -> AppConfig:
 
 
 fn load_env_config(filename: String) raises -> AppConfig:
-    let dict = env_load(filename)
+    var dict = env_load(filename)
     var config = AppConfig()
     config.testnet = str_to_bool(dict["testnet"])
     config.access_key = dict["access_key"]

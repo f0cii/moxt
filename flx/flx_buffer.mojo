@@ -108,31 +108,31 @@ struct FlxBuffer[dedup_string: Bool = True, dedup_key: Bool = True, dedup_keys_v
         self._add_string[as_key=True](value)
 
     fn _add_string[as_key: Bool](inout self, value: String):
-        let byte_length = len(value)
-        let bit_width = ValueBitWidth.of(byte_length)
-        let bytes = value._as_ptr().bitcast[DType.uint8]()
+        var byte_length = len(value)
+        var bit_width = ValueBitWidth.of(byte_length)
+        var bytes = value._as_ptr().bitcast[DType.uint8]()
 
         @parameter
         if dedup_string and not as_key:
-            let cached_offset = self._string_cache.get((bytes, byte_length), self._bytes)
+            var cached_offset = self._string_cache.get((bytes, byte_length), self._bytes)
             if cached_offset != -1:
                 self._stack.push_back(StackValue(bitcast[DType.uint8, 8](Int64(cached_offset)), bit_width, ValueType.String))
                 return
 
         @parameter
         if dedup_key and as_key:
-            let cached_offset = self._key_cache.get((bytes, byte_length), self._bytes)
+            var cached_offset = self._key_cache.get((bytes, byte_length), self._bytes)
             if cached_offset != -1:
                 self._stack.push_back(StackValue(bitcast[DType.uint8, 8](Int64(cached_offset)), bit_width, ValueType.Key))
                 return
             
         @parameter
         if not as_key:
-            let byte_width = self._align(bit_width)
+            var byte_width = self._align(bit_width)
             self._write(byte_length, byte_width)
 
-        let offset = self._offset
-        let new_offest = self._new_offset(byte_length)
+        var offset = self._offset
+        var new_offest = self._new_offset(byte_length)
         memcpy(self._bytes.offset(self._offset.to_int()), bytes, byte_length)
         self._offset = new_offest
         self._write(0)
@@ -152,36 +152,36 @@ struct FlxBuffer[dedup_string: Bool = True, dedup_key: Bool = True, dedup_keys_v
         value._strref_keepalive()
     
     fn blob(inout self, value: DTypePointer[DType.uint8], length: Int):
-        let bit_width = ValueBitWidth.of(length)
-        let byte_width = self._align(bit_width)
+        var bit_width = ValueBitWidth.of(length)
+        var byte_width = self._align(bit_width)
         self._write(length, byte_width)
-        let offset = self._offset
-        let new_offest = self._new_offset(length)
+        var offset = self._offset
+        var new_offest = self._new_offset(length)
         memcpy(self._bytes.offset(self._offset.to_int()), value, length)
         self._offset = new_offest
         self._stack.push_back(StackValue(bitcast[DType.uint8, 8](offset), bit_width, ValueType.Blob))
 
     fn add_indirect[D: DType](inout self, value: SIMD[D, 1]):
-        let value_type = ValueType.of[D]()
+        var value_type = ValueType.of[D]()
         if value_type == ValueType.Int or value_type == ValueType.UInt or value_type == ValueType.Float:
-            let bit_width = ValueBitWidth.of(value)
-            let byte_width = self._align(bit_width)
-            let offset = self._offset
+            var bit_width = ValueBitWidth.of(value)
+            var byte_width = self._align(bit_width)
+            var offset = self._offset
             self._write(StackValue.of(value), byte_width)
             self._stack.push_back(StackValue(bitcast[DType.uint8, 8](offset), bit_width, value_type + 5))
         else: 
             self._stack.push_back(StackValue.of(value))
 
     fn add[D: DType](inout self, value: DTypePointer[D], length: Int):
-        let len_bit_width = ValueBitWidth.of(length)
-        let elem_bit_width = ValueBitWidth.of(SIMD[D, 1](0))
+        var len_bit_width = ValueBitWidth.of(length)
+        var elem_bit_width = ValueBitWidth.of(SIMD[D, 1](0))
         if len_bit_width <= elem_bit_width:
-            let bit_width = len_bit_width if elem_bit_width < len_bit_width else elem_bit_width
-            let byte_width = self._align(bit_width)
+            var bit_width = len_bit_width if elem_bit_width < len_bit_width else elem_bit_width
+            var byte_width = self._align(bit_width)
             self._write(length, byte_width)
-            let offset = self._offset    
-            let byte_length = sizeof[D]() * length
-            let new_offest = self._new_offset(byte_length)
+            var offset = self._offset    
+            var byte_length = sizeof[D]() * length
+            var new_offest = self._new_offset(byte_length)
             memcpy(self._bytes.offset(self._offset.to_int()), value.bitcast[DType.uint8](), byte_length)
             self._offset = new_offest
             self._stack.push_back(StackValue(bitcast[DType.uint8, 8](offset), bit_width, ValueType.of[D]() + ValueType.Vector))
@@ -195,8 +195,8 @@ struct FlxBuffer[dedup_string: Bool = True, dedup_key: Bool = True, dedup_keys_v
                 pass
 
     fn add_referenced(inout self, reference_key: String) raises:
-        let key = Key(reference_key._as_ptr().bitcast[DType.uint8](), len(reference_key))
-        let stack_value = self._reference_cache.get(key, StackValue.Null)
+        var key = Key(reference_key._as_ptr().bitcast[DType.uint8](), len(reference_key))
+        var stack_value = self._reference_cache.get(key, StackValue.Null)
         key.pointer.free()
         if stack_value.type == ValueType.Null:
             raise "No value for reference key " + reference_key
@@ -211,14 +211,14 @@ struct FlxBuffer[dedup_string: Bool = True, dedup_key: Bool = True, dedup_keys_v
         self._stack_is_vector.push_back(False)
 
     fn end(inout self, reference_key: String = "") raises:
-        let position = self._stack_positions.pop_back()
-        let is_vector = self._stack_is_vector.pop_back()
+        var position = self._stack_positions.pop_back()
+        var is_vector = self._stack_is_vector.pop_back()
         if is_vector:
             self._end_vector(position)
         else:
             self._sort_keys_and_end_map(position)
         if len(reference_key) > 0:
-            let key = Key(reference_key._as_ptr().bitcast[DType.uint8](), len(reference_key))
+            var key = Key(reference_key._as_ptr().bitcast[DType.uint8](), len(reference_key))
             self._reference_cache.put(key, self._stack[len(self._stack) - 1])
     
     fn finish(owned self) raises -> (DTypePointer[DType.uint8], Int):
@@ -233,62 +233,62 @@ struct FlxBuffer[dedup_string: Bool = True, dedup_key: Bool = True, dedup_keys_v
         if len(self._stack) != 1:
             raise "Stack needs to have only one element. Instead of: " + String(len(self._stack))
         
-        let value = self._stack.pop_back()
-        let byte_width = self._align(value.element_width(self._offset, 0))
+        var value = self._stack.pop_back()
+        var byte_width = self._align(value.element_width(self._offset, 0))
         self._write(value, byte_width)
         self._write(value.stored_packed_type())
         self._write(byte_width.cast[DType.uint8]())
         return self._bytes, self._offset.to_int()
 
     fn _align(inout self, bit_width: ValueBitWidth) -> UInt64:
-        let byte_width = 1 << bit_width.value.to_int()
+        var byte_width = 1 << bit_width.value.to_int()
         self._offset += padding_size(self._offset, byte_width)
         return byte_width
 
     fn _write(inout self, value: StackValue, byte_width: UInt64):
         self._grow_bytes_if_needed(self._offset + byte_width)
         if value.is_offset():
-            let rel_offset = self._offset - value.as_uint()
+            var rel_offset = self._offset - value.as_uint()
             # Safety check not implemented for now as it is internal call and should be safe
             # if byte_width == 8 or rel_offset < (1 << (byte_width * 8)):
             self._write(rel_offset, byte_width)
         else:
-            let new_offset = self._new_offset(byte_width)
+            var new_offset = self._new_offset(byte_width)
             self._bytes.simd_store(self._offset.to_int(), value.to_value(byte_width))
             self._offset = new_offset
 
     fn _write(inout self, value: UInt64, byte_width: UInt64):
         self._grow_bytes_if_needed(self._offset + byte_width)
-        let new_offset = self._new_offset(byte_width)
+        var new_offset = self._new_offset(byte_width)
         self._bytes.simd_store(self._offset.to_int(), bitcast[DType.uint8, 8](value))
         # We write 8 bytes but the offset is still set to byte_width
         self._offset = new_offset
 
     fn _write(inout self, value: UInt8):
         self._grow_bytes_if_needed(self._offset + 1)
-        let new_offset = self._new_offset(1)
+        var new_offset = self._new_offset(1)
         self._bytes.offset(self._offset.to_int()).store(value)
         self._offset = new_offset
 
     fn _new_offset(inout self, byte_width: UInt64) -> UInt64:
-        let new_offset = self._offset + byte_width
-        let min_size = self._offset + max(byte_width, 8)
+        var new_offset = self._offset + byte_width
+        var min_size = self._offset + max(byte_width, 8)
         self._grow_bytes_if_needed(min_size)
         return new_offset
 
     fn _grow_bytes_if_needed(inout self, min_size: UInt64):
-        let prev_size = self._size
+        var prev_size = self._size
         while self._size < min_size:
             self._size <<= 1
         if prev_size < self._size:
-            let prev_bytes = self._bytes
+            var prev_bytes = self._bytes
             self._bytes = DTypePointer[DType.uint8].alloc(self._size.to_int())
             memcpy(self._bytes, prev_bytes, self._offset.to_int())
             prev_bytes.free()
 
     fn _end_vector(inout self, position: Int) raises:
-        let length = len(self._stack) - position
-        let vec = self._create_vector(position, length, 1)
+        var length = len(self._stack) - position
+        var vec = self._create_vector(position, length, 1)
         self._stack.resize(position, StackValue.Null)
         self._stack.push_back(vec)
 
@@ -296,8 +296,8 @@ struct FlxBuffer[dedup_string: Bool = True, dedup_key: Bool = True, dedup_keys_v
         if (len(self._stack) - position) & 1 == 1:
             raise "The stack needs to hold key value pairs (even number of elements). Check if you combined [key] with [add] method calls properly."
         for i in range(position + 2, len(self._stack), 2):
-            let key = self._stack[i]
-            let value = self._stack[i + 1]
+            var key = self._stack[i]
+            var value = self._stack[i + 1]
             var j = i - 2
             while j >= position and self._should_flip(self._stack[j], key):
                 self._stack[j + 2] = self._stack[j]
@@ -312,8 +312,8 @@ struct FlxBuffer[dedup_string: Bool = True, dedup_key: Bool = True, dedup_keys_v
             raise "Stack values are not keys " + String(a.type.value) + " " + String(a.type.value)
         var index = 0
         while True:
-            let c1 = self._bytes.load(a.as_uint().to_int() + index)
-            let c2 = self._bytes.load(b.as_uint().to_int() + index)
+            var c1 = self._bytes.load(a.as_uint().to_int() + index)
+            var c2 = self._bytes.load(b.as_uint().to_int() + index)
             if c1 < c2:
                 return False
             if c1 > c2:
@@ -323,12 +323,12 @@ struct FlxBuffer[dedup_string: Bool = True, dedup_key: Bool = True, dedup_keys_v
             index += 1
     
     fn _end_map(inout self, start: Int) raises:
-        let length = (len(self._stack) - start) >> 1
+        var length = (len(self._stack) - start) >> 1
         var keys = StackValue.Null
         @parameter
         if dedup_key and dedup_keys_vec:
-            let keys_vec = self._create_keys_vec_value(start, length)
-            let cached = self._keys_vec_cache.get(keys_vec, StackValue.Null)
+            var keys_vec = self._create_keys_vec_value(start, length)
+            var cached = self._keys_vec_cache.get(keys_vec, StackValue.Null)
             if cached != StackValue.Null:
                 keys = cached
                 keys_vec.pointer.free()
@@ -337,19 +337,19 @@ struct FlxBuffer[dedup_string: Bool = True, dedup_key: Bool = True, dedup_keys_v
                 self._keys_vec_cache.put(keys_vec, keys)
         else:
             keys = self._create_vector(start, length, 2)
-        let map = self._create_vector(start + 1, length, 2, keys)
+        var map = self._create_vector(start + 1, length, 2, keys)
         self._stack.resize(start, StackValue.Null)
         self._stack.push_back(map)
 
     fn _create_keys_vec_value(self, start: Int, length: Int) -> Key:
-        let size = length * 8
-        let result = DTypePointer[DType.uint8].alloc(size)
+        var size = length * 8
+        var result = DTypePointer[DType.uint8].alloc(size)
         var offset = 0
         memset_zero(result, size)
         for i in range(start, len(self._stack), 2):
             result.simd_store(offset, self._stack[i].value)
             offset += 8
-        let key = Key(result, size)
+        var key = Key(result, size)
         result.free()
         return key
 
@@ -358,7 +358,7 @@ struct FlxBuffer[dedup_string: Bool = True, dedup_key: Bool = True, dedup_keys_v
         var prefix_elements = 1
         if keys != StackValue.Null:
             prefix_elements += 2
-            let keys_bit_width = keys.element_width(self._offset, 0)
+            var keys_bit_width = keys.element_width(self._offset, 0)
             if bit_width < keys_bit_width:
                 bit_width = keys_bit_width
 
@@ -370,19 +370,19 @@ struct FlxBuffer[dedup_string: Bool = True, dedup_key: Bool = True, dedup_keys_v
             if keys != StackValue.Null:
                 typed = False
             for i in range(start, len(self._stack), step):
-                let elem_bit_width = self._stack[i].element_width(self._offset, i + prefix_elements)
+                var elem_bit_width = self._stack[i].element_width(self._offset, i + prefix_elements)
                 if bit_width < elem_bit_width:
                     bit_width = elem_bit_width
                 if vec_elem_type != self._stack[i].type:
                     typed = False
                 if bit_width == ValueBitWidth.width64 and typed == False:
                     break
-        let byte_width = self._align(bit_width)
+        var byte_width = self._align(bit_width)
         if keys != StackValue.Null:
             self._write(keys, byte_width)
             self._write((1 << keys.width.value).to_int(), byte_width)
         self._write(UInt64(length), byte_width)
-        let offset = self._offset
+        var offset = self._offset
         for i in range(start, len(self._stack), step):
             self._write(self._stack[i], byte_width)
         if not typed:

@@ -19,30 +19,31 @@ from base.moutil import *
 from core.bybitmodel import *
 from core.sign import hmac_sha256_b64, hmac_sha256_hex
 from base.yyjson import *
+from core.bybitmodel import *
 from core.bybitclient import *
 from core.bybitclientjson import *
-from core.bybitws import *
+# from core.bybitws import *
 from core.env import env_load
 
 
 fn test_ondemand_parser():
-    let str = '{"retCode":1001,"retMsg":"OK","result":{"category":"linear","list":[],"nextPageCursor":""},"retExtInfo":{},"time":1696236288675}'
-    let op = OndemandParser(1000 * 1000)
-    let doc = op.parse(str)
+    var str = '{"retCode":1001,"retMsg":"OK","result":{"category":"linear","list":[],"nextPageCursor":""},"retExtInfo":{},"time":1696236288675}'
+    var op = OndemandParser(1000 * 1000)
+    var doc = op.parse(str)
 
-    let key = "retCode"
-    let ret_code = doc.get_int(key)
+    var key = "retCode"
+    var ret_code = doc.get_int(key)
     logd(ret_code)
 
-    let key1 = "retMsg"
-    let retMsg = doc.get_str(key1)
+    var key1 = "retMsg"
+    var retMsg = doc.get_str(key1)
     logd(retMsg)
 
-    let result = doc.get_object("result")
-    let category = result.get_str("category")
+    var result = doc.get_object("result")
+    var category = result.get_str("category")
     logd("category: " + category)
-    let list = result.get_array("list")
-    let iter = list.iter()
+    var list = result.get_array("list")
+    var iter = list.iter()
     while iter.has_value():
         logd("dddd")
         iter.step()
@@ -52,41 +53,41 @@ fn test_ondemand_parser():
 
 
 fn test_ws_auth():
-    let s = '{"req_id":"LzIP5BH2aBVLUkmsOzg-q","success":true,"ret_msg":"","op":"auth","conn_id":"cldfn01dcjmj8l28s6sg-ngkux"}'
-    let od_parser = OndemandParser(1000 * 100)
-    let doc = od_parser.parse(s)
-    let op = doc.get_str("op")
+    var s = '{"req_id":"LzIP5BH2aBVLUkmsOzg-q","success":true,"ret_msg":"","op":"auth","conn_id":"cldfn01dcjmj8l28s6sg-ngkux"}'
+    var od_parser = OndemandParser(1000 * 100)
+    var doc = od_parser.parse(s)
+    var op = doc.get_str("op")
     logd("op: " + op)
-    let abc = doc.get_str("abc")
+    var abc = doc.get_str("abc")
     logd("abc: " + abc)
     if abc == "":
         logd("no abc")
-    # let ret_code = doc.get_int("retCode")
-    # let ret_msg = doc.get_str("retMsg")
+    # var ret_code = doc.get_int("retCode")
+    # var ret_msg = doc.get_str("retMsg")
     # if ret_code != 0:
     #     return
 
-    # let result = doc.get_object("result")
+    # var result = doc.get_object("result")
 
-    # let time_second = atol(result.get_str("timeSecond"))
-    # let time_nano = atol(result.get_str("timeNano"))
+    # var time_second = atol(result.get_str("timeSecond"))
+    # var time_nano = atol(result.get_str("timeNano"))
 
     _ = doc
     _ = od_parser
 
 
 fn test_raw():
-    let str = '{"retCode":1001,"retMsg":"OK","result":{"category":"linear","list":[],"nextPageCursor":""},"retExtInfo":{},"time":1696236288675}'
-    let max_capacity = 1000 * 1000
-    let parser = seq_simdjson_ondemand_parser_new(max_capacity)
-    let padded_string = seq_simdjson_padded_string_new(
+    var str = '{"retCode":1001,"retMsg":"OK","result":{"category":"linear","list":[],"nextPageCursor":""},"retExtInfo":{},"time":1696236288675}'
+    var max_capacity = 1000 * 1000
+    var parser = seq_simdjson_ondemand_parser_new(max_capacity)
+    var padded_string = seq_simdjson_padded_string_new(
         str.data()._as_scalar_pointer(), len(str)
     )
-    let doc = seq_simdjson_ondemand_parser_parse(parser, padded_string)
-    # let key: CString = "retCode"
-    # let ret_code = seq_simdjson_ondemand_get_int_d(doc, key.data, key.len)
-    let key = "retCode"
-    let ret_code = seq_simdjson_ondemand_get_int_d(
+    var doc = seq_simdjson_ondemand_parser_parse(parser, padded_string)
+    # var key: CString = "retCode"
+    # var ret_code = seq_simdjson_ondemand_get_int_d(doc, key.data, key.len)
+    var key = "retCode"
+    var ret_code = seq_simdjson_ondemand_get_int_d(
         doc, key.data()._as_scalar_pointer(), len(key)
     ).to_int()
     print(ret_code)
@@ -96,51 +97,51 @@ fn test_raw():
 
 
 fn test_far():
-    let f = Far()
+    var f = Far()
     f.set_int("a", 100)
-    let a = f.get_int("a")
+    var a = f.get_int("a")
     logi("a: " + String(a))
     f.set_float("b", 100.10)
-    let b = f.get_float("b")
+    var b = f.get_float("b")
     logi("b: " + String(b))
     f.set_bool("c", True)
-    let c = f.get_bool("c")
+    var c = f.get_bool("c")
     logi("c: " + String(c))
     f.set_str("d", "hello")
-    let d = f.get_str("d")
+    var d = f.get_str("d")
     logi("d: " + d)
     f.free()
 
 
 fn test_fixed():
-    let f0 = Fixed()
+    var f0 = Fixed()
     logd(str(f0))
 
-    let f1 = Fixed(1)
+    var f1 = Fixed(1)
     logd(str(f1))
 
-    let f2 = Fixed(100)
+    var f2 = Fixed(100)
     logd(str(f2))
 
-    let f3 = Fixed(1.2)
+    var f3 = Fixed(1.2)
     logd(str(f3))
 
-    let f4 = Fixed("1000.5")
+    var f4 = Fixed("1000.5")
     logd(str(f4))
 
-    let f5 = f2 + f4
+    var f5 = f2 + f4
     logd(str(f5))
 
-    let f6 = Fixed("1.0999").round_to_fractional(10000000000)
+    var f6 = Fixed("1.0999").round_to_fractional(10000000000)
     logd("f6: " + str(f6))
 
-    let f7 = Fixed("1.123456").round(2)
+    var f7 = Fixed("1.123456").round(2)
     logd("f7: " + str(f7))
 
-    let f8 = f2 * f4
+    var f8 = f2 * f4
     logd("f8: " + str(f8))
 
-    let f9 = Fixed("55") / Fixed(2)
+    var f9 = Fixed("55") / Fixed(2)
     logd("f9: " + str(f9))
 
     # seq_photon_thread_sleep_ms(10)
@@ -163,8 +164,8 @@ struct A:
 
 fn req(arg: c_void_pointer) raises -> c_void_pointer:
     logi("req")
-    # let url: StringLiteral = "https://reqres.in/api/users?page=1"
-    let url: StringLiteral = "https://reqres.in/api/users?page=1"
+    # var url: StringLiteral = "https://reqres.in/api/users?page=1"
+    var url: StringLiteral = "https://reqres.in/api/users?page=1"
     test_photon_http(url.data()._as_scalar_pointer(), len(url))
     logi("req end")
     return c_void_pointer.get_null()
@@ -173,7 +174,7 @@ fn req(arg: c_void_pointer) raises -> c_void_pointer:
 fn func1(arg: c_void_pointer) raises -> c_void_pointer:
     logi("func1 1000")
     while True:
-        let ncpu = seq_photon_workpool_get_vcpu_num(seq_photon_work_pool())
+        var ncpu = seq_photon_workpool_get_vcpu_num(seq_photon_work_pool())
         logi("func1 tick ncpu: " + String(ncpu))
         # a.incr()
         # logi(a.a)
@@ -200,7 +201,7 @@ fn test_ssmap():
     sm["a"] = "100"
     sm["b"] = "160"
     print(sm.__len__())
-    let c = sm["b"]
+    var c = sm["b"]
     print(c)
     print(len(c))
 
@@ -224,11 +225,11 @@ struct WSSample:
 
 
 fn test_httpclient():
-    # let base_url = "https://www.baidu.com"
-    let base_url = "https://api.bybit.com"
+    # var base_url = "https://www.baidu.com"
+    var base_url = "https://api.bybit.com"
     # https://api.bybit.com/v3/public/time
-    let client = HttpClient(base_url)
-    # let headers = SSMap()
+    var client = HttpClient(base_url)
+    # var headers = SSMap()
     var headers = Headers()
     headers["a"] = "abc"
     _ = client.get("/v3/public/time", headers)
@@ -236,107 +237,107 @@ fn test_httpclient():
     _ = client.do_request("/v3/public/time", VERB_GET, headers, "")
 
 
-fn test_websocket() raises:
-    # https://socketsbay.com/test-websockets
-    # let base_url = "wss://socketsbay.com/wss/v2/1/demo/"
+# fn test_websocket() raises:
+#     # https://socketsbay.com/test-websockets
+#     # var base_url = "wss://socketsbay.com/wss/v2/1/demo/"
 
-    # let host = "socketsbay.com"
-    # let port = "443"
-    # let path = "/wss/v2/1/demo/"
+#     # var host = "socketsbay.com"
+#     # var port = "443"
+#     # var path = "/wss/v2/1/demo/"
 
-    # wss://echo.websocket.org
-    # let host = "echo.websocket.org"
-    # let port = "443"
-    # let path = "/"
+#     # wss://echo.websocket.org
+#     # var host = "echo.websocket.org"
+#     # var port = "443"
+#     # var path = "/"
 
-    logd("test_websocket")
+#     logd("test_websocket")
 
-    let testnet = False
-    let private = False
-    let category = "linear"
-    let host = "stream-testnet.bybit.com" if testnet else "stream.bybit.com"
-    let port = "443"
-    let path = "/v5/private" if private else "/v5/public/" + category
+#     var testnet = False
+#     var private = False
+#     var category = "linear"
+#     var host = "stream-testnet.bybit.com" if testnet else "stream.bybit.com"
+#     var port = "443"
+#     var path = "/v5/private" if private else "/v5/public/" + category
 
-    let ws = WebSocket(host=host, port=port, path=path)
-    let id = ws.get_id()
-    var on_connect = ws.get_on_connect()
-    let on_connect_ptr = Pointer[on_connect_callback].address_of(
-        on_connect
-    ).__as_index()
-    # print("on_connect_ptr: " + str(aon_connect_ptr))
-    var on_heartbeat = ws.get_on_heartbeat()
-    let on_heartbeat_ptr = Pointer[on_heartbeat_callback].address_of(
-        on_heartbeat
-    ).__as_index()
-    # print("on_heartbeat_ptr: " + str(on_heartbeat_ptr))
-    var on_message = ws.get_on_message()
-    let on_message_ptr = Pointer[on_message_callback].address_of(
-        on_message
-    ).__as_index()
-    # print("on_message_ptr: " + str(on_message_ptr))
-    set_on_connect(id, on_connect_ptr)
-    set_on_heartbeat(id, on_heartbeat_ptr)
-    set_on_message(id, on_message_ptr)
-    ws.connect()
-    logi("connect done")
-    run_forever()
-    _ = ws ^
+#     var ws = WebSocket(host=host, port=port, path=path)
+#     var id = ws.get_id()
+#     var on_connect = ws.get_on_connect()
+#     var on_connect_ptr = int(Pointer[on_connect_callback].address_of(
+#         on_connect
+#     ))
+#     # print("on_connect_ptr: " + str(aon_connect_ptr))
+#     var on_heartbeat = ws.get_on_heartbeat()
+#     var on_heartbeat_ptr = int(Pointer[on_heartbeat_callback].address_of(
+#         on_heartbeat
+#     ))
+#     # print("on_heartbeat_ptr: " + str(on_heartbeat_ptr))
+#     var on_message = ws.get_on_message()
+#     var on_message_ptr = int(Pointer[on_message_callback].address_of(
+#         on_message
+#     ))
+#     # print("on_message_ptr: " + str(on_message_ptr))
+#     set_on_connect(id, on_connect_ptr)
+#     set_on_heartbeat(id, on_heartbeat_ptr)
+#     set_on_message(id, on_message_ptr)
+#     ws.connect()
+#     logi("connect done")
+#     run_forever()
+#     _ = ws ^
 
 
 fn get_on_message() -> on_message_callback:
     fn wrapper(data: c_char_pointer, data_len: Int):
         # print("get_on_message")
-        # let s = String(data, data_len)
+        # var s = String(data, data_len)
         # logd("get_on_message::on_message: " + s)
         # ok
         logd("get_on_message")
-        # let s_ref = to_string_ref(data, data_len)
+        # var s_ref = to_string_ref(data, data_len)
         # logi("s_ref: " + String(s_ref))
 
-        let s = c_str_to_string(data, data_len)
+        var s = c_str_to_string(data, data_len)
         logi("s=" + s)
 
     return wrapper
 
 
-fn test_bybitws() raises:
-    logd("test_bybitws")
-    var ws = BybitWS(
-        is_private=False,
-        testnet=False,
-        access_key="",
-        secret_key="",
-        category="linear",
-        topics="orderbook.1.BTCUSDT",
-    )
+# fn test_bybitws() raises:
+#     logd("test_bybitws")
+#     var ws = BybitWS(
+#         is_private=False,
+#         testnet=False,
+#         access_key="",
+#         secret_key="",
+#         category="linear",
+#         topics="orderbook.1.BTCUSDT",
+#     )
 
-    # let id = ws.get_id()
-    var on_connect = ws.get_on_connect()
-    var on_heartbeat = ws.get_on_heartbeat()
-    var on_message = get_on_message()
+#     # var id = ws.get_id()
+#     var on_connect = ws.get_on_connect()
+#     var on_heartbeat = ws.get_on_heartbeat()
+#     var on_message = get_on_message()
 
-    # let on_connect_ptr = Pointer[on_connect_callback].address_of(on_connect).__as_index()
-    # let on_heartbeat_ptr = Pointer[on_heartbeat_callback].address_of(on_heartbeat).__as_index()
-    # let on_message_ptr = Pointer[on_message_callback].address_of(on_message).__as_index()
+#     # var on_connect_ptr = Pointer[on_connect_callback].address_of(on_connect).__as_index()
+#     # var on_heartbeat_ptr = Pointer[on_heartbeat_callback].address_of(on_heartbeat).__as_index()
+#     # var on_message_ptr = Pointer[on_message_callback].address_of(on_message).__as_index()
 
-    # ws.set_on_connect(on_connect_ptr)
-    ws.set_on_connect(on_connect)
-    ws.set_on_heartbeat(on_heartbeat)
-    ws.set_on_message(on_message)
+#     # ws.set_on_connect(on_connect_ptr)
+#     ws.set_on_connect(on_connect)
+#     ws.set_on_heartbeat(on_heartbeat)
+#     ws.set_on_message(on_message)
 
-    var topics = list[String]()
-    topics.append("orderbook.1.BTCUSDT")
-    ws.set_subscription(topics)
-    ws.connect()
+#     var topics = list[String]()
+#     topics.append("orderbook.1.BTCUSDT")
+#     ws.set_subscription(topics)
+#     ws.connect()
 
-    logd("start")
+#     logd("start")
 
-    run_forever()
+#     run_forever()
 
-    _ = ws ^
-    # except err:
-    #     logi("error: " + str(err))
+#     _ = ws ^
+#     # except err:
+#     #     logi("error: " + str(err))
 
 
 @value
@@ -356,13 +357,13 @@ struct G:
 
 fn test_global_value():
     var g = G(101)
-    let id = 1
-    let ptr = set_global_value_ptr[G](id, Pointer[G].address_of(g))
+    var id = 1
+    var ptr = set_global_value_ptr[G](id, Pointer[G].address_of(g))
     logi("p0: " + String(ptr))
     var g1 = get_global_value[G](1)
     g1.debug()
 
-    let ptr1 = Pointer[G].address_of(g1).__as_index()
+    var ptr1 = int(Pointer[G].address_of(g1))
     logi("p1: " + String(ptr1))
 
     _ = g
@@ -373,115 +374,115 @@ fn test_query_params() raises:
     var queryParams = QueryParams()
     queryParams["a"] = "hello"
     queryParams["b"] = "100"
-    let qstr = queryParams.to_string()
+    var qstr = queryParams.to_string()
     logi("qstr=" + qstr)
 
-    let a = queryParams
-    let astr = a.to_string()
+    var a = queryParams
+    var astr = a.to_string()
     logi("as=" + astr)
 
 
-fn test_okx() raises:
-    let s = get_timestamp()
-    logi(s)
+# fn test_okx() raises:
+#     var s = get_timestamp()
+#     logi(s)
 
-    let a = hmac_sha256_b64(String("abc"), String("abb"))
-    logi(a)
+#     var a = hmac_sha256_b64(String("abc"), String("abb"))
+#     logi(a)
 
-    let env_dict = env_load()
+#     var env_dict = env_load()
 
-    let api_key = env_dict["OKEX_API_KEY"]
-    let api_secret_key = env_dict["OKEX_API_SECRET"]
-    let passphrase = env_dict["OKEX_API_PASSPHRASE"]
-    let b = OkxClient(
-        api_key=api_key, api_secret_key=api_secret_key, passphrase=passphrase
-    )
-    b.get_instruments("SWAP")
-    let res = b.get_account_balance()
-    let status = res.status
-    logi("status: " + str(status))
-    let msg = res.body  # .get[1, StringRef]()
-    logi("msg: " + str(msg))
+#     var api_key = env_dict["OKEX_API_KEY"]
+#     var api_secret_key = env_dict["OKEX_API_SECRET"]
+#     var passphrase = env_dict["OKEX_API_PASSPHRASE"]
+#     var b = OkxClient(
+#         api_key=api_key, api_secret_key=api_secret_key, passphrase=passphrase
+#     )
+#     b.get_instruments("SWAP")
+#     var res = b.get_account_balance()
+#     var status = res.status
+#     logi("status: " + str(status))
+#     var msg = res.body  # .get[1, StringRef]()
+#     logi("msg: " + str(msg))
 
-    # {"msg":"Request header OK-ACCESS-KEY can not be empty.","code":"50103"}
-    # {"msg":"Invalid OK-ACCESS-TIMESTAMP","code":"50112"}
-    # {"msg":"Timestamp request expired","code":"50102"}
-    # {"msg":"Your IP 185.14.47.178 is not included in your API key's b68428e0-6ea2-4dd8-9de2-af7f6114ecb8 IP whitelist.","code":"50110"}
-    # {"msg":"APIKey does not match current environment.","code":"50101"}
-    # {"code":"0","data":[{"adjEq":"","borrowFroz":"","details":[],"imr":"","isoEq":"0","mgnRatio":"","mmr":"","notionalUsd":"","ordFroz":"","totalEq":"0","uTime":"1701569386014"}],"msg":""}
+#     # {"msg":"Request header OK-ACCESS-KEY can not be empty.","code":"50103"}
+#     # {"msg":"Invalid OK-ACCESS-TIMESTAMP","code":"50112"}
+#     # {"msg":"Timestamp request expired","code":"50102"}
+#     # {"msg":"Your IP 185.14.47.178 is not included in your API key's b68428e0-6ea2-4dd8-9de2-af7f6114ecb8 IP whitelist.","code":"50110"}
+#     # {"msg":"APIKey does not match current environment.","code":"50101"}
+#     # {"code":"0","data":[{"adjEq":"","borrowFroz":"","details":[],"imr":"","isoEq":"0","mgnRatio":"","mmr":"","notionalUsd":"","ordFroz":"","totalEq":"0","uTime":"1701569386014"}],"msg":""}
 
 
 fn test_bybitclient() raises:
-    let env_dict = env_load()
+    var env_dict = env_load()
 
-    let access_key = env_dict["BYBIT_API_KEY"]
-    let secret_key = env_dict["BYBIT_API_SECRET"]
-    let client = BybitClient(
+    var access_key = env_dict["BYBIT_API_KEY"]
+    var secret_key = env_dict["BYBIT_API_SECRET"]
+    var client = BybitClient(
         testnet=False, access_key=access_key, secret_key=secret_key
     )
-    # let server_time = client.fetch_public_time()
+    # var server_time = client.fetch_public_time()
     # logi(str(server_time))
-    let category = "linear"
-    let symbol = "BTCUSDT"
+    var category = "linear"
+    var symbol = "BTCUSDT"
 
     try:
-        # let exchange_info = client.fetch_exchange_info(category, symbol)
+        # var exchange_info = client.fetch_exchange_info(category, symbol)
         # logi(str(exchange_info))
 
-        # let kline = client.fetch_kline(category, symbol, interval="1", limit=5, start=0, end=0)
+        # var kline = client.fetch_kline(category, symbol, interval="1", limit=5, start=0, end=0)
         # for index in range(kline.size()):
-        #     let item = kline[index]
+        #     var item = kline[index]
         #     logi(str(item))
 
         # test_orderbook_parse_body()
-        # let ob = client.fetch_orderbook(category, symbol, 5)
+        # var ob = client.fetch_orderbook(category, symbol, 5)
         # logi("-----asks-----")
         # for index in range(ob.asks.size()):
-        #     let item = ob.asks[index]
+        #     var item = ob.asks[index]
         #     logi(str(item))
 
         # logi("-----bids-----")
         # for index in range(ob.bids.size()):
-        #     let item = ob.bids[index]
+        #     var item = ob.bids[index]
         #     logi(str(item))
 
-        # let doc = yyjson_mut_doc()
+        # var doc = yyjson_mut_doc()
         # doc.add_str("category", category)
         # doc.add_str("symbol", symbol)
         # doc.add_str("mode", "0")
         # doc.add_int("a", 100)
-        # let body_str = doc.mut_write()
+        # var body_str = doc.mut_write()
 
         # logi("[" + body_str + "]")
 
         # sign
         # logi("----------sign-----------")
-        # let time_ms_str = "1701825677411" # str(time_ns() / 1e6)
-        # let recv_window_str = "15000"
-        # let payload = '{"category":"linear","symbol":"BTCUSDT","mode":"0"}'
-        # let param_str = time_ms_str + access_key + recv_window_str + payload
+        # var time_ms_str = "1701825677411" # str(time_ns() / 1e6)
+        # var recv_window_str = "15000"
+        # var payload = '{"category":"linear","symbol":"BTCUSDT","mode":"0"}'
+        # var param_str = time_ms_str + access_key + recv_window_str + payload
         # logi("param_str=" + param_str)
-        # let sign_str = hmac_sha256_hex(param_str, secret_key)
+        # var sign_str = hmac_sha256_hex(param_str, secret_key)
         # logi("sign_str=" + sign_str)
 
-        # let res = client.switch_position_mode(category, symbol, "0")
+        # var res = client.switch_position_mode(category, symbol, "0")
         # logi("res=" + str(res))
 
         # try:
-        #     let res = client.switch_position_mode(category, symbol, "0")
+        #     var res = client.switch_position_mode(category, symbol, "0")
         #     logi("res=" + str(res))
         # except err:
         #     logi("error: " + str(err))
 
-        # let res = client.set_leverage(category, symbol, "10", "10")
+        # var res = client.set_leverage(category, symbol, "10", "10")
         # logi("res=" + str(res))
 
-        let side = "Buy"
-        let order_type = "Limit"
-        let qty = "0.0001"
-        let price = "30000"
+        var side = "Buy"
+        var order_type = "Limit"
+        var qty = "0.0001"
+        var price = "30000"
 
-        # let res = client.place_order(category, symbol, side, order_type, qty, price)
+        # var res = client.place_order(category, symbol, side, order_type, qty, price)
         # logi("res=" + str(res))
 
         # cancel_order
@@ -490,14 +491,14 @@ fn test_bybitclient() raises:
 
         # fetch_balance - pass
         # test_fetch_balance_parse_body()
-        # let res = client.fetch_balance("CONTRACT", "USDT")
+        # var res = client.fetch_balance("CONTRACT", "USDT")
         # for index in range(res.size()):
-        #     let item = res[index]
+        #     var item = res[index]
         #     logi("item=" + str(item))
 
-        let res = client.fetch_orders(category, symbol)
+        var res = client.fetch_orders(category, symbol)
         for index in range(len(res)):
-            let item = res[index]
+            var item = res[index]
             logi("item=" + str(item))
         logi("OK")
     except err:
@@ -514,16 +515,16 @@ fn test_yyjson():
     doc.add_str("category", "abc")
     doc.add_str("symbol", "ddd")
     doc.add_str("mode", "1")
-    let body_str = doc.mut_write()
+    var body_str = doc.mut_write()
     logi(body_str)
 
-    let doc_str = '{"category":"abc","symbol":"ddd","mode":"1"}'
-    let doc1 = yyjson_doc(doc_str)
-    let root = doc1.root()
-    # let c = root["category"]
-    # let ret_code = c.str()
-    let ret_code = root["category"].str()
-    # let ret_msg = root["symbol"].str()
+    var doc_str = '{"category":"abc","symbol":"ddd","mode":"1"}'
+    var doc1 = yyjson_doc(doc_str)
+    var root = doc1.root()
+    # var c = root["category"]
+    # var ret_code = c.str()
+    var ret_code = root["category"].str()
+    # var ret_msg = root["symbol"].str()
 
     logi("ret_code: " + ret_code)
 
@@ -536,43 +537,43 @@ fn a(p: Pointer[UInt8]) -> None:
 
 
 fn test_res_perf():
-    let total = 100  # 00000
+    var total = 100  # 00000
 
     @parameter
     fn test():
         for i in range(total):
-            let res = Pointer[UInt8].alloc(1024 * 64)
+            var res = Pointer[UInt8].alloc(1024 * 64)
             res[0] = 0
             a(res)
 
-    let start = time_ns()  # / 1e9
-    # let tm = time_function[test]()
+    var start = time_ns()  # / 1e9
+    # var tm = time_function[test]()
     # test()
 
     for i in range(total):
-        let res = Pointer[UInt8].alloc(1024 * 64)
+        var res = Pointer[UInt8].alloc(1024 * 64)
         res[0] = 0
         a(res)
 
-    let end = time_ns()  # / 1e9
-    let tm = end - start
+    var end = time_ns()  # / 1e9
+    var tm = end - start
     logi("start=" + str(start))
     logi("end=" + str(end))
     logi("tm=" + str(tm))
 
 
 fn test_add():
-    let a = 100
-    let b = 200
-    let c = seq_add(a, b)
+    var a = 100
+    var b = 200
+    var c = seq_add(a, b)
     logi("c=" + str(c))
 
-    # let d = seq_add_with_exception0(a, b)
-    # let e = seq_add_with_exception1(a, b)
+    # var d = seq_add_with_exception0(a, b)
+    # var e = seq_add_with_exception1(a, b)
 
 
 fn test_json() raises:
-    let id = seq_nanoid()
+    var id = seq_nanoid()
     var yy_doc = yyjson_mut_doc()
     yy_doc.add_str("req_id", id)
     yy_doc.add_str("op", "subscribe")
@@ -580,7 +581,7 @@ fn test_json() raises:
     values.append("ab")
     values.append("ab3")
     yy_doc.arr_with_str("args", values)
-    let body_str = yy_doc.mut_write()
+    var body_str = yy_doc.mut_write()
     logd("send: " + body_str)
 
 
@@ -590,7 +591,7 @@ fn run_forever():
 
 fn main() raises:
     _ = seq_ct_init()
-    let ret = seq_photon_init_default()
+    var ret = seq_photon_init_default()
     seq_init_photon_work_pool(2)
 
     seq_init_log(LOG_LEVEL_DBG, "")

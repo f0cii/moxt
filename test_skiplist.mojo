@@ -4,27 +4,27 @@ from base.fixed import Fixed
 
 
 fn test_skiplist() raises:
-    let asks = seq_skiplist_new(True)
+    var asks = seq_skiplist_new(True)
     _ = seq_skiplist_insert(asks, Fixed(3000).value(), Fixed(100).value(), True)
     _ = seq_skiplist_insert(asks, Fixed(3005).value(), Fixed(200).value(), True)
     _ = seq_skiplist_insert(asks, Fixed(2700.1).value(), Fixed(200).value(), True)
     seq_skiplist_dump(asks)
 
     var node = seq_skiplist_begin(asks)
-    let end = seq_skiplist_end(asks)
+    var end = seq_skiplist_end(asks)
     while node != end:
         var key: Int64 = 0
         var value: Int64 = 0
         seq_skiplist_node_value(
             node, Pointer[Int64].address_of(key), Pointer[Int64].address_of(value)
         )
-        let key_ = Fixed.from_value(key)
-        let value_ = Fixed.from_value(value)
+        var key_ = Fixed.from_value(key)
+        var value_ = Fixed.from_value(value)
         print("key: " + str(key_) + " value: " + str(value_))
         node = seq_skiplist_next(asks, node)
 
-    let v = seq_skiplist_remove(asks, Fixed(3000).value())
-    let vf = Fixed.from_value(v)
+    var v = seq_skiplist_remove(asks, Fixed(3000).value())
+    var vf = Fixed.from_value(v)
 
     assert_equal(str(vf), "100")
 

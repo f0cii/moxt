@@ -14,14 +14,14 @@ fn time_us() -> Int64:
 
 
 fn set_global_value_ptr[V: AnyRegType](id: Int, v: Pointer[V]) -> Int:
-    let ptr = v.__as_index()
+    var ptr = int(v)
     seq_set_global_int(id, ptr)
     return ptr
 
 
 @always_inline
 fn get_global_value[V: AnyRegType](id: Int) -> V:
-    let ptr = seq_get_global_int(id)
+    var ptr = seq_get_global_int(id)
     return unsafe.bitcast[V](ptr).load()
 
 

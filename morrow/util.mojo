@@ -9,7 +9,7 @@ fn _is_leap(year: Int) -> Bool:
 
 def _days_before_year(year: Int) -> Int:
     "year -> number of days before January 1st of year."
-    let y = year - 1
+    var y = year - 1
     return y * 365 + y // 4 - y // 100 + y // 400
 
 
@@ -69,7 +69,7 @@ fn _repeat_string(string: String, n: Int) -> String:
 
 
 fn rjust(string: String, width: Int, fillchar: String = " ") -> String:
-    let extra = width - len(string)
+    var extra = width - len(string)
     return _repeat_string(fillchar, extra) + string
 
 

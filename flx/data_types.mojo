@@ -240,7 +240,7 @@ struct StackValue(CollectionElement):
             value[0] = v.cast[DType.uint8]()
             return StackValue(value, ValueBitWidth.of(v), ValueType.of[D]())
         elif D == DType.uint8 or D == DType.int8:
-            let v1 = bitcast[DType.uint8, 1](v)
+            var v1 = bitcast[DType.uint8, 1](v)
             value[0] = v1[0]
             return StackValue(value, ValueBitWidth.of(v), ValueType.of[D]())
         elif D == DType.uint16 or D == DType.int16 or D == DType.float16:
@@ -271,7 +271,7 @@ struct StackValue(CollectionElement):
     @staticmethod
     @always_inline
     fn of(v: Int) -> Self:
-        let value = bitcast[DType.uint8, 8](Int64(v))
+        var value = bitcast[DType.uint8, 8](Int64(v))
         return StackValue(value, ValueBitWidth.of(v), ValueType.Int)
 
     @always_inline
@@ -289,10 +289,10 @@ struct StackValue(CollectionElement):
         if self.type.is_inline():
             return self.width
         for i in range(4):
-            let width = UInt64(1 << i)
-            let offset_loc = size + padding_size(size, width) + UInt64(index * width)
-            let offset = offset_loc - self.as_uint()
-            let bit_width = ValueBitWidth.of(offset.to_int())
+            var width = UInt64(1 << i)
+            var offset_loc = size + padding_size(size, width) + UInt64(index * width)
+            var offset = offset_loc - self.as_uint()
+            var bit_width = ValueBitWidth.of(offset.to_int())
             if (1 << bit_width.value).cast[DType.uint64]() == width:
                 return bit_width
 
@@ -311,7 +311,7 @@ struct StackValue(CollectionElement):
         return bitcast[DType.uint64, 1](self.value)
 
     fn to_value(self, byte_width: UInt64) -> SIMD[DType.uint8, 8]:
-        let self_byte_width = (1 << self.width.value).cast[DType.uint64]()
+        var self_byte_width = (1 << self.width.value).cast[DType.uint64]()
         if self_byte_width == byte_width or self.type == ValueType.UInt:
             return self.value
         else:

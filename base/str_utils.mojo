@@ -21,8 +21,8 @@ fn to_repr(s: String) -> String:
 
 
 fn to_string_ref(s: String) -> StringRef:
-    let slen = len(s)
-    let ptr = Pointer[Int8]().alloc(slen)
+    var slen = len(s)
+    var ptr = Pointer[Int8]().alloc(slen)
 
     memcpy(ptr, s._buffer.data.value, slen)
 
@@ -30,7 +30,7 @@ fn to_string_ref(s: String) -> StringRef:
 
 
 fn to_lower(s: String, slen: Int) -> String:
-    let ptr = Pointer[Int8]().alloc(slen)
+    var ptr = Pointer[Int8]().alloc(slen)
 
     # memcpy(ptr, s._buffer.data.bitcast[Int8](), slen)
     memcpy(ptr, s._buffer.data.value, slen)
@@ -47,7 +47,7 @@ fn to_lower(s: String) -> String:
 
 
 fn to_upper(s: String, slen: Int) -> String:
-    let ptr = Pointer[Int8]().alloc(slen)
+    var ptr = Pointer[Int8]().alloc(slen)
 
     # memcpy(ptr, s._buffer.data.bitcast[Int8](), slen)
     memcpy(ptr, s._buffer.data.value, slen)
@@ -64,8 +64,8 @@ fn to_upper(s: String) -> String:
 
 
 fn str_contains(full_string: String, substring: String) -> Bool:
-    let m = len(full_string)
-    let n = len(substring)
+    var m = len(full_string)
+    var n = len(substring)
     if n > m:
         return False
     for i in range(m - n + 1):

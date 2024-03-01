@@ -29,7 +29,7 @@ struct SSMap:
 
     fn __getitem__(self, key: StringLiteral) -> String:
         var n: c_size_t = 0
-        let s = seq_ssmap_get(
+        var s = seq_ssmap_get(
             self.ptr, key.data()._as_scalar_pointer(), Pointer[c_size_t].address_of(n)
         )
         return c_str_to_string(s, n)

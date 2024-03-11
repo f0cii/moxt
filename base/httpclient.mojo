@@ -155,13 +155,13 @@ struct HttpClient:
         var res = self.do_request(request_path, VERB_PUT, headers, data)
         return res
 
-    @always_inline
-    @staticmethod
-    fn cast_to_cheaders(headers: Optional[Headers], inout dist: CHeaders):
-        if not headers:
-            return
-        for e in headers.value().items():
-            dist[e[].key.s] = e[].value
+    fn do_request(
+        self, path: String, verb: Int, headers: Optional[Headers], body: String
+    ) -> HttpResponse:
+        var _headers = CHeaders()
+        self.cast_to_cheaders(headers, _headers)
+        var res = self.do_request(path, verb, _headers, body)
+        return res
 
     fn do_request(
         self, path: String, verb: Int, headers: CHeaders, body: String
@@ -187,3 +187,11 @@ struct HttpClient:
         # print("s=" + s)
 
         return HttpResponse(status, s)
+
+    @always_inline
+    @staticmethod
+    fn cast_to_cheaders(headers: Optional[Headers], inout dist: CHeaders):
+        if not headers:
+            return
+        for e in headers.value().items():
+            dist[e[].key.s] = e[].value

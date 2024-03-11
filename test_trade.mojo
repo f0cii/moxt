@@ -531,7 +531,7 @@ fn test_ti() raises:
         if not is_valided:
             break
         
-        # var info_ = __get_address_as_owned_value(info.value)
+        # var info_ = info.value[]
         var info_ = info.take_value()
         var input_names = info_.input_names()
         var input_names_str = list_to_str(input_names)
@@ -734,6 +734,15 @@ fn test_queue() raises:
     assert_equal(a103.__bool__(), False)
 
 
+fn test_httpget() raises:
+    var client = HttpClient("https://www.baidu.com")
+    var headers = Headers()
+    headers["abc"] = "abc"
+    var res = client.get("/", headers)
+    print(res.status_code)
+    print(res.text)
+
+
 fn test_local_position() raises:
     var lp = LocalPosition()
     lp.add(100, 3000)
@@ -772,7 +781,8 @@ fn main() raises:
     # test_ti_call_at_index()
     # test_ti_call_at_index2()
     # test_fixed()
-    test_queue()
+    # test_queue()
+    test_httpget()
 
 
     for i in range (n):

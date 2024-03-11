@@ -53,15 +53,15 @@ struct BybitClient:
 
     fn fetch_public_time(self) raises -> ServerTime:
         var ret = self.do_get("/v3/public/time", "", False)
-        if ret.status != 200:
-            raise Error("error status=" + str(ret.status))
+        if ret.status_code != 200:
+            raise Error("error status_code=" + str(ret.status_code))
 
         # print(ret.body)
-        logd("body: " + str(ret.body))
+        logd("text: " + str(ret.text))
 
         # {"retCode":0,"retMsg":"OK","result":{"timeSecond":"1696233582","timeNano":"1696233582169993116"},"retExtInfo":{},"time":1696233582169}
         var parser = OndemandParser(ParserBufferSize)
-        var doc = parser.parse(ret.body)
+        var doc = parser.parse(ret.text)
         var ret_code = doc.get_int("retCode")
         var ret_msg = doc.get_str("retMsg")
         if ret_code != 0:
@@ -86,10 +86,10 @@ struct BybitClient:
         var query_str = query_values.to_string()
         logi("query_str: " + query_str)
         var ret = self.do_get("/v5/market/instruments-info", query_str, False)
-        if ret.status != 200:
-            raise Error("error status=" + str(ret.status))
+        if ret.status_code != 200:
+            raise Error("error status_code=" + str(ret.status_code))
 
-        logd(ret.body)
+        logd(ret.text)
 
         # {"retCode":0,"retMsg":"OK","result":{"category":"linear","list":[{"symbol":"BTCUSDT","contractType":"LinearPerpetual","status":"Trading","baseCoin":"BTC","quoteCoin":"USDT","launchTime":"1584230400000","deliveryTime":"0","deliveryFeeRate":"","priceScale":"2","leverageFilter":{"minLeverage":"1","maxLeverage":"100.00","leverageStep":"0.01"},"priceFilter":{"minPrice":"0.10","maxPrice":"199999.80","tickSize":"0.10"},"lotSizeFilter":{"maxOrderQty":"100.000","minOrderQty":"0.001","qtyStep":"0.001","postOnlyMaxOrderQty":"1000.000"},"unifiedMarginTrade":true,"fundingInterval":480,"settleCoin":"USDT","copyTrading":"both"}],"nextPageCursor":""},"retExtInfo":{},"time":1701762078208}
 
@@ -97,7 +97,7 @@ struct BybitClient:
         var stepSize: Float64 = 0
 
         var parser = OndemandParser(ParserBufferSize)
-        var doc = parser.parse(ret.body)
+        var doc = parser.parse(ret.text)
         var ret_code = doc.get_int("retCode")
         var ret_msg = doc.get_str("retMsg")
         if ret_code != 0:
@@ -160,8 +160,8 @@ struct BybitClient:
             query_values["end"] = str(end)
         var query_str = query_values.to_string()
         var ret = self.do_get("/v5/market/kline", query_str, False)
-        if ret.status != 200:
-            raise Error("error status=" + str(ret.status))
+        if ret.status_code != 200:
+            raise Error("error status_code=" + str(ret.status_code))
 
         # logi(ret.body)
         # {"retCode":0,"retMsg":"OK","result":{"symbol":"BTCUSDT","category":"linear","list":[["1687589640000","30709.9","30710.4","30709.9","30710.3","3.655","112245.7381"],["1687589580000","30707.9","30710","30704.7","30709.9","21.984","675041.8648"],["1687589520000","30708","30714.7","30705","30707.9","33.378","1025097.6459"],["1687589460000","30689.9","30710.3","30689.9","30708","51.984","1595858.2778"],["1687589400000","30678.6","30690.9","30678.5","30689.9","38.747","1188886.4093"]]},"retExtInfo":{},"time":1687589659062}
@@ -169,7 +169,7 @@ struct BybitClient:
         var res = list[KlineItem]()
 
         var parser = DomParser(ParserBufferSize)
-        var doc = parser.parse(ret.body)
+        var doc = parser.parse(ret.text)
         var ret_code = doc.get_int("retCode")
         var ret_msg = doc.get_str("retMsg")
         if ret_code != 0:
@@ -226,8 +226,8 @@ struct BybitClient:
             query_values["limit"] = str(limit)
         var query_str = query_values.to_string()
         var ret = self.do_get("/v5/market/orderbook", query_str, False)
-        if ret.status != 200:
-            raise Error("error status=" + str(ret.status))
+        if ret.status_code != 200:
+            raise Error("error status_code=" + str(ret.status_code))
 
         # print(ret.body)
         # {
@@ -249,7 +249,7 @@ struct BybitClient:
         var bids = list[OrderBookItem]()
 
         var parser = DomParser(ParserBufferSize)
-        var doc = parser.parse(ret.body)
+        var doc = parser.parse(ret.text)
         var ret_code = doc.get_int("retCode")
         var ret_msg = doc.get_str("retMsg")
         if ret_code != 0:
@@ -313,8 +313,8 @@ struct BybitClient:
         # {"category":"linear","symbol":"BTCUSDT","mode":"0"}
         var ret = self.do_post("/v5/position/switch-mode", body_str, True)
         # print(ret)
-        if ret.status != 200:
-            raise Error("error status=" + str(ret.status))
+        if ret.status_code != 200:
+            raise Error("error status_code=" + str(ret.status_code))
         # /*
 
         # * {"retCode":10001,"retMsg":"params error: position_mode invalid","result":{},"retExtInfo":{},"time":1687601751714}
@@ -358,8 +358,8 @@ struct BybitClient:
 
         var ret = self.do_post("/v5/position/set-leverage", body_str, True)
         # print(ret)
-        if ret.status != 200:
-            raise Error("error status=" + str(ret.status))
+        if ret.status_code != 200:
+            raise Error("error status_code=" + str(ret.status_code))
 
         # /*
         # * {"retCode":0,"retMsg":"OK","result":{},"retExtInfo":{},"time":1696339881214}
@@ -368,7 +368,7 @@ struct BybitClient:
         # */
 
         var parser = DomParser(ParserBufferSize)
-        var doc = parser.parse(ret.body)
+        var doc = parser.parse(ret.text)
         var ret_code = doc.get_int("retCode")
         var ret_msg = doc.get_str("retMsg")
         if ret_code != 0:
@@ -417,8 +417,8 @@ struct BybitClient:
 
         var ret = self.do_post("/v5/order/create", body_str, True)
         # print(ret)
-        if ret.status != 200:
-            raise Error("error status=" + str(ret.status))
+        if ret.status_code != 200:
+            raise Error("error status_code=" + str(ret.status_code))
 
         # * {"retCode":10001,"retMsg":"params error: side invalid","result":{},"retExtInfo":{},"time":1687610278834}
         # * {"retCode":10001,"retMsg":"position idx not match position mode","result":{},"retExtInfo":{},"time":1687610314417}
@@ -431,7 +431,7 @@ struct BybitClient:
         # print(ret.body)
 
         var parser = DomParser(ParserBufferSize)
-        var doc = parser.parse(ret.body)
+        var doc = parser.parse(ret.text)
         var ret_code = doc.get_int("retCode")
         var ret_msg = doc.get_str("retMsg")
         if ret_code != 0:
@@ -470,8 +470,8 @@ struct BybitClient:
 
         var ret = self.do_post("/v5/order/cancel", body_str, True)
         # print(ret)
-        if ret.status != 200:
-            raise Error("error status=" + str(ret.status))
+        if ret.status_code != 200:
+            raise Error("error status=" + str(ret.status_code))
 
         # print(ret.body)
 
@@ -480,7 +480,7 @@ struct BybitClient:
         # * {"retCode":0,"retMsg":"OK","result":{"orderId":"1c64212f-8b16-4d4b-90c1-7a4cb55f240a","orderLinkId":""},"retExtInfo":{},"time":1689204723386}
 
         var parser = DomParser(ParserBufferSize)
-        var doc = parser.parse(ret.body)
+        var doc = parser.parse(ret.text)
         var ret_code = doc.get_int("retCode")
         var ret_msg = doc.get_str("retMsg")
         if ret_code != 0:
@@ -519,8 +519,8 @@ struct BybitClient:
 
         var ret = self.do_post("/v5/order/cancel-all", body_str, True)
         # print(ret)
-        if ret.status != 200:
-            raise Error("error status=" + str(ret.status))
+        if ret.status_code != 200:
+            raise Error("error status=" + str(ret.status_code))
 
         # logd(ret.body)
 
@@ -528,7 +528,7 @@ struct BybitClient:
         var res = list[OrderResponse]()
 
         var parser = DomParser(ParserBufferSize)
-        var doc = parser.parse(ret.body)
+        var doc = parser.parse(ret.text)
         var ret_code = doc.get_int("retCode")
         var ret_msg = doc.get_str("retMsg")
         if ret_code != 0:
@@ -565,8 +565,8 @@ struct BybitClient:
         query_values["coin"] = coin
         var query_str = query_values.to_string()
         var ret = self.do_get("/v5/account/wallet-balance", query_str, True)
-        if ret.status != 200:
-            raise Error("error status=" + str(ret.status))
+        if ret.status_code != 200:
+            raise Error("error status_code=" + str(ret.status_code))
 
         # print(ret.body)
 
@@ -574,7 +574,7 @@ struct BybitClient:
         var res = list[BalanceInfo]()
 
         var parser = OndemandParser(ParserBufferSize)
-        var doc = parser.parse(ret.body)
+        var doc = parser.parse(ret.text)
 
         var ret_code = doc.get_int("retCode")
         var ret_msg = doc.get_str("retMsg")
@@ -654,15 +654,15 @@ struct BybitClient:
         var query_str = query_values.to_string()
         logd("query_str: " + query_str)
         var ret = self.do_get("/v5/order/realtime", query_str, True)
-        if ret.status != 200:
-            raise Error("error status=" + str(ret.status) + " body=" + str(ret.body))
+        if ret.status_code != 200:
+            raise Error("error status_code=" + str(ret.status_code) + " text=" + str(ret.text))
 
         # {"retCode":0,"retMsg":"OK","result":{"list":[],"nextPageCursor":"","category":"linear"},"retExtInfo":{},"time":1696392159183}
         # {"retCode":10002,"retMsg":"invalid request, please check your server timestamp or recv_window param. req_timestamp[1696396708819],server_timestamp[1696396707813],recv_window[15000]","result":{},"retExtInfo":{},"time":1696396707814}
         var res = list[OrderInfo]()
 
         var parser = DomParser(ParserBufferSize)
-        var doc = parser.parse(ret.body)
+        var doc = parser.parse(ret.text)
 
         var ret_code = doc.get_int("retCode")
         var ret_msg = doc.get_str("retMsg")
@@ -762,15 +762,15 @@ struct BybitClient:
         var query_str = query_values.to_string()
         loge("query_str=" + query_str)
         var ret = self.do_get("/v5/order/history", query_str, True)
-        if ret.status != 200:
-            raise Error("error status=[" + str(ret.status) + "]")
+        if ret.status_code != 200:
+            raise Error("error status_code=[" + str(ret.status_code) + "]")
 
         # print(ret.body)
 
         var res = list[OrderInfo]()
 
         var parser = DomParser(ParserBufferSize)
-        var doc = parser.parse(ret.body)
+        var doc = parser.parse(ret.text)
         var ret_code = doc.get_int("retCode")
         var ret_msg = doc.get_str("retMsg")
         if ret_code != 0:
@@ -855,8 +855,8 @@ struct BybitClient:
         # baseCoin, settleCoin, limit, cursor
         var query_str = query_values.to_string()
         var ret = self.do_get("/v5/position/list", query_str, True)
-        if ret.status != 200:
-            raise Error("error status=[" + str(ret.status) + "]")
+        if ret.status_code != 200:
+            raise Error("error status=[" + str(ret.status_code) + "]")
 
         # {"retCode":10002,"retMsg":"invalid request, please check your server timestamp or recv_window param. req_timestamp[1696255257619],server_timestamp[1696255255967],recv_window[15000]","result":{},"retExtInfo":{},"time":1696255255967}
 
@@ -864,7 +864,7 @@ struct BybitClient:
 
         var res = list[PositionInfo]()
         var parser = DomParser(ParserBufferSize)
-        var doc = parser.parse(ret.body)
+        var doc = parser.parse(ret.text)
         var ret_code = doc.get_int("retCode")
         var ret_msg = doc.get_str("retMsg")
         if ret_code != 0:
@@ -994,7 +994,7 @@ struct BybitClient:
         # logd("request_path: " + request_path)
         # logd("param: " + param_)
         var res = self.client.get(request_path, headers=headers)
-        logd("res.status=" + str(res.status) + " body=" + res.body)
+        logd("res.status_code=" + str(res.status_code) + " text=" + res.text)
         return res
 
     fn do_post(
@@ -1005,7 +1005,7 @@ struct BybitClient:
         headers["Content-Type"] = "application/json"
         self.do_sign(headers, body, sign)
         var res = self.client.post(path, data=body, headers=headers)
-        logd("res.status=" + str(res.status) + " body=" + res.body)
+        logd("res.status=" + str(res.status_code) + " text=" + res.text)
         return res
 
 

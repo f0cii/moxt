@@ -78,7 +78,7 @@ fn emit_on_connect(id: Int) -> None:
         logd("emit_on_connect nil")
         return
     var pointer = AnyPointer[OnConnectWrapper].__from_index(ptr)
-    __get_address_as_lvalue(pointer.value)()
+    pointer[]()
 
 
 fn emit_on_heartbeat(id: Int) -> None:
@@ -88,7 +88,7 @@ fn emit_on_heartbeat(id: Int) -> None:
         logd("emit_on_heartbeat nil")
         return
     var pointer = AnyPointer[OnHeartbeatWrapper].__from_index(ptr)
-    __get_address_as_lvalue(pointer.value)()
+    pointer[]()
 
 
 fn emit_on_message(id: Int, data: c_char_pointer, data_len: c_size_t) -> None:
@@ -99,7 +99,7 @@ fn emit_on_message(id: Int, data: c_char_pointer, data_len: c_size_t) -> None:
         logd("emit_on_message nil")
         return
     var pointer = AnyPointer[OnMessageWrapper].__from_index(ptr)
-    __get_address_as_lvalue(pointer.value)(data, data_len)
+    pointer[](data, data_len)
 
 
 struct WebSocket:

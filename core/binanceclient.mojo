@@ -47,14 +47,14 @@ struct BinanceClient:
 
     fn public_time(self) raises -> Int:
         var ret = self.do_get("/fapi/v1/time", "", False)
-        if ret.status != 200:
-            raise Error("error status=" + str(ret.status) + " body=" + ret.body)
+        if ret.status_code != 200:
+            raise Error("error status_code=" + str(ret.status_code) + " text=" + ret.text)
 
-        logd("body: " + str(ret.body))
+        logd("text: " + str(ret.text))
 
         # {"serverTime":1704283776645}
         var parser = OndemandParser(ParserBufferSize)
-        var doc = parser.parse(ret.body)
+        var doc = parser.parse(ret.text)
         var server_time = doc.get_int("serverTime")
         if server_time == 0:
             raise Error("error server_time=0")
@@ -107,8 +107,8 @@ struct BinanceClient:
 
         var ret = self.do_post("/fapi/v1/order", query_str, True)
         # print(ret)
-        if ret.status != 200:
-            raise Error("error status=" + str(ret.status) + " body=" + ret.body)
+        if ret.status_code != 200:
+            raise Error("error status_code=" + str(ret.status_code) + " text=" + ret.text)
 
         # {"code":-1102,"msg":"Mandatory parameter 'timeinforce' was not sent, was empty/null, or malformed."}
         # {"code":-1102,"msg":"Mandatory parameter 'price' was not sent, was empty/null, or malformed."}
@@ -117,7 +117,7 @@ struct BinanceClient:
         # logd(ret.body)
 
         var parser = DomParser(ParserBufferSize)
-        var doc = parser.parse(ret.body)
+        var doc = parser.parse(ret.text)
         var code = doc.get_int("code")
         if code != 0:
             var msg = doc.get_str("msg")
@@ -151,15 +151,15 @@ struct BinanceClient:
 
         var ret = self.do_delete("/fapi/v1/order", query_str, True)
         # print(ret)
-        if ret.status != 200:
-            raise Error("error status=" + str(ret.status) + " body=" + ret.body)
+        if ret.status_code != 200:
+            raise Error("error status_code=" + str(ret.status_code) + " text=" + ret.status_code)
 
         # {"code":-2015,"msg":"Invalid API-key, IP, or permissions for action, request ip: 100.100.100.100"}
         # {"orderId":237740210409,"symbol":"BTCUSDT","status":"CANCELED","clientOrderId":"62ayQ4MjyVIaCkvDX00dhh","price":"20000.00","avgPrice":"0.00","origQty":"0.010","executedQty":"0.000","cumQty":"0.000","cumQuote":"0.00000","timeInForce":"GTC","type":"LIMIT","reduceOnly":false,"closePosition":false,"side":"BUY","positionSide":"LONG","stopPrice":"0.00","workingType":"CONTRACT_PRICE","priceProtect":false,"origType":"LIMIT","priceMatch":"NONE","selfTradePreventionMode":"NONE","goodTillDate":0,"updateTime":1704339843127}
         # logd(ret.body)
 
         var parser = DomParser(ParserBufferSize)
-        var doc = parser.parse(ret.body)
+        var doc = parser.parse(ret.text)
         var code = doc.get_int("code")
         if code != 0:
             var msg = doc.get_str("msg")
@@ -184,13 +184,13 @@ struct BinanceClient:
         """
         var ret = self.do_post("/fapi/v1/listenKey", "", True)
         # print(ret)
-        if ret.status != 200:
-            raise Error("error status=" + str(ret.status) + " body=" + ret.body)
+        if ret.status_code != 200:
+            raise Error("error status_code=" + str(ret.status_code) + " text=" + ret.text)
 
-        logd("body=" + ret.body)
+        logd("text=" + ret.text)
 
         var parser = DomParser(ParserBufferSize)
-        var doc = parser.parse(ret.body)
+        var doc = parser.parse(ret.text)
         var code = doc.get_int("code")
         if code != 0:
             var msg = doc.get_str("msg")
@@ -211,14 +211,14 @@ struct BinanceClient:
         """
         var ret = self.do_put("/fapi/v1/listenKey", "", True)
         # print(ret)
-        if ret.status != 200:
-            raise Error("error status=" + str(ret.status) + " body=" + ret.body)
+        if ret.status_code != 200:
+            raise Error("error status_code=" + str(ret.status_code) + " text=" + ret.text)
 
-        logd("body=" + ret.body)
+        logd("text=" + ret.text)
         # {}
 
         var parser = DomParser(ParserBufferSize)
-        var doc = parser.parse(ret.body)
+        var doc = parser.parse(ret.text)
         var code = doc.get_int("code")
         if code != 0:
             var msg = doc.get_str("msg")

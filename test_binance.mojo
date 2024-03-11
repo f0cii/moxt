@@ -37,8 +37,8 @@ fn test_httpclient_perf():
     headers["a"] = "aaaaaaaaaaaaaaaa"
     headers["b"] = "aaaaaaaaaaaaaaaa"
     var res = client.get(path, headers)
-    logd("status: " + str(res.status))
-    logd("body: " + res.body)
+    logd("status_code: " + str(res.status_code))
+    logd("text: " + res.text)
 
 
 fn test_websocket() raises:

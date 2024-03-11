@@ -160,9 +160,7 @@ struct SmartGridStrategy(BaseStrategy):
         var total_profit: Float64 = 0
         for cell_ptr in self.grid.cells:
             # Compute the floating loss for each grid and accumulate
-            total_profit += __get_address_as_lvalue(
-                cell_ptr.value
-            ).calculate_profit_amount(ask, bid, position_idx)
+            total_profit += cell_ptr[].calculate_profit_amount(ask, bid, position_idx)
         return total_profit
 
     fn calculate_cell_profits(
@@ -206,9 +204,9 @@ struct SmartGridStrategy(BaseStrategy):
             # var cell = self.grid.cells[index]
             var cell_ptr = self.grid.cells.unsafe_get(index)
             if self.is_within_buy_range(
-                __get_address_as_lvalue(cell_ptr.value), current_cell_level
+                cell_ptr[], current_cell_level
             ):
-                self.place_buy_order(index, __get_address_as_lvalue(cell_ptr.value))
+                self.place_buy_order(index, cell_ptr[])
 
     # Check whether the grid unit is within the buy order range
     fn is_within_buy_range(

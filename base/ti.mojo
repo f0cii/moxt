@@ -234,7 +234,7 @@ struct Outputs:
             v.resize(size, 0.0)
             self.data_vec.push_back(v ^)
             self.data.store(
-                i, __get_address_as_lvalue((self.data_vec.data + i).value).data
+                i, (self.data_vec.data + i)[].data
             )
 
 

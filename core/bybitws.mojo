@@ -160,7 +160,7 @@ struct BybitWS:
         var coc_any_ptr = AnyPointer[ObjectContainer[OnConnectWrapper]].__from_index(
             coc_ptr
         )
-        var wrapper_ptr = __get_address_as_lvalue(coc_any_ptr.value).emplace_as_index(
+        var wrapper_ptr = coc_any_ptr[].emplace_as_index(
             wrapper
         )
         set_on_connect(id, wrapper_ptr)
@@ -171,7 +171,7 @@ struct BybitWS:
         var coc_any_ptr = AnyPointer[ObjectContainer[OnHeartbeatWrapper]].__from_index(
             coc_ptr
         )
-        var wrapper_ptr = __get_address_as_lvalue(coc_any_ptr.value).emplace_as_index(
+        var wrapper_ptr = coc_any_ptr[].emplace_as_index(
             wrapper
         )
         set_on_heartbeat(id, wrapper_ptr)
@@ -182,7 +182,7 @@ struct BybitWS:
         var coc_any_ptr = AnyPointer[ObjectContainer[OnMessageWrapper]].__from_index(
             coc_ptr
         )
-        var wrapper_ptr = __get_address_as_lvalue(coc_any_ptr.value).emplace_as_index(
+        var wrapper_ptr = coc_any_ptr[].emplace_as_index(
             wrapper
         )
         set_on_message(id, wrapper_ptr)
@@ -236,7 +236,6 @@ struct BybitWS:
 
         fn wrapper():
             __get_address_as_lvalue(self_ptr.address).on_heartbeat()
-
         return wrapper
 
     # fn get_on_message(self) -> on_message_callback:

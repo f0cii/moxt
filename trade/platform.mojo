@@ -162,7 +162,7 @@ struct Platform:
     fn notify_order_update(inout self, order: Order):
         for i in range(len(self._order_update_callbacks)):
             var ptr = self._order_update_callbacks.unsafe_get(i)
-            __get_address_as_lvalue(ptr.value)(order)
+            ptr[](order)
 
     fn get_order(self, cid: String) raises -> Order:
         self._order_cache_lock.lock()

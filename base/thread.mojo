@@ -615,7 +615,7 @@ struct ArgDataRef:
 
     fn __init__(owned value: ArgData) -> Self:
         var data = Pointer[ArgData].alloc(1)
-        __get_address_as_uninit_lvalue(data.offset(0).address) = value
+        data.offset(0)[] = value
         return Self {data: data}
 
     fn __copyinit__(existing: Self) -> Self:

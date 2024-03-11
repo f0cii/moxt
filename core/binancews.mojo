@@ -91,7 +91,7 @@ struct BinanceWS:
         var coc_any_ptr = AnyPointer[ObjectContainer[OnConnectWrapper]].__from_index(
             coc_ptr
         )
-        var wrapper_ptr = __get_address_as_lvalue(coc_any_ptr.value).emplace_as_index(wrapper)
+        var wrapper_ptr = coc_any_ptr[].emplace_as_index(wrapper)
         seq_set_global_int(id, wrapper_ptr)
 
     fn set_on_heartbeat(self, owned wrapper: OnHeartbeatWrapper):
@@ -100,7 +100,7 @@ struct BinanceWS:
         var coc_any_ptr = AnyPointer[ObjectContainer[OnHeartbeatWrapper]].__from_index(
             coc_ptr
         )
-        var wrapper_ptr = __get_address_as_lvalue(coc_any_ptr.value).emplace_as_index(wrapper)
+        var wrapper_ptr = coc_any_ptr[].emplace_as_index(wrapper)
         seq_set_global_int(id, wrapper_ptr)
 
     fn set_on_message(self, owned wrapper: OnMessageWrapper):
@@ -109,7 +109,7 @@ struct BinanceWS:
         var coc_any_ptr = AnyPointer[ObjectContainer[OnMessageWrapper]].__from_index(
             coc_ptr
         )
-        var wrapper_ptr = __get_address_as_lvalue(coc_any_ptr.value).emplace_as_index(wrapper)
+        var wrapper_ptr = coc_any_ptr[].emplace_as_index(wrapper)
         seq_set_global_int(id, wrapper_ptr)
 
     fn subscribe(self):
@@ -119,7 +119,7 @@ struct BinanceWS:
         # var self_ptr = Reference(self).get_unsafe_pointer()
 
         fn wrapper():
-            # __get_address_as_lvalue(self_ptr.address).on_connect()
+            # self_ptr[].on_connect()
             pass
 
         return wrapper
@@ -128,7 +128,7 @@ struct BinanceWS:
         # var self_ptr = Reference(self).get_unsafe_pointer()
 
         fn wrapper():
-            # __get_address_as_lvalue(self_ptr.address).on_heartbeat()
+            # self_ptr[].on_heartbeat()
             pass
 
         return wrapper

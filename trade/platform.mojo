@@ -1,6 +1,7 @@
 from stdlib_extensions.builtins import dict, list, HashableInt, HashableStr
 from stdlib_extensions.builtins.string import *
 from ylstdlib import *
+from ylstdlib.dynamic_vector import DynamicVector
 from base.c import *
 from base.mo import *
 from base.thread import *
@@ -16,7 +17,7 @@ alias OrderUpdateCallback = fn (order: Order) escaping -> None
 
 
 @value
-struct OrderUpdateCallbackWrapper(ListElement):
+struct OrderUpdateCallbackWrapper(CollectionElement):
     var _callback: OrderUpdateCallback
 
     fn __init__(inout self, owned callback: OrderUpdateCallback):
@@ -38,7 +39,7 @@ struct Platform:
     var _symbol_index_dict: dict[HashableStr, Int]
     var _order_cache: dict[HashableStr, Order]  # key: order_client_id
     var _order_cache_lock: RWLock
-    var _order_update_callbacks: List[OrderUpdateCallbackWrapper]
+    var _order_update_callbacks: DynamicVector[OrderUpdateCallbackWrapper]
 
     fn __init__(inout self, config: AppConfig):
         logd("Platform.__init__")
@@ -51,7 +52,9 @@ struct Platform:
         self._symbol_index_dict = dict[HashableStr, Int]()
         self._order_cache = dict[HashableStr, Order]()
         self._order_cache_lock = RWLock()
-        self._order_update_callbacks = List[OrderUpdateCallbackWrapper]()
+        self._order_update_callbacks = DynamicVector[OrderUpdateCallbackWrapper](
+            capacity=16
+        )
         logd("Platform.__init__ done")
 
     fn __moveinit__(inout self, owned existing: Self):
@@ -161,8 +164,8 @@ struct Platform:
     @always_inline
     fn notify_order_update(inout self, order: Order):
         for i in range(len(self._order_update_callbacks)):
-            var ptr = self._order_update_callbacks.unsafe_get(i)
-            ptr[](order)
+            var ref = self._order_update_callbacks.__refitem__(i)
+            ref[](order)
 
     fn get_order(self, cid: String) raises -> Order:
         self._order_cache_lock.lock()

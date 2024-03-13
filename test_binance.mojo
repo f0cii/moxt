@@ -296,11 +296,11 @@ fn test_binanceclient() raises:
 
     var order_start = time_us()
 
-    # var res = client.place_order(symbol, side, type_, position_side, quantity, price)
-    # logi("res=" + str(res))
+    var place_order_res = client.place_order(symbol, side, type_, position_side, quantity, price)
+    logi("res=" + str(place_order_res))
 
-    # var res = client.cancel_order(symbol, order_id="237740210409")
-    # logi("res=" + str(res))
+    var cancel_order_res = client.cancel_order(symbol, order_id="237740210409")
+    logi("res=" + str(cancel_order_res))
 
     var order_end = time_us()
 

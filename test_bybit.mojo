@@ -158,8 +158,8 @@ fn test_bybitclient() raises:
     client.set_verbose(True)
 
     # Preparation phase
-    # var server_time = client.fetch_public_time()
-    # logi(str(server_time))
+    var server_time = client.fetch_public_time()
+    logi(str(server_time))
     # _ = seq_photon_thread_sleep_ms(200)
 
     var category = "linear"
@@ -171,54 +171,54 @@ fn test_bybitclient() raises:
 
     # <ExchangeInfo: symbol=BTCUSDT, tick_size=0.10000000000000001, step_size=0.001>
 
-    # var kline = client.fetch_kline(category, symbol, interval="1", limit=5, start=0, end=0)
-    # for item in kline:
-    #     logi(str(item))
+    var kline = client.fetch_kline(category, symbol, interval="1", limit=5, start=0, end=0)
+    for item in kline:
+        logi(str(item))
 
     # test_orderbook_parse_body()
-    # var ob = client.fetch_orderbook(category, symbol, 5)
-    # logi("-----asks-----")
-    # for item in ob.asks:
-    #     logi(str(item))
+    var ob = client.fetch_orderbook(category, symbol, 5)
+    logi("-----asks-----")
+    for item in ob.asks:
+        logi(str(item))
 
-    # logi("-----bids-----")
-    # for item in ob.bids:
-    #     logi(str(item))
+    logi("-----bids-----")
+    for item in ob.bids:
+        logi(str(item))
 
-    # var res = client.switch_position_mode(category, symbol, "3")
-    # logi("res=" + str(res))
+    var switch_position_mode_res = client.switch_position_mode(category, symbol, "3")
+    logi("res=" + str(switch_position_mode_res))
     # retCode=1, retMsg=Open orders exist, so you cannot change position mode
 
-    # var res = client.set_leverage(category, symbol, "10", "10")
-    # logi("res=" + str(res))
+    var set_leverage_res = client.set_leverage(category, symbol, "10", "10")
+    logi("res=" + str(set_leverage_res))
 
     var side = "Buy"
     var order_type = "Limit"
     var qty = "0.001"
     var price = "3000"
 
-    # var res = client.place_order(category, symbol, side, order_type, qty, price, position_idx=1)
-    # logi("res=" + str(res))
+    var place_order_res = client.place_order(category, symbol, side, order_type, qty, price, position_idx=1)
+    logi("res=" + str(place_order_res))
     # retCode=1, retMsg=params error: The number of contracts exceeds minimum limit allowed
 
-    # var res = client.cancel_order(category, symbol, "4d822437-a502-49d6-8aa7-55a602920b3f")
-    # logi("res=" + str(res))
+    var cancel_order_res = client.cancel_order(category, symbol, "4d822437-a502-49d6-8aa7-55a602920b3f")
+    logi("res=" + str(cancel_order_res))
 
-    # var res = client.cancel_orders(category, symbol)
-    # for item in res:
-    #     logi("item=" + str(item))
+    var cancel_orders_res = client.cancel_orders(category, symbol)
+    for item in cancel_orders_res:
+        logi("item=" + str(item))
 
-    # var res = client.fetch_balance("CONTRACT", "USDT")
-    # for item in res:
-    #     logi("item=" + str(item))
+    var fetch_balance_res = client.fetch_balance("CONTRACT", "USDT")
+    for item in fetch_balance_res:
+        logi("item=" + str(item))
 
-    # var res = client.fetch_orders(category, symbol)
-    # for item in res:
-    #     logi("item=" + str(item))
+    var fetch_orders_res = client.fetch_orders(category, symbol)
+    for item in fetch_orders_res:
+        logi("item=" + str(item))
 
-    # var res = client.fetch_positions(category, symbol)
-    # for item in res:
-    #     logi("item=" + str(item))
+    var fetch_positions_res = client.fetch_positions(category, symbol)
+    for item in fetch_positions_res:
+        logi("item=" + str(item))
     # <PositionInfo: symbol=BTCUSDT, position_idx=1, side=Buy, size=0.015, avg_price=40869.30666667, position_value=613.0396, leverage=1.0, mark_price=42191.30, position_mm=0.0000075, position_im=6.130396, take_profit=0.00, stop_loss=0.00, unrealised_pnl=19.8299, cum_realised_pnl=838.09142572, created_time=1682125794703, updated_time=1706790560723>
 
     # Close position

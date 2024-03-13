@@ -15,8 +15,8 @@ alias VERB_POST = 4
 alias VERB_PUT = 5
 
 
-alias CHeaders = SSMap
-alias Headers = Dict[StringKey, String]
+#alias Headers = Dict[StringKey, String]
+alias Headers = SSMap
 
 
 @value
@@ -55,6 +55,10 @@ struct QueryParams:
 struct HttpResponse:
     var status_code: Int
     var text: String
+
+    fn __init__(inout self, status_code: Int, text: String):
+        self.status_code = status_code
+        self.text = text
 
 
 struct HttpClient:
@@ -95,76 +99,32 @@ struct HttpClient:
     fn set_verbose(inout self, verbose: Bool):
         self._verbose = verbose
 
-    fn delete(self, request_path: String, headers: Optional[Headers]) -> HttpResponse:
-        var _headers = CHeaders()
-        self.cast_to_cheaders(headers, _headers)
-        var res = self.do_request(request_path, VERB_DELETE, _headers, "")
-        return res
-
-    fn delete(self, request_path: String, headers: CHeaders) -> HttpResponse:
+    fn delete(self, request_path: String, headers: Headers) -> HttpResponse:
         var res = self.do_request(request_path, VERB_DELETE, headers, "")
         return res
 
-    fn get(self, request_path: String, headers: Optional[Headers]) -> HttpResponse:
-        var _headers = CHeaders()
-        self.cast_to_cheaders(headers, _headers)
-        var res = self.do_request(request_path, VERB_GET, _headers, "")
-        return res
-
-    fn get(self, request_path: String, headers: CHeaders) -> HttpResponse:
+    fn get(self, request_path: String, headers: Headers) -> HttpResponse:
         var res = self.do_request(request_path, VERB_GET, headers, "")
         return res
 
     fn head(
-        self, request_path: String, data: String, headers: Optional[Headers]
-    ) -> HttpResponse:
-        var _headers = CHeaders()
-        self.cast_to_cheaders(headers, _headers)
-        var res = self.do_request(request_path, VERB_HEAD, _headers, data)
-        return res
-
-    fn head(
-        self, request_path: String, data: String, headers: CHeaders
+        self, request_path: String, data: String, headers: Headers
     ) -> HttpResponse:
         var res = self.do_request(request_path, VERB_HEAD, headers, data)
         return res
 
     fn post(
-        self, request_path: String, data: String, headers: Optional[Headers]
-    ) -> HttpResponse:
-        var _headers = CHeaders()
-        self.cast_to_cheaders(headers, _headers)
-        var res = self.do_request(request_path, VERB_POST, _headers, data)
-        return res
-
-    fn post(
-        self, request_path: String, data: String, headers: CHeaders
+        self, request_path: String, data: String, headers: Headers
     ) -> HttpResponse:
         var res = self.do_request(request_path, VERB_POST, headers, data)
         return res
 
-    fn put(
-        self, request_path: String, data: String, headers: Optional[Headers]
-    ) -> HttpResponse:
-        var _headers = CHeaders()
-        self.cast_to_cheaders(headers, _headers)
-        var res = self.do_request(request_path, VERB_PUT, _headers, data)
-        return res
-
-    fn put(self, request_path: String, data: String, headers: CHeaders) -> HttpResponse:
+    fn put(self, request_path: String, data: String, headers: Headers) -> HttpResponse:
         var res = self.do_request(request_path, VERB_PUT, headers, data)
         return res
 
     fn do_request(
-        self, path: String, verb: Int, headers: Optional[Headers], body: String
-    ) -> HttpResponse:
-        var _headers = CHeaders()
-        self.cast_to_cheaders(headers, _headers)
-        var res = self.do_request(path, verb, _headers, body)
-        return res
-
-    fn do_request(
-        self, path: String, verb: Int, headers: CHeaders, body: String
+        self, path: String, verb: Int, headers: Headers, body: String
     ) -> HttpResponse:
         var n: Int = 0
         var buff = Pointer[UInt8].alloc(1024 * 100)
@@ -183,8 +143,6 @@ struct HttpClient:
 
         var s = c_str_to_string(buff, n)
         buff.free()
-
-        # print("s=" + s)
 
         return HttpResponse(status, s)
 

@@ -177,8 +177,8 @@ struct DynamicGridStrategy(BaseStrategy):
             order_client_id=order_client_id,
         )
         logi("Place order returns: " + str(res))
-        self.grid.cells[index].set_long_open_cid(order_client_id)
-        self.grid.cells[index].set_long_open_status(OrderStatus.new)
+        self.grid.cells[index].long_open_cid = order_client_id
+        self.grid.cells[index].long_open_status = OrderStatus.new
         logi("Update order id")
 
     fn place_tp_orders(inout self) raises:
@@ -227,8 +227,8 @@ struct DynamicGridStrategy(BaseStrategy):
             order_client_id=order_client_id,
         )
         logi("Place a closing order and return: " + str(res))
-        self.grid.cells[index].set_long_tp_cid(order_client_id)
-        self.grid.cells[index].set_long_tp_status(OrderStatus.new)
+        self.grid.cells[index].long_tp_cid = order_client_id
+        self.grid.cells[index].long_tp_status = OrderStatus.new
         logi("Update order id")
 
     fn reset_cell(inout self, index: Int, position_idx: PositionIdx) raises:

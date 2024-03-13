@@ -84,7 +84,7 @@ struct BybitClient:
         query_values["category"] = category
         query_values["symbol"] = symbol
         var query_str = query_values.to_string()
-        logi("query_str: " + query_str)
+        # logi("query_str: " + query_str)
         var ret = self.do_get("/v5/market/instruments-info", query_str, False)
         if ret.status_code != 200:
             raise Error("error status_code=" + str(ret.status_code))
@@ -326,7 +326,7 @@ struct BybitClient:
         # logi(ret.body)
 
         var parser = DomParser(ParserBufferSize)
-        var doc = parser.parse(ret.body)
+        var doc = parser.parse(ret.text)
         var ret_code = doc.get_int("retCode")
         var ret_msg = doc.get_str("retMsg")
         if ret_code != 0:

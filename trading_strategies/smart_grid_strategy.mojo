@@ -202,11 +202,10 @@ struct SmartGridStrategy(BaseStrategy):
     fn place_buy_orders(inout self, current_cell_level: Int) raises:
         for index in range(len(self.grid.cells)):
             # var cell = self.grid.cells[index]
-            var cell_ptr = self.grid.cells.unsafe_get(index)
-            if self.is_within_buy_range(
-                cell_ptr[], current_cell_level
-            ):
-                self.place_buy_order(index, cell_ptr[])
+            var ref = self.grid.cells.__refitem__(index)
+            # var cell_ptr = self.grid.cells.unsafe_get(index)
+            if self.is_within_buy_range(ref[], current_cell_level):
+                self.place_buy_order(index, ref[])
 
     # Check whether the grid unit is within the buy order range
     fn is_within_buy_range(
@@ -302,8 +301,8 @@ struct SmartGridStrategy(BaseStrategy):
             order_client_id=order_client_id,
         )
         logi("Place a closing order and return: " + str(res))
-        self.grid.cells[index].set_long_tp_cid(order_client_id)
-        self.grid.cells[index].set_long_tp_status(OrderStatus.new)
+        self.grid.cells[index].long_tp_cid = order_client_id
+        self.grid.cells[index].long_tp_status = OrderStatus.new
         logi("Update order id")
 
     fn reset_cell(inout self, index: Int, position_idx: PositionIdx) raises:

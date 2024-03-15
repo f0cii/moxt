@@ -15,8 +15,9 @@ alias VERB_POST = 4
 alias VERB_PUT = 5
 
 
-#alias Headers = Dict[StringKey, String]
+# alias Headers = Dict[StringKey, String]
 alias Headers = SSMap
+alias DEFAULT_BUFF_SIZE = 1024 * 100
 
 
 @value
@@ -99,35 +100,59 @@ struct HttpClient:
     fn set_verbose(inout self, verbose: Bool):
         self._verbose = verbose
 
-    fn delete(self, request_path: String, headers: Headers) -> HttpResponse:
-        var res = self.do_request(request_path, VERB_DELETE, headers, "")
+    fn delete(
+        self, request_path: String, inout headers: Headers, buff_size: Int = DEFAULT_BUFF_SIZE
+    ) -> HttpResponse:
+        var res = self.do_request(request_path, VERB_DELETE, headers, "", buff_size)
         return res
 
-    fn get(self, request_path: String, headers: Headers) -> HttpResponse:
-        var res = self.do_request(request_path, VERB_GET, headers, "")
+    fn get(
+        self, request_path: String, inout headers: Headers, buff_size: Int = DEFAULT_BUFF_SIZE
+    ) -> HttpResponse:
+        var res = self.do_request(request_path, VERB_GET, headers, "", buff_size)
         return res
 
     fn head(
-        self, request_path: String, data: String, headers: Headers
+        self,
+        request_path: String,
+        data: String,
+        inout headers: Headers,
+        buff_size: Int = DEFAULT_BUFF_SIZE,
     ) -> HttpResponse:
-        var res = self.do_request(request_path, VERB_HEAD, headers, data)
+        var res = self.do_request(request_path, VERB_HEAD, headers, data, buff_size)
         return res
 
     fn post(
-        self, request_path: String, data: String, headers: Headers
+        self,
+        request_path: String,
+        data: String,
+        inout headers: Headers,
+        buff_size: Int = DEFAULT_BUFF_SIZE,
     ) -> HttpResponse:
-        var res = self.do_request(request_path, VERB_POST, headers, data)
+        var res = self.do_request(request_path, VERB_POST, headers, data, buff_size)
         return res
 
-    fn put(self, request_path: String, data: String, headers: Headers) -> HttpResponse:
-        var res = self.do_request(request_path, VERB_PUT, headers, data)
+    fn put(
+        self,
+        request_path: String,
+        data: String,
+        inout headers: Headers,
+        buff_size: Int = DEFAULT_BUFF_SIZE,
+    ) -> HttpResponse:
+        var res = self.do_request(request_path, VERB_PUT, headers, data, buff_size)
         return res
 
     fn do_request(
-        self, path: String, verb: Int, headers: Headers, body: String
+        self,
+        path: String,
+        verb: Int,
+        inout headers: Headers,
+        body: String,
+        buff_size: Int,
     ) -> HttpResponse:
         var n: Int = 0
-        var buff = Pointer[UInt8].alloc(1024 * 100)
+        headers["User-Agent"] = "MOXT/1.0.0"
+        var buff = Pointer[UInt8].alloc(buff_size)
         var status = seq_cclient_do_request(
             self.ptr,
             path._buffer.data.value,
@@ -137,6 +162,7 @@ struct HttpClient:
             body._buffer.data.value,
             len(body),
             buff,
+            buff_size,
             Pointer[Int].address_of(n),
             self._verbose,
         )
@@ -145,11 +171,3 @@ struct HttpClient:
         buff.free()
 
         return HttpResponse(status, s)
-
-    @always_inline
-    @staticmethod
-    fn cast_to_cheaders(headers: Optional[Headers], inout dist: CHeaders):
-        if not headers:
-            return
-        for e in headers.value().items():
-            dist[e[].key.s] = e[].value

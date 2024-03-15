@@ -1,6 +1,7 @@
 import math
 from stdlib_extensions.builtins import dict, list, HashableInt, HashableStr
 from ylstdlib import *
+from ylstdlib.dynamic_vector import DynamicVector
 from base.fixed import Fixed
 from base.mo import *
 from trade.types import *
@@ -13,7 +14,7 @@ fn append_string_to_list_if_not_empty(inout l: list[String], s: String):
 
 
 @value
-struct GridCellInfo(ListElement):
+struct GridCellInfo(CollectionElement):
     var level: Int
     var price: Fixed
 
@@ -99,60 +100,6 @@ struct GridCellInfo(ListElement):
 
         return cid_list
 
-    fn set_long_open_cid(inout self, cid: String):
-        self.long_open_cid = cid
-
-    fn set_long_open_status(inout self, status: OrderStatus):
-        self.long_open_status = status
-
-    fn set_long_open_quantity(inout self, new_quantity: Fixed):
-        self.long_open_quantity = new_quantity
-
-    fn set_long_entry_price(inout self, price: Fixed):
-        self.long_entry_price = price
-    
-    fn set_long_filled_qty(inout self, qty: Fixed):
-        self.long_filled_qty = qty
-
-    fn set_long_tp_cid(inout self, cid: String):
-        self.long_tp_cid = cid
-
-    fn set_long_tp_status(inout self, status: OrderStatus):
-        self.long_tp_status = status
-
-    fn set_long_sl_cid(inout self, cid: String):
-        self.long_sl_cid = cid
-
-    fn set_long_sl_status(inout self, status: OrderStatus):
-        self.long_sl_status = status
-
-    fn set_short_open_cid(inout self, cid: String):
-        self.short_open_cid = cid
-
-    fn set_short_open_status(inout self, status: OrderStatus):
-        self.short_open_status = status
-
-    fn set_short_open_quantity(inout self, new_quantity: Fixed):
-        self.short_open_quantity = new_quantity
-
-    fn set_short_entry_price(inout self, price: Fixed):
-        self.short_entry_price = price
-    
-    fn set_short_filled_qty(inout self, qty: Fixed):
-        self.short_filled_qty = qty
-
-    fn set_short_tp_cid(inout self, cid: String):
-        self.short_tp_cid = cid
-
-    fn set_short_tp_status(inout self, status: OrderStatus):
-        self.short_tp_status = status
-
-    fn set_short_sl_cid(inout self, cid: String):
-        self.short_sl_cid = cid
-
-    fn set_short_sl_status(inout self, status: OrderStatus):
-        self.short_sl_status = status
-
     fn calculate_profit_percentage(
         self, ask: Fixed, bid: Fixed, position_idx: PositionIdx
     ) -> Fixed:
@@ -167,16 +114,12 @@ struct GridCellInfo(ListElement):
             entry_price = self.long_entry_price
             entry_quantity = self.long_open_quantity
             var current_price = ask
-            profit = (
-                current_price - entry_price
-            ) * entry_quantity
+            profit = (current_price - entry_price) * entry_quantity
         else:
             entry_price = self.short_entry_price
             entry_quantity = self.short_open_quantity
             var current_price = bid
-            profit = (
-                entry_price - current_price
-            ) * entry_quantity
+            profit = (entry_price - current_price) * entry_quantity
 
         var entry_value = entry_price * entry_quantity
         if entry_price.is_zero():
@@ -198,7 +141,7 @@ struct GridCellInfo(ListElement):
         if position_idx == PositionIdx.both_side_buy:
             entry_price = self.long_entry_price
             entry_quantity = self.long_open_quantity
-            var current_price = ask            
+            var current_price = ask
             profit = (
                 current_price.to_float() - entry_price.to_float()
             ) * entry_quantity.to_float()
@@ -257,7 +200,7 @@ struct GridInfo(Stringable):
     var tick_size: Fixed
     var base_price: Fixed
     var precision: Int
-    var cells: List[GridCellInfo]
+    var cells: DynamicVector[GridCellInfo]
 
     fn __init__(inout self):
         self.grid_interval = Fixed.zero
@@ -265,7 +208,7 @@ struct GridInfo(Stringable):
         self.tick_size = Fixed.zero
         self.base_price = Fixed.zero
         self.precision = 0
-        self.cells = List[GridCellInfo]()
+        self.cells = DynamicVector[GridCellInfo](capacity=8)
 
     fn setup(
         inout self,

@@ -189,36 +189,36 @@ fn test_bybitclient() raises:
     logi("res=" + str(switch_position_mode_res))
     # retCode=1, retMsg=Open orders exist, so you cannot change position mode
 
-    var set_leverage_res = client.set_leverage(category, symbol, "10", "10")
-    logi("res=" + str(set_leverage_res))
+    # var set_leverage_res = client.set_leverage(category, symbol, "10", "10")
+    # logi("res=" + str(set_leverage_res))
 
-    var side = "Buy"
-    var order_type = "Limit"
-    var qty = "0.001"
-    var price = "3000"
+    # var side = "Buy"
+    # var order_type = "Limit"
+    # var qty = "0.001"
+    # var price = "3000"
 
-    var place_order_res = client.place_order(category, symbol, side, order_type, qty, price, position_idx=1)
-    logi("res=" + str(place_order_res))
-    # retCode=1, retMsg=params error: The number of contracts exceeds minimum limit allowed
+    # var place_order_res = client.place_order(category, symbol, side, order_type, qty, price, position_idx=1)
+    # logi("res=" + str(place_order_res))
+    # # retCode=1, retMsg=params error: The number of contracts exceeds minimum limit allowed
 
-    var cancel_order_res = client.cancel_order(category, symbol, "4d822437-a502-49d6-8aa7-55a602920b3f")
-    logi("res=" + str(cancel_order_res))
+    # var cancel_order_res = client.cancel_order(category, symbol, "4d822437-a502-49d6-8aa7-55a602920b3f")
+    # logi("res=" + str(cancel_order_res))
 
-    var cancel_orders_res = client.cancel_orders(category, symbol)
-    for item in cancel_orders_res:
-        logi("item=" + str(item))
+    # var cancel_orders_res = client.cancel_orders(category, symbol)
+    # for item in cancel_orders_res:
+    #     logi("item=" + str(item))
 
-    var fetch_balance_res = client.fetch_balance("CONTRACT", "USDT")
-    for item in fetch_balance_res:
-        logi("item=" + str(item))
+    # var fetch_balance_res = client.fetch_balance("CONTRACT", "USDT")
+    # for item in fetch_balance_res:
+    #     logi("item=" + str(item))
 
-    var fetch_orders_res = client.fetch_orders(category, symbol)
-    for item in fetch_orders_res:
-        logi("item=" + str(item))
+    # var fetch_orders_res = client.fetch_orders(category, symbol)
+    # for item in fetch_orders_res:
+    #     logi("item=" + str(item))
 
-    var fetch_positions_res = client.fetch_positions(category, symbol)
-    for item in fetch_positions_res:
-        logi("item=" + str(item))
+    # var fetch_positions_res = client.fetch_positions(category, symbol)
+    # for item in fetch_positions_res:
+    #     logi("item=" + str(item))
     # <PositionInfo: symbol=BTCUSDT, position_idx=1, side=Buy, size=0.015, avg_price=40869.30666667, position_value=613.0396, leverage=1.0, mark_price=42191.30, position_mm=0.0000075, position_im=6.130396, take_profit=0.00, stop_loss=0.00, unrealised_pnl=19.8299, cum_realised_pnl=838.09142572, created_time=1682125794703, updated_time=1706790560723>
 
     # Close position

@@ -10,7 +10,7 @@ from base.httpclient import (
 struct requests:
     @staticmethod
     fn delete(
-        base_url: String, path: String, headers: Optional[Headers] = None
+        base_url: String, path: String, inout headers: Headers
     ) -> HttpResponse:
         var client = HttpClient(base_url)
         var res = client.delete(path, headers)
@@ -18,7 +18,7 @@ struct requests:
 
     @staticmethod
     fn get(
-        base_url: String, path: String, headers: Optional[Headers] = None
+        base_url: String, path: String, inout headers: Headers
     ) -> HttpResponse:
         var client = HttpClient(base_url)
         var res = client.get(path, headers)
@@ -26,7 +26,7 @@ struct requests:
 
     @staticmethod
     fn head(
-        base_url: String, path: String, data: String, headers: Optional[Headers] = None
+        base_url: String, path: String, data: String, inout headers: Headers
     ) -> HttpResponse:
         var client = HttpClient(base_url)
         var res = client.head(path, data, headers)
@@ -34,7 +34,7 @@ struct requests:
 
     @staticmethod
     fn post(
-        base_url: String, path: String, data: String, headers: Optional[Headers] = None
+        base_url: String, path: String, data: String, inout headers: Headers
     ) -> HttpResponse:
         var client = HttpClient(base_url)
         var res = client.post(path, data, headers)
@@ -42,7 +42,7 @@ struct requests:
 
     @staticmethod
     fn put(
-        base_url: String, path: String, data: String, headers: Optional[Headers] = None
+        base_url: String, path: String, data: String, inout headers: Headers
     ) -> HttpResponse:
         var client = HttpClient(base_url)
         var res = client.put(path, data, headers)

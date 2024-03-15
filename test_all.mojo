@@ -233,8 +233,8 @@ fn test_httpclient():
     var headers = Headers()
     headers["a"] = "abc"
     _ = client.get("/v3/public/time", headers)
-    _ = client.do_request("/v3/public/time", VERB_GET, headers, "")
-    _ = client.do_request("/v3/public/time", VERB_GET, headers, "")
+    _ = client.do_request("/v3/public/time", VERB_GET, headers, "", 1024*1024)
+    _ = client.do_request("/v3/public/time", VERB_GET, headers, "", 1024*1024)
 
 
 # fn test_websocket() raises:

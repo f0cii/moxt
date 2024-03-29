@@ -2,7 +2,7 @@ from memory import unsafe
 import math
 import .c
 from .mo import *
-from stdlib_extensions.time import time_ns
+from ylstdlib.time import time_ns
 
 
 fn time_ms() -> Int64:

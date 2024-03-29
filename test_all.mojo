@@ -10,8 +10,7 @@ from base.fixed import Fixed
 from base.ssmap import SSMap
 from base.httpclient import HttpClient, VERB_GET, Headers, QueryParams
 from base.websocket import *
-from stdlib_extensions.time import time_ns
-from stdlib_extensions.builtins import list, dict, HashableInt, HashableStr
+from ylstdlib.time import time_ns
 from core.okxconsts import *
 from core.okxclient import *
 from testing import assert_equal, assert_true, assert_false
@@ -326,7 +325,7 @@ fn get_on_message() -> on_message_callback:
 #     ws.set_on_heartbeat(on_heartbeat)
 #     ws.set_on_message(on_message)
 
-#     var topics = list[String]()
+#     var topics = List[String]()
 #     topics.append("orderbook.1.BTCUSDT")
 #     ws.set_subscription(topics)
 #     ws.connect()
@@ -577,7 +576,7 @@ fn test_json() raises:
     var yy_doc = yyjson_mut_doc()
     yy_doc.add_str("req_id", id)
     yy_doc.add_str("op", "subscribe")
-    var values = list[String]()
+    var values = List[String]()
     values.append("ab")
     values.append("ab3")
     yy_doc.arr_with_str("args", values)

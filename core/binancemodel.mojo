@@ -1,7 +1,6 @@
 from base.str_utils import *
 from base.str import Str
 from base.fixed import Fixed
-from stdlib_extensions.builtins import dict, list, HashableInt, HashableStr
 
 
 @value

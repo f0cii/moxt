@@ -1,13 +1,12 @@
 import math
-from stdlib_extensions.builtins import dict, list, HashableInt, HashableStr
 from ylstdlib import *
-from ylstdlib.dynamic_vector import DynamicVector
+from collections.list import List
 from base.fixed import Fixed
 from base.mo import *
 from trade.types import *
 
 
-fn append_string_to_list_if_not_empty(inout l: list[String], s: String):
+fn append_string_to_list_if_not_empty(inout l: List[String], s: String):
     if s == "":
         return
     l.append(s)
@@ -62,8 +61,8 @@ struct GridCellInfo(CollectionElement):
         self.short_sl_cid = ""
         self.short_sl_status = OrderStatus.empty
 
-    fn reset_long_side(inout self) -> list[String]:
-        var cid_list = list[String]()
+    fn reset_long_side(inout self) -> List[String]:
+        var cid_list = List[String]()
 
         append_string_to_list_if_not_empty(cid_list, self.long_open_cid)
         append_string_to_list_if_not_empty(cid_list, self.long_tp_cid)
@@ -81,8 +80,8 @@ struct GridCellInfo(CollectionElement):
 
         return cid_list
 
-    fn reset_short_side(inout self) -> list[String]:
-        var cid_list = list[String]()
+    fn reset_short_side(inout self) -> List[String]:
+        var cid_list = List[String]()
 
         append_string_to_list_if_not_empty(cid_list, self.short_open_cid)
         append_string_to_list_if_not_empty(cid_list, self.short_tp_cid)
@@ -200,7 +199,7 @@ struct GridInfo(Stringable):
     var tick_size: Fixed
     var base_price: Fixed
     var precision: Int
-    var cells: DynamicVector[GridCellInfo]
+    var cells: List[GridCellInfo]
 
     fn __init__(inout self):
         self.grid_interval = Fixed.zero
@@ -208,7 +207,7 @@ struct GridInfo(Stringable):
         self.tick_size = Fixed.zero
         self.base_price = Fixed.zero
         self.precision = 0
-        self.cells = DynamicVector[GridCellInfo](capacity=8)
+        self.cells = List[GridCellInfo](capacity=8)
 
     fn setup(
         inout self,
@@ -244,7 +243,7 @@ struct GridInfo(Stringable):
             var level = self.cells[0].level - 1
             var price = self.get_price_by_level(level)
             var cell = self.new_grid_cell(level, price)
-            self.cells.insert(0, cell)
+            list_insert[GridCellInfo](self.cells, 0, cell)
 
     fn get_price_by_level(self, level: Int) -> Fixed:
         var offset = level

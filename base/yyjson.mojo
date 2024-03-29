@@ -2,11 +2,11 @@ import time
 import sys
 import os
 from memory import unsafe
+from collections.list import List
 from base.str_cache import *
 from .c import *
 from .mo import *
 from .yyjsonbase import *
-from stdlib_extensions.builtins import dict, list, HashableInt
 
 
 @value
@@ -56,7 +56,7 @@ struct yyjson_mut_doc:
         )
 
     @always_inline
-    fn arr_with_bool(self, key: StringLiteral, value: list[Bool]) raises:
+    fn arr_with_bool(self, key: StringLiteral, value: List[Bool]) raises:
         var n = len(value)
         var vp = Pointer[Bool].alloc(n)
         for i in range(0, n):
@@ -68,7 +68,7 @@ struct yyjson_mut_doc:
         vp.free()
 
     @always_inline
-    fn arr_with_float(self, key: StringLiteral, value: list[Float64]) raises:
+    fn arr_with_float(self, key: StringLiteral, value: List[Float64]) raises:
         var n = len(value)
         var vp = Pointer[Float64].alloc(n)
         for i in range(0, n):
@@ -80,7 +80,7 @@ struct yyjson_mut_doc:
         vp.free()
 
     @always_inline
-    fn arr_with_int(self, key: StringLiteral, value: list[Int]) raises:
+    fn arr_with_int(self, key: StringLiteral, value: List[Int]) raises:
         var n = len(value)
         var vp = Pointer[Int].alloc(n)
         for i in range(0, n):
@@ -92,7 +92,7 @@ struct yyjson_mut_doc:
         vp.free()
 
     @always_inline
-    fn arr_with_str(inout self, key: StringLiteral, value: list[String]) raises:
+    fn arr_with_str(inout self, key: StringLiteral, value: List[String]) raises:
         var n = len(value)
         var vp = Pointer[c_char_pointer].alloc(n)
         for i in range(0, n):
@@ -183,8 +183,8 @@ struct yyjson_val(CollectionElement):
         return seq_yyjson_arr_size(self.p)
 
     @always_inline
-    fn array_list(self) -> list[yyjson_val]:
-        var res = list[yyjson_val]()
+    fn array_list(self) -> List[yyjson_val]:
+        var res = List[yyjson_val]()
         var idx: Int = 0
         var max: Int = seq_yyjson_arr_size(self.p)
         var val = seq_yyjson_arr_get_first(self.p)

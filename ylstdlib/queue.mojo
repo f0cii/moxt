@@ -1,5 +1,5 @@
 from testing import assert_true
-from collections.vector import DynamicVector
+from collections.list import List
 from collections.optional import Optional
 from math import max
 
@@ -8,15 +8,15 @@ alias IndexError = Error("IndexError")
 
 @value
 struct Queue[T: CollectionElement](Sized):
-    var items: DynamicVector[T]
+    var items: List[T]
     var begin: Int
 
     fn __init__(inout self):
-        self.items = DynamicVector[T]()
+        self.items = List[T]()
         self.begin = 0
 
     fn __init__(inout self, capacity: Int):
-        self.items = DynamicVector[T](capacity=capacity)
+        self.items = List[T](capacity=capacity)
         self.begin = 0
 
     @always_inline
@@ -25,7 +25,7 @@ struct Queue[T: CollectionElement](Sized):
 
     @always_inline
     fn enqueue(inout self, item: T):
-        self.items.push_back(item)
+        self.items.append(item)
 
     @always_inline
     fn front(self) -> T:  # Note: The return value can't be a reference, yet.

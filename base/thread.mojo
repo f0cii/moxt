@@ -2,8 +2,6 @@ from memory import unsafe
 from .c import *
 from .mo import *
 from base.moutil import *
-from stdlib_extensions.builtins import dict, HashableInt, HashableStr
-from stdlib_extensions.builtins._dict import KeyValueIterator
 
 
 alias timer_entry_t = fn () raises -> UInt64
@@ -547,18 +545,18 @@ struct ConditionVariable:
         seq_photon_condition_variable_free(self.ptr)
 
 
-alias CoRunFunction = fn (dict[HashableStr, String]) raises escaping -> String
+alias CoRunFunction = fn (Dict[String, String]) raises escaping -> String
 
 
 struct ArgData:
-    var _data: dict[HashableStr, String]
+    var _data: Dict[String, String]
     var _run: CoRunFunction
 
     fn __init__(inout self):
         # print("__init__")
-        self._data = dict[HashableStr, String]()
+        self._data = Dict[String, String]()
 
-        fn default_run(arg: dict[HashableStr, String]) raises -> String:
+        fn default_run(arg: Dict[String, String]) raises -> String:
             return ""
 
         self._run = default_run
@@ -577,16 +575,16 @@ struct ArgData:
         # print("__del__")
         pass
 
-    fn __getitem__(self, key: HashableStr) raises -> String:
+    fn __getitem__(self, key: String) raises -> String:
         return self._data[key]
 
-    fn __setitem__(inout self, key: HashableStr, value: String):
+    fn __setitem__(inout self, key: String, value: String):
         self._data[key] = value
 
     fn __len__(self) -> Int:
         return len(self._data)
 
-    fn items(self) -> KeyValueIterator[HashableStr, String]:
+    fn items(self) -> KeyValueIterator[String, String]:
         return self._data.items()
 
     fn set_run(inout self, run: CoRunFunction):
@@ -641,7 +639,7 @@ struct ArgDataRef:
         return mem_ref_ptr_to_value[Self](ptr)
 
     fn get(self) -> ArgData:
-        return __get_address_as_lvalue(self.data.offset(0).address)
+        return self.data.offset(0)[]
 
     fn get_as_owned(self) -> ArgData:
         return __get_address_as_owned_value(self.data.offset(0).address)
@@ -649,7 +647,7 @@ struct ArgDataRef:
     @staticmethod
     fn from_ptr_as_value(ptr: Int) -> ArgData:
         var value = mem_ref_ptr_to_value[Self](ptr)
-        return __get_address_as_lvalue(value.data.offset(0).address)
+        return value.data.offset(0)[]
 
     @staticmethod
     fn from_ptr_as_owned_value(ptr: Int) -> ArgData:
@@ -697,7 +695,7 @@ fn run_coro(f: CoroFunction):
     value["sem_ptr"] = sem.ptr_to_int()
 
     # @parameter
-    fn co_run(arg: dict[HashableStr, String]) raises -> String:
+    fn co_run(arg: Dict[String, String]) raises -> String:
         var p = arg["sem_ptr"]
         var ptr = strtoi(p)
         f()

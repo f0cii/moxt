@@ -1,7 +1,6 @@
 from base.str_utils import *
 from base.str import Str
 from base.fixed import Fixed
-from stdlib_extensions.builtins import dict, list, HashableInt, HashableStr
 
 
 @value
@@ -124,10 +123,10 @@ struct OrderBook(Stringable):
     Order book
     """
 
-    var asks: list[OrderBookItem]
-    var bids: list[OrderBookItem]
+    var asks: List[OrderBookItem]
+    var bids: List[OrderBookItem]
 
-    def __init__(inout self, asks: list[OrderBookItem], bids: list[OrderBookItem]):
+    def __init__(inout self, asks: List[OrderBookItem], bids: List[OrderBookItem]):
         self.asks = asks
         self.bids = bids
 
@@ -451,10 +450,10 @@ struct OrderBookLevel(CollectionElement):
 @value
 struct OrderBookLite:
     var symbol: String
-    var asks: list[OrderBookLevel]
-    var bids: list[OrderBookLevel]
+    var asks: List[OrderBookLevel]
+    var bids: List[OrderBookLevel]
 
     fn __init__(inout self, symbol: String = ""):
         self.symbol = symbol
-        self.asks = list[OrderBookLevel]()
-        self.bids = list[OrderBookLevel]()
+        self.asks = List[OrderBookLevel]()
+        self.bids = List[OrderBookLevel]()

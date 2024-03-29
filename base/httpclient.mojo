@@ -1,10 +1,8 @@
-from collections import Dict, KeyElement
+from collections import Dict
 from collections.optional import Optional
 from .c import *
 from .mo import *
 from .ssmap import SSMap
-from stdlib_extensions.builtins import dict, list, HashableInt, HashableStr
-from ylstdlib.dict import StringKey
 
 
 alias VERB_UNKNOWN = 0
@@ -15,17 +13,17 @@ alias VERB_POST = 4
 alias VERB_PUT = 5
 
 
-# alias Headers = Dict[StringKey, String]
+# alias Headers = Dict[String, String]
 alias Headers = SSMap
 alias DEFAULT_BUFF_SIZE = 1024 * 100
 
 
 @value
 struct QueryParams:
-    var data: dict[HashableStr, String]
+    var data: Dict[String, String]
 
     fn __init__(inout self):
-        self.data = dict[HashableStr, String]()
+        self.data = Dict[String, String]()
 
     fn __setitem__(inout self, name: String, value: String):
         self.data[name] = value
@@ -38,7 +36,7 @@ struct QueryParams:
         for item in self.data.items():
             # if item.value == "":
             #     continue
-            url += str(item.key) + "=" + str(item.value) + "&"
+            url += item[].key + "=" + item[].value + "&"
         return url[1:-1]
 
     fn debug(inout self) raises:
@@ -152,6 +150,7 @@ struct HttpClient:
     ) -> HttpResponse:
         var n: Int = 0
         headers["User-Agent"] = "MOXT/1.0.0"
+        print("1")
         var buff = Pointer[UInt8].alloc(buff_size)
         var status = seq_cclient_do_request(
             self.ptr,
@@ -166,6 +165,7 @@ struct HttpClient:
             Pointer[Int].address_of(n),
             self._verbose,
         )
+        print("2")
 
         var s = c_str_to_string(buff, n)
         buff.free()

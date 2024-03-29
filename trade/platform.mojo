@@ -1,7 +1,5 @@
-from stdlib_extensions.builtins import dict, list, HashableInt, HashableStr
-from stdlib_extensions.builtins.string import *
 from ylstdlib import *
-from ylstdlib.dynamic_vector import DynamicVector
+from collections.list import List
 from base.c import *
 from base.mo import *
 from base.thread import *
@@ -33,26 +31,26 @@ struct OrderUpdateCallbackWrapper(CollectionElement):
 struct Platform:
     var _config: AppConfig
     var _client: BybitClient
-    var _symbols: list[String]
+    var _symbols: List[String]
     var _asks: Pointer[c_void_pointer]
     var _bids: Pointer[c_void_pointer]
-    var _symbol_index_dict: dict[HashableStr, Int]
-    var _order_cache: dict[HashableStr, Order]  # key: order_client_id
+    var _symbol_index_dict: Dict[String, Int]
+    var _order_cache: Dict[String, Order]  # key: order_client_id
     var _order_cache_lock: RWLock
-    var _order_update_callbacks: DynamicVector[OrderUpdateCallbackWrapper]
+    var _order_update_callbacks: List[OrderUpdateCallbackWrapper]
 
-    fn __init__(inout self, config: AppConfig):
+    fn __init__(inout self, config: AppConfig) raises:
         logd("Platform.__init__")
         self._config = config
         self._client = BybitClient(config.testnet, config.access_key, config.secret_key)
-        self._symbols = split(config.symbols, ",")
+        self._symbols = config.symbols.split(",")
         var symbol_count = len(self._symbols)
         self._asks = Pointer[c_void_pointer].alloc(symbol_count)
         self._bids = Pointer[c_void_pointer].alloc(symbol_count)
-        self._symbol_index_dict = dict[HashableStr, Int]()
-        self._order_cache = dict[HashableStr, Order]()
+        self._symbol_index_dict = Dict[String, Int]()
+        self._order_cache = Dict[String, Order]()
         self._order_cache_lock = RWLock()
-        self._order_update_callbacks = DynamicVector[OrderUpdateCallbackWrapper](
+        self._order_update_callbacks = List[OrderUpdateCallbackWrapper](
             capacity=16
         )
         logd("Platform.__init__ done")
@@ -108,22 +106,22 @@ struct Platform:
             var bids_ptr = self._bids.load(i)
             seq_skiplist_free(bids_ptr)
 
-    fn delete_orders_from_cache(inout self, cids: list[String]) raises:
+    fn delete_orders_from_cache(inout self, cids: List[String]) raises:
         if len(cids) == 0:
             return
 
         self._order_cache_lock.lock()
         for cid in cids:
-            logi("Remove order: " + cid)
-            self._order_cache.pop(cid)
+            logi("Remove order: " + cid[])
+            _ = self._order_cache.pop(cid[])
         self._order_cache_lock.unlock()
 
     fn on_update_orderbook(
         self,
         symbol: String,
         type_: String,
-        inout asks: list[OrderBookLevel],
-        inout bids: list[OrderBookLevel],
+        inout asks: List[OrderBookLevel],
+        inout bids: List[OrderBookLevel],
     ) raises:
         var index = self._symbol_index_dict[symbol]
         # logd("Platform.update_orderbook")
@@ -136,18 +134,18 @@ struct Platform:
         var _asks = self._asks.load(index)
         for i in asks:
             # logd("ask price: " + str(i.price) + " qty: " + str(i.qty))
-            if i.qty.is_zero():
-                _ = seq_skiplist_remove(_asks, i.price.value())
+            if i[].qty.is_zero():
+                _ = seq_skiplist_remove(_asks, i[].price.value())
             else:
-                _ = seq_skiplist_insert(_asks, i.price.value(), i.qty.value(), True)
+                _ = seq_skiplist_insert(_asks, i[].price.value(), i[].qty.value(), True)
 
         var _bids = self._bids.load(index)
         for i in bids:
             # logd("bid price: " + str(i.price) + " qty: " + str(i.qty))
-            if i.qty.is_zero():
-                _ = seq_skiplist_remove(_bids, i.price.value())
+            if i[].qty.is_zero():
+                _ = seq_skiplist_remove(_bids, i[].price.value())
             else:
-                _ = seq_skiplist_insert(_bids, i.price.value(), i.qty.value(), True)
+                _ = seq_skiplist_insert(_bids, i[].price.value(), i[].qty.value(), True)
 
     fn on_update_order(inout self, order: Order) -> Bool:
         logi("on_update_order: " + str(order))
@@ -164,7 +162,7 @@ struct Platform:
     @always_inline
     fn notify_order_update(inout self, order: Order):
         for i in range(len(self._order_update_callbacks)):
-            var ref = self._order_update_callbacks.__refitem__(i)
+            var ref = self._order_update_callbacks.__get_ref(i)
             ref[](order)
 
     fn get_order(self, cid: String) raises -> Order:
@@ -262,11 +260,11 @@ struct Platform:
         order_client_id: String = "",
         limit: Int = 0,
         cursor: String = "",
-    ) raises -> list[Order]:
+    ) raises -> List[Order]:
         var orders_original = self._client.fetch_orders(
             category, symbol, order_client_id, limit, cursor
         )
-        var orders = list[Order]()
+        var orders = List[Order]()
         for i in range(len(orders_original)):
             var order = convert_bybit_order(orders_original[i])
             orders.append(order)
@@ -306,7 +304,7 @@ struct Platform:
         settle_coin: String = "",
     ) raises -> BatchCancelResult:
         var res = self._client.cancel_orders(category, symbol, base_coin, settle_coin)
-        var cancelled_orders = list[CancelOrderResult]()
+        var cancelled_orders = List[CancelOrderResult]()
         for i in range(len(res)):
             var item = res[i]
             cancelled_orders.append(
@@ -317,7 +315,7 @@ struct Platform:
     @always_inline
     fn fetch_positions(
         self, category: String, symbol: String
-    ) raises -> list[PositionInfo]:
+    ) raises -> List[PositionInfo]:
         return self._client.fetch_positions(category, symbol)
 
     @always_inline

@@ -1,7 +1,6 @@
 from .c import *
 from .mo import *
 from .moutil import *
-from stdlib_extensions.builtins import dict, HashableInt
 
 
 alias TLS1_1_VERSION = 0x0302
@@ -140,7 +139,7 @@ struct WebSocket:
         var self_ptr = Reference(self).get_unsafe_pointer()
 
         fn wrapper():
-            __get_address_as_lvalue(self_ptr.address).on_connect()
+            self_ptr[].on_connect()
 
         return wrapper
 
@@ -148,7 +147,7 @@ struct WebSocket:
         var self_ptr = Reference(self).get_unsafe_pointer()
 
         fn wrapper():
-            __get_address_as_lvalue(self_ptr.address).on_heartbeat()
+            self_ptr[].on_heartbeat()
 
         return wrapper
 
@@ -156,7 +155,7 @@ struct WebSocket:
         var self_ptr = Reference(self).get_unsafe_pointer()
 
         fn wrapper(data: c_char_pointer, data_len: Int):
-            __get_address_as_lvalue(self_ptr.address).on_message(data, data_len)
+            self_ptr[].on_message(data, data_len)
 
         return wrapper
 

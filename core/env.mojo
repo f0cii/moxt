@@ -1,28 +1,26 @@
-from stdlib_extensions.pathlib import Path
-from stdlib_extensions.builtins import list, dict, HashableStr
-from stdlib_extensions.builtins.string import *
+from pathlib.path import Path
 from base.str_utils import str_contains
 
 
-fn env_loads(s: String) raises -> dict[HashableStr, String]:
-    var lines = split(s, "\n")
+fn env_loads(s: String) raises -> Dict[String, String]:
+    var lines = s.split("\n")
 
-    var env_dict = dict[HashableStr, String]()
+    var env_dict = Dict[String, String]()
     for i in range(len(lines)):
         var line = lines[i]
-        if not str_contains(line, "="):
+        if "=" not in line:
             continue
-        var l_array = split(line, "=")
-        if len(l_array) != 2:
+        var l_list = line.split("=")
+        if len(l_list) != 2:
             continue
-        var key = l_array[0]
-        var value = l_array[1]
+        var key = l_list[0]
+        var value = l_list[1]
         env_dict[key] = value
 
     return env_dict
 
 
-fn env_load(filename: String = ".env") raises -> dict[HashableStr, String]:
+fn env_load(filename: String = ".env") raises -> Dict[String, String]:
     var env_file = Path(filename)
     var text = env_file.read_text()
     return env_loads(text)

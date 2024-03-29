@@ -12,7 +12,7 @@ struct SmartGridStrategy(BaseStrategy):
     var platform: Platform
     var grid: GridInfo
     var category: String
-    var symbols: list[String]
+    var symbols: List[String]
     var symbol: String
     var tick_size: Fixed
     var step_size: Fixed
@@ -30,7 +30,7 @@ struct SmartGridStrategy(BaseStrategy):
         self.platform = Platform(config)
         self.grid = GridInfo()
         self.category = config.category
-        self.symbols = split(config.symbols, ",")
+        self.symbols = config.symbols.split(",")
         self.symbol = self.symbols[0]
         self.tick_size = Fixed.zero
         self.step_size = Fixed.zero
@@ -165,11 +165,11 @@ struct SmartGridStrategy(BaseStrategy):
 
     fn calculate_cell_profits(
         self, ask: Fixed, bid: Fixed, position_idx: PositionIdx
-    ) raises -> list[Tuple[Int, Fixed]]:
+    ) raises -> List[Tuple[Int, Fixed]]:
         """
         Calculate floating profit for each grid
         """
-        var cell_profits = list[Tuple[Int, Fixed]]()
+        var cell_profits = List[Tuple[Int, Fixed]]()
 
         for index in range(len(self.grid.cells)):
             var cell = self.grid.cells[index]
@@ -202,7 +202,7 @@ struct SmartGridStrategy(BaseStrategy):
     fn place_buy_orders(inout self, current_cell_level: Int) raises:
         for index in range(len(self.grid.cells)):
             # var cell = self.grid.cells[index]
-            var ref = self.grid.cells.__refitem__(index)
+            var ref = self.grid.cells.__get_ref(index)
             # var cell_ptr = self.grid.cells.unsafe_get(index)
             if self.is_within_buy_range(ref[], current_cell_level):
                 self.place_buy_order(index, ref[])

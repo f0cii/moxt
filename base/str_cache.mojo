@@ -1,6 +1,6 @@
+from collections.list import List
 from .c import *
 from .mo import *
-from stdlib_extensions.builtins import dict, list, HashableInt, HashableStr
 
 
 fn seq_get_next_cache_key() -> Int64:
@@ -76,14 +76,14 @@ struct CString:
 
 @value
 struct MyStringCache:
-    var _keys: list[Int64]
+    var _keys: List[Int64]
 
     fn __init__(inout self):
-        self._keys = list[Int64]()
+        self._keys = List[Int64]()
 
     fn __del__(owned self):
         for key in self._keys:
-            _ = StringCache.free_string(key)
+            _ = StringCache.free_string(key[])
 
     fn set_string(inout self, s: String) -> CString:
         var r = StringCache.set_string(s)

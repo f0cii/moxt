@@ -13,7 +13,7 @@ from .binancemodel import (
 )
 from base.str_utils import *
 from core.sign import hmac_sha256_hex
-from stdlib_extensions.time import time_ns
+from ylstdlib.time import time_ns
 
 
 alias ParserBufferSize = 1000 * 100

@@ -1,5 +1,4 @@
 from os.atomic import Atomic
-from stdlib_extensions.builtins.string import __str_contains__, split
 from base.sj_ondemand import *
 from base.sj_dom import *
 from base.thread import *
@@ -51,12 +50,12 @@ struct Executor[T: BaseStrategy](Movable, Runable, IExecutor):
             access_key=config.access_key,
             secret_key=config.secret_key,
         )
-        var symbols = split(config.symbols, ",")
+        var symbols = config.symbols.split(",")
         var public_topics = String("")
         for sym in symbols:
             if public_topics != "":
                 public_topics += ","
-            public_topics += "orderbook." + str(config.depth) + "." + sym
+            public_topics += "orderbook." + str(config.depth) + "." + sym[]
         self._public_ws = BybitWS(
             is_private=False,
             testnet=config.testnet,
@@ -154,7 +153,7 @@ struct Executor[T: BaseStrategy](Movable, Runable, IExecutor):
         var self_ptr = Reference(self).get_unsafe_pointer()
 
         fn wrapper(data: c_char_pointer, data_len: Int):
-            __get_address_as_lvalue(self_ptr.address).on_private_message(data, data_len)
+            self_ptr[].on_private_message(data, data_len)
 
         return wrapper
 
@@ -162,7 +161,7 @@ struct Executor[T: BaseStrategy](Movable, Runable, IExecutor):
         var self_ptr = Reference(self).get_unsafe_pointer()
 
         fn wrapper(data: c_char_pointer, data_len: Int):
-            __get_address_as_lvalue(self_ptr.address).on_public_message(data, data_len)
+            self_ptr[].on_public_message(data, data_len)
             # var s = c_str_to_string(data, data_len)
             # logd("get_public_on_message message: " + s)
 
@@ -203,14 +202,13 @@ struct Executor[T: BaseStrategy](Movable, Runable, IExecutor):
             # var doc = parser.parse(data, data_len)
             var topic = doc.get_str("topic")
 
-            if __str_contains__("orderbook.", topic):
+            if "orderbook." in topic:
                 self.process_orderbook_message(doc)
 
             _ = doc ^
             _ = parser ^
         except err:
             loge("on_public_message error: " + str(err))
-            _ = exit(0)
 
     fn process_orderbook_message(inout self, inout doc: DomElement) raises -> None:
         # logd("process_orderbook_message")
@@ -224,8 +222,8 @@ struct Executor[T: BaseStrategy](Movable, Runable, IExecutor):
         var a = data.get_array("a")
         var a_iter = a.iter()
 
-        var asks = list[OrderBookLevel]()
-        var bids = list[OrderBookLevel]()
+        var asks = List[OrderBookLevel]()
+        var bids = List[OrderBookLevel]()
 
         while a_iter.has_element():
             var a_obj = a_iter.get()
@@ -259,11 +257,11 @@ struct Executor[T: BaseStrategy](Movable, Runable, IExecutor):
 
         # logd("asks=" + str(len(asks)) + " bids=" + str(len(bids)))
 
-        __get_address_as_lvalue(self._platform.address).on_update_orderbook(
+        self._platform[].on_update_orderbook(
             symbol, type_, asks, bids
         )
         if self.is_initialized():
-            var ob = __get_address_as_lvalue(self._platform.address).get_orderbook(
+            var ob = self._platform[].get_orderbook(
                 symbol, 5
             )
             self._strategy.on_orderbook(ob)
@@ -312,7 +310,7 @@ struct Executor[T: BaseStrategy](Movable, Runable, IExecutor):
 
             logi("order: " + str(order))
 
-            _ = __get_address_as_lvalue(self._platform.address).on_update_order(order)
+            _ = self._platform[].on_update_order(order)
 
             iter.step()
 
@@ -321,7 +319,7 @@ struct Executor[T: BaseStrategy](Movable, Runable, IExecutor):
     fn process_position_message(inout self, inout doc: OndemandDocument) -> None:
         var data = doc.get_array("data")
 
-        var positions = list[PositionInfo]()
+        var positions = List[PositionInfo]()
 
         var iter = data.iter()
         while iter.has_value():

@@ -1,6 +1,4 @@
-from stdlib_extensions.builtins import dict, list, HashableInt
-from stdlib_extensions.builtins.string import *
-from stdlib_extensions.time import time_ns
+from ylstdlib.time import time_ns
 from base.globals import *
 from base.websocket import *
 from base.yyjson import yyjson_doc, yyjson_mut_doc

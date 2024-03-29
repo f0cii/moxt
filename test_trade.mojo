@@ -1,10 +1,7 @@
 import time
 from memory import unsafe
 from testing import assert_equal, assert_true, assert_false
-from stdlib_extensions.time import time_ns
-from stdlib_extensions.builtins import dict, list, HashableInt, HashableStr, list_to_str
-from stdlib_extensions.builtins.string import __str_contains__
-from flx import *
+from ylstdlib.time import time_ns
 from ylstdlib import *
 
 from base.mo import *
@@ -90,34 +87,34 @@ fn test_hmac_sha256_b64() raises:
     assert_equal(b, "02895cf3008ae095e5eb890183187700d205bba8d7082e9b6df298a6557867e0")
 
 
-fn test_lockfree_queue() raises:
-    var df_cb = FlxMap().add("a", 7).add("b", 8).add("c", "hello").finish()
+# fn test_lockfree_queue() raises:
+#     var df_cb = FlxMap().add("a", 7).add("b", 8).add("c", "hello").finish()
 
-    var ptr = df_cb.get[0, DTypePointer[DType.uint8]]()
+#     var ptr = df_cb.get[0, DTypePointer[DType.uint8]]()
     
-    var v = iovec(df_cb)
+#     var v = iovec(df_cb)
 
-    var q = LockfreeQueue()
-    var v_ptr = Pointer[iovec].address_of(v)
-    var ok = q.push(v_ptr)
-    # logi("ok=" + str(ok))
-    var v2 = iovec()
-    var ok2 = q.pop(Pointer[iovec].address_of(v2))
-    # logi("ok2=" + str(ok2))
-    if v.iov_base != v2.iov_base:
-        assert_true(False)
-    if v.iov_len != v2.iov_len:
-        assert_true(False)
+#     var q = LockfreeQueue()
+#     var v_ptr = Pointer[iovec].address_of(v)
+#     var ok = q.push(v_ptr)
+#     # logi("ok=" + str(ok))
+#     var v2 = iovec()
+#     var ok2 = q.pop(Pointer[iovec].address_of(v2))
+#     # logi("ok2=" + str(ok2))
+#     if v.iov_base != v2.iov_base:
+#         assert_true(False)
+#     if v.iov_len != v2.iov_len:
+#         assert_true(False)
 
-    var df_cb1 = v2.to_data()
+#     var df_cb1 = v2.to_data()
     
-    var value = FlxValue(df_cb1)
-    var a = value["a"].int()
-    var c = value["c"].string()
-    assert_equal(a, 7)
-    assert_equal(c, "hello")
+#     var value = FlxValue(df_cb1)
+#     var a = value["a"].int()
+#     var c = value["c"].string()
+#     assert_equal(a, 7)
+#     assert_equal(c, "hello")
 
-    ptr.free()
+#     ptr.free()
 
 
 fn test_str_cache() raises:
@@ -164,14 +161,14 @@ fn test_sonic() raises:
 
 fn test_subscribe_message() raises:
     var id = "SYFjgKDMWl-xdy_Gn-A0_"
-    var _subscription_topics_str = "orderbook.1.BTCUSDT"
+    var _subscription_topics_str = String("orderbook.1.BTCUSDT")
     var yy_doc = yyjson_mut_doc()
     yy_doc.add_str("req_id", id)
     yy_doc.add_str("op", "subscribe")
-    var values = list[String]()
-    var topics = split(_subscription_topics_str, ",")
+    var values = List[String]()
+    var topics = _subscription_topics_str.split(",")
     for topic in topics:
-        values.append(topic)
+        values.append(topic[])
     yy_doc.arr_with_str("args", values)
     var body_str = yy_doc.mut_write()
     # logi("send: " + body_str)
@@ -181,7 +178,7 @@ fn test_subscribe_message() raises:
 
 
 fn test_order_info() raises:
-    var orders = list[OrderInfo]()
+    var orders = List[OrderInfo]()
 
     var order_info =
         OrderInfo(1, StringRef("cf7a63a5-4c78-40f5-be9e-393645bb7339"), StringRef("BTCUSDT"), StringRef("Buy"), StringRef("Limit"), 10000.0, 0.01,
@@ -244,7 +241,7 @@ fn test_parse_order() raises:
 
     assert_equal(len(data), 1)
 
-    var orders = list[OrderInfo]()
+    var orders = List[OrderInfo]()
 
     var iter = data.iter()
     while iter.has_value():
@@ -308,7 +305,7 @@ fn test_parse_position() raises:
 
     assert_equal(len(data), 2)
 
-    var positions = list[PositionInfo]()
+    var positions = List[PositionInfo]()
 
     var iter = data.iter()
     while iter.has_value():
@@ -448,8 +445,8 @@ fn test_platform() raises:
     var platform = Platform(app_config)
     # var platform_ = platform ^
     platform.setup()
-    var asks = list[OrderBookLevel]()
-    var bids = list[OrderBookLevel]()
+    var asks = List[OrderBookLevel]()
+    var bids = List[OrderBookLevel]()
     # {"topic":"orderbook.1.BTCUSDT","type":"snapshot","ts":1704262157072,"data":{"s":"BTCUSDT","b":[["45195.00","7.794"]],"a":[["45195.10","3.567"]],"u":11104722,"seq":114545691619},"cts":1704262157070}
     asks.append(OrderBookLevel(Fixed("45195.10"), Fixed("3.567")))
     bids.append(OrderBookLevel(Fixed("45195.00"), Fixed("7.794")))
@@ -467,7 +464,7 @@ fn test_orderbook() raises:
     var doc = parser.parse(s)
     var topic = doc.get_str("topic")
 
-    if __str_contains__("orderbook.", topic):
+    if "orderbook." in topic:
         logd("topic")
 
 
@@ -521,7 +518,7 @@ fn test_parse_orderbook_bids() raises:
     assert_equal(len(orderbook.bids), 1)
 
     for i in orderbook.asks:
-        logd("price: " + str(i.price) + " qty: " + str(i.qty))
+        logd("price: " + str(i[].price) + " qty: " + str(i[].qty))
 
     
 fn test_ti() raises:
@@ -534,14 +531,14 @@ fn test_ti() raises:
         # var info_ = info.value[]
         var info_ = info.take_value()
         var input_names = info_.input_names()
-        var input_names_str = list_to_str(input_names)
-        logi("input_names_str=" + input_names_str)
+        # var input_names_str = list_to_str(input_names)
+        # logi("input_names_str=" + input_names_str)
         var option_names = info_.option_names()
-        var option_names_str = list_to_str(option_names)
-        logi("option_names_str=" + option_names_str)
+        # var option_names_str = list_to_str(option_names)
+        # logi("option_names_str=" + option_names_str)
         var output_names = info_.output_names()
-        var output_names_str = list_to_str(output_names)
-        logi("output_names_str=" + output_names_str)
+        # var output_names_str = list_to_str(output_names)
+        # logi("output_names_str=" + output_names_str)
         info = seq_ti_get_next_indicator(info)
 
 
@@ -659,7 +656,7 @@ fn test_ti_call_at_index2() raises:
 
     var input_length: c_int = 10
 
-    var data_in = DynamicVector[Float64](capacity=int(input_length))
+    var data_in = List[Float64](capacity=int(input_length))
     data_in.append(5)
     data_in.append(8)
     data_in.append(12)
@@ -671,7 +668,7 @@ fn test_ti_call_at_index2() raises:
     data_in.append(11)
     data_in.append(13)
 
-    var options = DynamicVector[Float64](capacity=1)
+    var options = List[Float64](capacity=1)
     options.append(3)
     assert_equal(len(options), 1)
     
@@ -682,7 +679,7 @@ fn test_ti_call_at_index2() raises:
     var output_length = int(input_length - start)
 
     var outputs = Pointer[AnyPointer[Float64]].alloc(1)
-    var data_out = DynamicVector[Float64](capacity=output_length)
+    var data_out = List[Float64](capacity=output_length)
     data_out.resize(output_length, 0.0)
     outputs.store(0, data_out.data)
     var ok = seq_ti_indicator_run(info, input_length, inputs, options.data, outputs)

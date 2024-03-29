@@ -63,11 +63,11 @@ fn photon_handle_term(sig: c_int) raises -> None:
 fn __execute_executor_action[T: BaseStrategy](c_ptr: Int, action: Int):
     var executor_ptr = AnyPointer[Executor[T]].__from_index(c_ptr)
     if action == ACTION_RUN:
-        __get_address_as_lvalue(executor_ptr.value).run()
+        executor_ptr[].run()
     elif action == ACTION_STOP_NOW:
-        __get_address_as_lvalue(executor_ptr.value).stop_now()
+        executor_ptr[].stop_now()
     elif action == ACTION_PERFORM_TASKS:
-        __get_address_as_lvalue(executor_ptr.value).perform_tasks()
+        executor_ptr[].perform_tasks()
 
 
 fn execute_executor_action(action: Int):
@@ -169,8 +169,8 @@ fn main() raises:
     seq_init_photon_work_pool(2)
 
     init_log(log_level, log_file)
-    seq_init_net(0)
-    # seq_init_net(1)
+    # seq_init_net(0)
+    seq_init_net(1)
 
     logi("Initialization return result: " + str(ret))
 

@@ -1,3 +1,4 @@
+from collections.list import List
 from base.sj_ondemand import OndemandParser
 from base.sj_dom import DomParser
 from base.c import *
@@ -19,7 +20,7 @@ from .bybitmodel import (
 )
 from base.str_utils import *
 from core.sign import hmac_sha256_hex
-from stdlib_extensions.time import time_ns
+from ylstdlib.time import time_ns
 
 
 alias ParserBufferSize = 1000 * 100
@@ -147,7 +148,7 @@ struct BybitClient:
         limit: Int,
         start: Int,
         end: Int,
-    ) raises -> list[KlineItem]:
+    ) raises -> List[KlineItem]:
         var query_values = QueryParams()
         query_values["category"] = category
         query_values["symbol"] = symbol
@@ -166,7 +167,7 @@ struct BybitClient:
         # logi(ret.body)
         # {"retCode":0,"retMsg":"OK","result":{"symbol":"BTCUSDT","category":"linear","list":[["1687589640000","30709.9","30710.4","30709.9","30710.3","3.655","112245.7381"],["1687589580000","30707.9","30710","30704.7","30709.9","21.984","675041.8648"],["1687589520000","30708","30714.7","30705","30707.9","33.378","1025097.6459"],["1687589460000","30689.9","30710.3","30689.9","30708","51.984","1595858.2778"],["1687589400000","30678.6","30690.9","30678.5","30689.9","38.747","1188886.4093"]]},"retExtInfo":{},"time":1687589659062}
 
-        var res = list[KlineItem]()
+        var res = List[KlineItem]()
 
         var parser = DomParser(ParserBufferSize)
         var doc = parser.parse(ret.text)
@@ -245,8 +246,8 @@ struct BybitClient:
         # }
 
         # res = OrderBook
-        var asks = list[OrderBookItem]()
-        var bids = list[OrderBookItem]()
+        var asks = List[OrderBookItem]()
+        var bids = List[OrderBookItem]()
 
         var parser = DomParser(ParserBufferSize)
         var doc = parser.parse(ret.text)
@@ -502,7 +503,7 @@ struct BybitClient:
         symbol: String,
         base_coin: String = "",
         settle_coin: String = "",
-    ) raises -> list[OrderResponse]:
+    ) raises -> List[OrderResponse]:
         """
         Batch cancel orders
         """
@@ -525,7 +526,7 @@ struct BybitClient:
         # logd(ret.body)
 
         # * {"retCode":0,"retMsg":"OK","result":{"list":[]},"retExtInfo":{},"time":1687612231164}
-        var res = list[OrderResponse]()
+        var res = List[OrderResponse]()
 
         var parser = DomParser(ParserBufferSize)
         var doc = parser.parse(ret.text)
@@ -556,7 +557,7 @@ struct BybitClient:
 
     fn fetch_balance(
         self, account_type: String, coin: String
-    ) raises -> list[BalanceInfo]:
+    ) raises -> List[BalanceInfo]:
         """
         Fetch walvar balance
         """
@@ -571,7 +572,7 @@ struct BybitClient:
         # print(ret.body)
 
         # {"retCode":0,"retMsg":"OK","result":{"list":[{"accountType":"CONTRACT","accountIMRate":"","accountMMRate":"","totalEquity":"","totalWalletBalance":"","totalMarginBalance":"","totalAvailableBalance":"","totalPerpUPL":"","totalInitialMargin":"","totalMaintenanceMargin":"","accountLTV":"","coin":[{"coin":"USDT","equity":"20.21","usdValue":"","walletBalance":"20.21","borrowAmount":"","availableToBorrow":"","availableToWithdraw":"20.21","accruedInterest":"","totalOrderIM":"0","totalPositionIM":"0","totalPositionMM":"","unrealisedPnl":"0","cumRealisedPnl":"0"}]}]},"retExtInfo":{},"time":1687608906096}
-        var res = list[BalanceInfo]()
+        var res = List[BalanceInfo]()
 
         var parser = OndemandParser(ParserBufferSize)
         var doc = parser.parse(ret.text)
@@ -637,7 +638,7 @@ struct BybitClient:
         order_link_id: String = "",
         limit: Int = 0,
         cursor: String = "",
-    ) raises -> list[OrderInfo]:
+    ) raises -> List[OrderInfo]:
         """
         Fetch current orders
         https://bybit-exchange.github.io/docs/zh-TW/v5/order/open-order
@@ -659,7 +660,7 @@ struct BybitClient:
 
         # {"retCode":0,"retMsg":"OK","result":{"list":[],"nextPageCursor":"","category":"linear"},"retExtInfo":{},"time":1696392159183}
         # {"retCode":10002,"retMsg":"invalid request, please check your server timestamp or recv_window param. req_timestamp[1696396708819],server_timestamp[1696396707813],recv_window[15000]","result":{},"retExtInfo":{},"time":1696396707814}
-        var res = list[OrderInfo]()
+        var res = List[OrderInfo]()
 
         var parser = DomParser(ParserBufferSize)
         var doc = parser.parse(ret.text)
@@ -735,7 +736,7 @@ struct BybitClient:
         end_time_ms: Int = 0,
         limit: Int = 0,
         cursor: String = "",
-    ) raises -> list[OrderInfo]:
+    ) raises -> List[OrderInfo]:
         """
         Fetch historical orders
         https://bybit-exchange.github.io/docs/zh-TW/v5/order/order-list
@@ -767,7 +768,7 @@ struct BybitClient:
 
         # print(ret.body)
 
-        var res = list[OrderInfo]()
+        var res = List[OrderInfo]()
 
         var parser = DomParser(ParserBufferSize)
         var doc = parser.parse(ret.text)
@@ -848,7 +849,7 @@ struct BybitClient:
 
     fn fetch_positions(
         self, category: String, symbol: String
-    ) raises -> list[PositionInfo]:
+    ) raises -> List[PositionInfo]:
         var query_values = QueryParams()
         query_values["category"] = category
         query_values["symbol"] = symbol
@@ -862,7 +863,7 @@ struct BybitClient:
 
         # logi(ret.body)
 
-        var res = list[PositionInfo]()
+        var res = List[PositionInfo]()
         var parser = DomParser(ParserBufferSize)
         var doc = parser.parse(ret.text)
         var ret_code = doc.get_int("retCode")

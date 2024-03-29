@@ -18,10 +18,8 @@ from base.websocket import (
     set_on_message,
 )
 from base.yyjson import yyjson_doc, yyjson_mut_doc
-from stdlib_extensions.builtins import dict, list, HashableInt
-from stdlib_extensions.builtins.string import *
 from core.sign import hmac_sha256_hex
-from stdlib_extensions.time import time_ns
+from ylstdlib.time import time_ns
 from base.sj_ondemand import OndemandParser
 from base.containers import ObjectContainer
 from base.websocket import OnConnectWrapper, OnHeartbeatWrapper, OnMessageWrapper
@@ -37,7 +35,7 @@ struct BybitWS:
     var _access_key: String
     var _secret_key: String
     var _category: String
-    var _subscription_topics: list[String]
+    var _subscription_topics: List[String]
     var _subscription_topics_str: String
     var _heartbeat_time: Pointer[Int64]
 
@@ -54,7 +52,7 @@ struct BybitWS:
         self._access_key = access_key
         self._secret_key = secret_key
         self._category = category
-        self._subscription_topics = list[String]()
+        self._subscription_topics = List[String]()
         self._subscription_topics_str = topics
 
         var host: String = ""
@@ -160,9 +158,7 @@ struct BybitWS:
         var coc_any_ptr = AnyPointer[ObjectContainer[OnConnectWrapper]].__from_index(
             coc_ptr
         )
-        var wrapper_ptr = coc_any_ptr[].emplace_as_index(
-            wrapper
-        )
+        var wrapper_ptr = coc_any_ptr[].emplace_as_index(wrapper)
         set_on_connect(id, wrapper_ptr)
 
     fn set_on_heartbeat(self, owned wrapper: OnHeartbeatWrapper):
@@ -171,9 +167,7 @@ struct BybitWS:
         var coc_any_ptr = AnyPointer[ObjectContainer[OnHeartbeatWrapper]].__from_index(
             coc_ptr
         )
-        var wrapper_ptr = coc_any_ptr[].emplace_as_index(
-            wrapper
-        )
+        var wrapper_ptr = coc_any_ptr[].emplace_as_index(wrapper)
         set_on_heartbeat(id, wrapper_ptr)
 
     fn set_on_message(self, owned wrapper: OnMessageWrapper):
@@ -182,12 +176,10 @@ struct BybitWS:
         var coc_any_ptr = AnyPointer[ObjectContainer[OnMessageWrapper]].__from_index(
             coc_ptr
         )
-        var wrapper_ptr = coc_any_ptr[].emplace_as_index(
-            wrapper
-        )
+        var wrapper_ptr = coc_any_ptr[].emplace_as_index(wrapper)
         set_on_message(id, wrapper_ptr)
 
-    fn set_subscription(inout self, topics: list[String]) raises:
+    fn set_subscription(inout self, topics: List[String]) raises:
         for topic in topics:
             logd("topic: " + topic)
             self._subscription_topics.append(topic)
@@ -209,10 +201,10 @@ struct BybitWS:
             var yy_doc = yyjson_mut_doc()
             yy_doc.add_str("req_id", id)
             yy_doc.add_str("op", "subscribe")
-            var values = list[String]()
-            var topics = split(self._subscription_topics_str, ",")
+            var values = List[String]()
+            var topics = self._subscription_topics_str.split(",")
             for topic in topics:
-                values.append(topic)
+                values.append(topic[])
             yy_doc.arr_with_str("args", values)
             var body_str = yy_doc.mut_write()
             logd("send: " + body_str)
@@ -220,14 +212,11 @@ struct BybitWS:
         except err:
             loge("subscribe err " + str(err))
 
-    # fn get_ptr(self) -> Int:
-    #     return Reference(self).get_unsafe_pointer().__as_index()
-
     fn get_on_connect(self) -> on_connect_callback:
         var self_ptr = Reference(self).get_unsafe_pointer()
 
         fn wrapper() -> None:
-            __get_address_as_lvalue(self_ptr.address).on_connect()
+            self_ptr[].on_connect()
 
         return wrapper
 
@@ -235,7 +224,8 @@ struct BybitWS:
         var self_ptr = Reference(self).get_unsafe_pointer()
 
         fn wrapper():
-            __get_address_as_lvalue(self_ptr.address).on_heartbeat()
+            self_ptr[].on_heartbeat()
+
         return wrapper
 
     # fn get_on_message(self) -> on_message_callback:
@@ -268,7 +258,7 @@ struct BybitWS:
             var yy_doc = yyjson_mut_doc()
             yy_doc.add_str("req_id", id)
             yy_doc.add_str("op", "auth")
-            var args = list[String]()
+            var args = List[String]()
             args.append(self._access_key)
             args.append(expires)
             args.append(hex_signature)

@@ -32,7 +32,7 @@ fn do_it() -> None:
     w.do()
 
 
-# let do_func_ptr: a_fun = e_do()
+# var do_func_ptr: a_fun = e_do()
 
 
 fn test_h():

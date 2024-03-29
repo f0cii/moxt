@@ -13,7 +13,6 @@ import .okxconsts as c
 from .okxconsts import GET, POST
 from morrow.morrow import Morrow
 from .sign import hmac_sha256_b64
-from stdlib_extensions.builtins import dict, list, HashableInt
 
 
 def get_timestamp() -> String:

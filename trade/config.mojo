@@ -1,5 +1,6 @@
 from python import Python
-from stdlib_extensions.pathlib import Path
+from collections import Dict
+from pathlib.path import Path
 from base.fixed import Fixed
 from base.moutil import *
 from core.env import *
@@ -14,7 +15,8 @@ struct AppConfig(Stringable):
     var symbols: String
     var depth: Int
     var strategy: String
-    var params: dict[HashableStr, String]
+    var params: Dict[String, String]
+
 
     fn __init__(inout self):
         self.testnet = False
@@ -24,14 +26,14 @@ struct AppConfig(Stringable):
         self.symbols = ""
         self.depth = 1
         self.strategy = ""
-        self.params = dict[HashableStr, String]()
+        self.params = Dict[String, String]()
 
     fn __str__(self) -> String:
         var params_str = String("")
-        for key_value in self.params.items():
+        for e in self.params.items():
             if params_str != "":
                 params_str += ", "
-            params_str += str(key_value.key) + "=" + key_value.value
+            params_str += e[].key + "=" + e[].value
         return (
             "<AppConfig: testnet="
             + str(self.testnet)

@@ -1,3 +1,4 @@
+from collections.list import List
 from base.c import *
 from base.mo import *
 from base.thread import RWLock
@@ -12,7 +13,7 @@ struct DynamicGridStrategy(BaseStrategy):
     var platform: Platform
     var grid: GridInfo
     var category: String
-    var symbols: list[String]
+    var symbols: List[String]
     var symbol: String
     var tick_size: Fixed
     var step_size: Fixed
@@ -26,7 +27,7 @@ struct DynamicGridStrategy(BaseStrategy):
         self.platform = Platform(config)
         self.grid = GridInfo()
         self.category = config.category
-        self.symbols = split(config.symbols, ",")
+        self.symbols = config.symbols.split(",")
         self.symbol = self.symbols[0]
         self.tick_size = Fixed.zero
         self.step_size = Fixed.zero

@@ -64,10 +64,10 @@ struct Fixed(Stringable):
         }
 
     fn __init__(v: FloatLiteral) -> Self:
-        return Self {_value: int(FIXED_SCALE_F * v)}
+        return Self {_value: Int64(FIXED_SCALE_F * v)}
 
     fn __init__(v: Float64) -> Self:
-        return Self {_value: int(FIXED_SCALE_F * v)}
+        return Self {_value: Int64(FIXED_SCALE_F * v)}
 
     fn __init__(v: String) -> Self:
         var v_ = seq_fixed12_new_string(v._buffer.data.value, len(v))

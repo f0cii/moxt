@@ -8,8 +8,7 @@ from base.sj_ondemand import OndemandParser
 from base.fixed import Fixed
 from base.httpclient import HttpClient, VERB_GET, Headers, QueryParams
 from base.websocket import *
-from stdlib_extensions.time import time_ns
-from stdlib_extensions.builtins import dict, HashableInt, HashableStr
+from ylstdlib.time import time_ns
 from testing import assert_equal, assert_true, assert_false
 from base.moutil import *
 from base.globals import *
@@ -121,7 +120,7 @@ fn test_binancews() raises:
     ws.set_on_heartbeat(on_heartbeat)
     ws.set_on_message(on_message)
 
-    # var topics = list[String]()
+    # var topics = List[String]()
     # topics.append("btcusdt@depth5")
     # ws.set_subscription(topics)
     ws.connect()
@@ -133,10 +132,10 @@ fn test_binancews() raises:
     _ = ws ^
 
 
-fn sum_int_list(v: list[Int]) raises -> Int:
+fn sum_int_list(v: List[Int]) raises -> Int:
     var result: Int = 0
     for item in v:
-        result += item
+        result += item[]
     return result
 
 
@@ -225,7 +224,7 @@ fn test_binanceclient_public_time() raises:
 
     # Test order placement speed
     var times = 3
-    var order_times = list[Int]()  # Record the time taken for each order placement
+    var order_times = List[Int]()  # Record the time taken for each order placement
 
     var start_time = time_us()
 
@@ -308,8 +307,8 @@ fn test_binanceclient() raises:
 
     # Test order placement speed
     var times = 30
-    var order_times = list[Int]()  # Record the time taken for each order placement
-    var cancel_times = list[Int]()  # Record the time taken for each order cancellation
+    var order_times = List[Int]()  # Record the time taken for each order placement
+    var cancel_times = List[Int]()  # Record the time taken for each order cancellation
 
     var start_time = time_us()
 

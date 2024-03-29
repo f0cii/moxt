@@ -1,4 +1,4 @@
 fn main():
-    let a: Int = 100
-    let b = rebind[Int64, Int](a)
+    var a: Int = 100
+    var b = rebind[Int64, Int](a)
     print(b)

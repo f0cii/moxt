@@ -1,5 +1,4 @@
 from collections.optional import Optional
-from stdlib_extensions.builtins import dict, list, HashableInt, HashableStr
 from base.fixed import Fixed
 
 
@@ -7,7 +6,7 @@ trait StringableCollectionElement(CollectionElement, Stringable):
     ...
 
 
-fn list_to_str[T: StringableCollectionElement](input_list: list[T]) -> String:
+fn list_to_str[T: StringableCollectionElement](input_list: List[T]) -> String:
     try:
         var result: String = "["
         for i in range(len(input_list)):
@@ -191,10 +190,10 @@ struct PlaceOrderResult(StringableCollectionElement):
 @value
 struct PlaceOrdersResult(Stringable):
     # var success: Bool
-    var orders: list[PlaceOrderResult]
+    var orders: List[PlaceOrderResult]
     # var error_message: String
 
-    fn __init__(inout self, owned orders: list[PlaceOrderResult]):
+    fn __init__(inout self, owned orders: List[PlaceOrderResult]):
         self.orders = orders
 
     fn __str__(self) -> String:
@@ -233,10 +232,10 @@ struct CancelOrderResult(StringableCollectionElement):
 @value
 struct BatchCancelResult(Stringable):
     # var success: Bool
-    var cancelled_orders: list[CancelOrderResult]
+    var cancelled_orders: List[CancelOrderResult]
     # var error_message: String
 
-    fn __init__(inout self, owned cancelled_orders: list[CancelOrderResult]):
+    fn __init__(inout self, owned cancelled_orders: List[CancelOrderResult]):
         self.cancelled_orders = cancelled_orders
 
     fn __str__(self) -> String:

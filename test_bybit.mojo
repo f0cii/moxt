@@ -8,8 +8,7 @@ from base.sj_ondemand import OndemandParser
 from base.fixed import Fixed
 from base.httpclient import HttpClient, VERB_GET, Headers, QueryParams
 from base.websocket import *
-from stdlib_extensions.time import time_ns
-from stdlib_extensions.builtins import dict, HashableInt, HashableStr
+from ylstdlib.time import time_ns
 from core.okxconsts import *
 from core.okxclient import *
 from testing import assert_equal, assert_true, assert_false
@@ -126,7 +125,7 @@ fn test_bybitws() raises:
     ws.set_on_heartbeat(on_heartbeat)
     ws.set_on_message(on_message)
 
-    # var topics = list[String]()
+    # var topics = List[String]()
     # topics.append("orderbook.1.BTCUSDT")
     # ws.set_subscription(topics)
     ws.connect()
@@ -138,10 +137,10 @@ fn test_bybitws() raises:
     _ = ws ^
 
 
-fn sum_int_list(v: list[Int]) raises -> Int:
+fn sum_int_list(v: List[Int]) raises -> Int:
     var result: Int = 0
     for item in v:
-        result += item
+        result += item[]
     return result
 
 
@@ -173,17 +172,17 @@ fn test_bybitclient() raises:
 
     var kline = client.fetch_kline(category, symbol, interval="1", limit=5, start=0, end=0)
     for item in kline:
-        logi(str(item))
+        logi(str(item[]))
 
     # test_orderbook_parse_body()
     var ob = client.fetch_orderbook(category, symbol, 5)
     logi("-----asks-----")
     for item in ob.asks:
-        logi(str(item))
+        logi(str(item[]))
 
     logi("-----bids-----")
     for item in ob.bids:
-        logi(str(item))
+        logi(str(item[]))
 
     var switch_position_mode_res = client.switch_position_mode(category, symbol, "3")
     logi("res=" + str(switch_position_mode_res))
@@ -264,8 +263,8 @@ fn test_bybit_perf() raises:
 
     # Test order placement speed
     var times = 30
-    var order_times = list[Int]()  # Record the time taken for each order placement
-    var cancel_times = list[Int]()  # Record the time taken for each order cancellation
+    var order_times = List[Int]()  # Record the time taken for each order placement
+    var cancel_times = List[Int]()  # Record the time taken for each order cancellation
 
     var start_time = time_us()
 

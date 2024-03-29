@@ -1,5 +1,4 @@
 from utils.static_tuple import StaticTuple
-from stdlib_extensions.builtins import list, dict, HashableInt, HashableStr
 from .c import *
 
 
@@ -10,7 +9,7 @@ alias TI_TYPE_SIMPLE = 4  # These apply a simple operator (e.g. addition, sin, s
 alias TI_TYPE_COMPARATIVE = 5  # These are designed to take inputs from different securities. i.e. compare stock A to stock B.
 
 
-alias Series = DynamicVector[Float64]
+alias Series = List[Float64]
 alias Options = VariadicList[Float64]
 
 
@@ -49,9 +48,9 @@ struct ti_indicator_info(Movable):
     var _inputs: c_int
     var _options: c_int
     var _outputs: c_int
-    var _input_names: StaticTuple[16, c_char_pointer]
-    var _option_names: StaticTuple[16, c_char_pointer]
-    var _output_names: StaticTuple[16, c_char_pointer]
+    var _input_names: StaticTuple[c_char_pointer, 16]
+    var _option_names: StaticTuple[c_char_pointer, 16]
+    var _output_names: StaticTuple[c_char_pointer, 16]
     var _stream_new: ti_indicator_stream_new
     var _stream_run: ti_indicator_stream_run
     var _stream_free: ti_indicator_stream_free
@@ -82,22 +81,22 @@ struct ti_indicator_info(Movable):
     fn indicator_type(self) -> Int:
         return int(self._type)
 
-    fn input_names(self) -> list[String]:
-        var result = list[String]()
+    fn input_names(self) -> List[String]:
+        var result = List[String]()
         for i in range(self._inputs):
             var s = self._input_names[i]
             result.append(c_str_to_string(s, strlen(s)))
         return result
 
-    fn option_names(self) -> list[String]:
-        var result = list[String]()
+    fn option_names(self) -> List[String]:
+        var result = List[String]()
         for i in range(self._options):
             var s = self._option_names[i]
             result.append(c_str_to_string(s, strlen(s)))
         return result
 
-    fn output_names(self) -> list[String]:
-        var result = list[String]()
+    fn output_names(self) -> List[String]:
+        var result = List[String]()
         for i in range(self._outputs):
             var s = self._output_names[i]
             result.append(c_str_to_string(s, strlen(s)))
@@ -214,27 +213,27 @@ struct Inputs:
 
 struct Outputs:
     var data: Pointer[AnyPointer[Float64]]
-    var data_vec: DynamicVector[Series]
+    var data_list: List[Series]
     var outputs: Int
 
     fn __init__(inout self, outputs: Int = 4):
         self.data = Pointer[AnyPointer[Float64]].alloc(outputs)
-        self.data_vec = DynamicVector[Series](capacity=outputs)
+        self.data_list = List[Series](capacity=outputs)
         self.outputs = outputs
 
     fn __del__(owned self):
         self.data.free()
 
     fn __getitem__(self, index: Int) -> Series:
-        return self.data_vec[index]
+        return self.data_list[index]
 
     fn resize(inout self, size: Int, value: Float64):
         for i in range(self.outputs):
             var v = Series()
             v.resize(size, 0.0)
-            self.data_vec.push_back(v ^)
+            self.data_list.append(v ^)
             self.data.store(
-                i, (self.data_vec.data + i)[].data
+                i, (self.data_list.data + i)[].data
             )
 
 
@@ -247,7 +246,7 @@ fn ti_indicator(
     options: VariadicList[Float64],
 ) raises:
     var info = seq_ti_indicator_at_index(indicator_index)
-    var options_ = DynamicVector[Float64](capacity=len(options))
+    var options_ = List[Float64](capacity=len(options))
     options_.append(3)
     for i in options:
         options_.append(i)

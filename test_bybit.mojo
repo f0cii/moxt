@@ -3,6 +3,7 @@ from time import time_function
 from memory import unsafe
 from base.mo import *
 from base.c import *
+from base.thread import *
 from base.sj_dom import *
 from base.sj_ondemand import OndemandParser
 from base.fixed import Fixed
@@ -131,8 +132,9 @@ fn test_bybitws() raises:
     ws.connect()
 
     logd("start")
+    perform_ioc_poll()
 
-    run_forever()
+    # run_forever()
 
     _ = ws ^
 
@@ -348,13 +350,20 @@ fn photon_handle_term(sig: c_int) raises -> None:
     _ = exit(0)
 
 
+fn perform_ioc_poll() -> None:
+    var ioc = seq_asio_ioc()
+    while True:
+        seq_asio_ioc_poll(ioc)
+        sleep(0.001)
+
+
 fn main() raises:
     _ = seq_ct_init()
     var ret = seq_photon_init_default()
     seq_init_photon_work_pool(2)
     seq_init_log(LOG_LEVEL_DBG, "")
     # seq_init_log(LOG_LEVEL_OFF, "")
-    seq_init_net(0)
+    # seq_init_net(0)
     # seq_init_net(1)
 
     logi("Initialization return result: " + str(ret))
@@ -376,11 +385,16 @@ fn main() raises:
 
     # while True:
     # test_httpclient_perf()
-    test_bybitclient()
+    # test_bybitclient()
     # test_bybitws()
 
-    logi("The program is prepared and ready, awaiting events...")
-    run_forever()
+    var ns = time_ns()
+    logi("ns=" + str(ns))
+    var expires = str(int(ns / 1e6 + 5000))
+    logi("expires=" + expires)
+
+    # logi("The program is prepared and ready, awaiting events...")
+    # run_forever()
 
     _ = coc ^
     _ = hoc ^

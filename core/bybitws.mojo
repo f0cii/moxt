@@ -75,6 +75,10 @@ struct BybitWS:
             + path
             + " isPrivate="
             + str(is_private)
+            + " accessKey="
+            + self._access_key
+            + " secretKey="
+            + self._secret_key
         )
 
         var host_ = to_schar_ptr(host)
@@ -90,7 +94,7 @@ struct BybitWS:
         port_.free()
         path_.free()
         register_websocket(ptr)
-        # logd("ws._ptr=" + str(seq_voidptr_to_int(ptr)))
+        logd("BybitWS.register_websocket ws=" + str(ptr))
         self._ptr = ptr
         self._id = seq_voidptr_to_int(ptr)
         self._heartbeat_time = Pointer[Int64].alloc(1)
@@ -239,14 +243,15 @@ struct BybitWS:
         self._heartbeat_time.store(time_ms())
         if self._is_private:
             var param = self.generate_auth_payload()
-            # logd("auth: " + param)
+            logd("auth: " + param)
             self.send(param)
         else:
             self.subscribe()
 
     fn generate_auth_payload(self) -> String:
         try:
-            var expires = str(time_ns() / 1e6 + 5000)
+            var ns = time_ns()
+            var expires = str(int(ns / 1e6 + 5000))
             var req: String = "GET/realtime" + expires
             var hex_signature = hmac_sha256_hex(req, self._secret_key)
 

@@ -99,13 +99,19 @@ struct HttpClient:
         self._verbose = verbose
 
     fn delete(
-        self, request_path: String, inout headers: Headers, buff_size: Int = DEFAULT_BUFF_SIZE
+        self,
+        request_path: String,
+        inout headers: Headers,
+        buff_size: Int = DEFAULT_BUFF_SIZE,
     ) -> HttpResponse:
         var res = self.do_request(request_path, VERB_DELETE, headers, "", buff_size)
         return res
 
     fn get(
-        self, request_path: String, inout headers: Headers, buff_size: Int = DEFAULT_BUFF_SIZE
+        self,
+        request_path: String,
+        inout headers: Headers,
+        buff_size: Int = DEFAULT_BUFF_SIZE,
     ) -> HttpResponse:
         var res = self.do_request(request_path, VERB_GET, headers, "", buff_size)
         return res
@@ -150,7 +156,6 @@ struct HttpClient:
     ) -> HttpResponse:
         var n: Int = 0
         headers["User-Agent"] = "MOXT/1.0.0"
-        print("1")
         var buff = Pointer[UInt8].alloc(buff_size)
         var status = seq_cclient_do_request(
             self.ptr,
@@ -165,7 +170,6 @@ struct HttpClient:
             Pointer[Int].address_of(n),
             self._verbose,
         )
-        print("2")
 
         var s = c_str_to_string(buff, n)
         buff.free()

@@ -1,6 +1,8 @@
 from sys import argv
+from sys.param_env import is_defined, env_get_int, env_get_string
 import time
 from testing import assert_equal, assert_true, assert_false
+from algorithm.functional import parallelize, async_parallelize
 from base.containers import ObjectContainer
 from base.c import *
 from base.mo import *
@@ -13,102 +15,78 @@ from trade.executor import *
 from trading_strategies.dynamic_grid_strategy import DynamicGridStrategy
 from trading_strategies.smart_grid_strategy import SmartGridStrategy
 
-# Run operation
-alias ACTION_RUN = 1000
-
-# Stop operation
-alias ACTION_STOP_NOW = 1001
-
-# Perform tasks operation
-alias ACTION_PERFORM_TASKS = 1002
 
 
-fn execute_executor_action(action: Int, c_ptr: Int):
-    var strategy = seq_get_global_string(CURRENT_STRATEGY_KEY)
-    if strategy == "DynamicGridStrategy":
-        __execute_executor_action[DynamicGridStrategy](c_ptr, action)
-    elif strategy == "SmartGridStrategy":
-        __execute_executor_action[SmartGridStrategy](c_ptr, action)
 
-
-fn run(app_config: AppConfig) raises:
-    var strategy = seq_get_global_string(CURRENT_STRATEGY_KEY)
+fn run_strategy(app_config: AppConfig) raises:
+    var strategy = app_config.strategy
     if strategy == "DynamicGridStrategy":
         __run[DynamicGridStrategy](app_config)
     elif strategy == "SmartGridStrategy":
         __run[SmartGridStrategy](app_config)
+    else:
+        raise "strategy=" + strategy + " is not supported"
 
 
-fn run_forever():
-    seq_photon_join_current_vcpu_into_workpool(seq_photon_work_pool())
+fn stop_strategy_now():
+    logi("stop_strategy_now")
+    var strategy = seq_get_global_string(CURRENT_STRATEGY_KEY)
+    logi("strategy: " + strategy)
+    var executor_ptr = seq_get_global_int(TRADE_EXECUTOR_PTR_KEY)
+    logi("executor_ptr: " + str(executor_ptr))
+
+    if strategy == "DynamicGridStrategy":
+        logi("DynamicGridStrategy")
+        var executor_ptr_0 = Pointer[Executor[DynamicGridStrategy]].__from_index(
+            executor_ptr
+        )
+        executor_ptr_0[].stop_now()
+    elif strategy == "SmartGridStrategy":
+        logi("SmartGridStrategy")
+        var executor_ptr_0 = Pointer[Executor[SmartGridStrategy]].__from_index(
+            executor_ptr
+        )
+        executor_ptr_0[].stop_now()
+    else:
+        logw("not support strategy: " + strategy)
+
+
+# fn run_forever():
+#     seq_photon_join_current_vcpu_into_workpool(seq_photon_work_pool())
 
 
 fn handle_exit():
-    execute_executor_action(ACTION_STOP_NOW)
-    time.sleep(3)
+    stop_strategy_now()
+    time.sleep(1)
     logi("exit...")
     _ = exit(0)
 
 
 fn handle_term(sig: c_int) raises -> None:
-    print("handle_term")
+    logi("handle_term")
     handle_exit()
 
 
 fn photon_handle_term(sig: c_int) raises -> None:
-    print("photon_handle_term")
+    logi("photon_handle_term")
     handle_exit()
 
-
-fn __execute_executor_action[T: BaseStrategy](c_ptr: Int, action: Int):
-    var executor_ptr = AnyPointer[Executor[T]].__from_index(c_ptr)
-    if action == ACTION_RUN:
-        executor_ptr[].run()
-    elif action == ACTION_STOP_NOW:
-        executor_ptr[].stop_now()
-    elif action == ACTION_PERFORM_TASKS:
-        executor_ptr[].perform_tasks()
-
-
-fn execute_executor_action(action: Int):
-    var c_ptr = get_global_pointer(TRADE_EXECUTOR_PTR_KEY)
-    execute_executor_action(action, c_ptr)
-
-
-fn __executor_run_entry(arg: c_void_pointer) raises -> c_void_pointer:
-    var ptr = seq_voidptr_to_int(arg)
-    execute_executor_action(ACTION_RUN, ptr)
-    return c_void_pointer.get_null()
-
-
-fn __executor_perform_tasks_entry(arg: c_void_pointer) raises -> c_void_pointer:
-    var ptr = seq_voidptr_to_int(arg)
-    execute_executor_action(ACTION_PERFORM_TASKS, ptr)
-    return c_void_pointer.get_null()
 
 
 fn __run[T: BaseStrategy](app_config: AppConfig) raises:
     var strategy = create_strategy[T](app_config)
     var executor = Executor[T](app_config, strategy ^)
 
+    var executor_ptr = Reference(executor).get_unsafe_pointer()
+    set_global_pointer(TRADE_EXECUTOR_PTR_KEY, int(executor_ptr))
+
     executor.start()
 
-    var executor_ptr = Reference(executor).get_unsafe_pointer()
-    var executor_ptr_index = int(executor_ptr)
-    set_global_pointer(TRADE_EXECUTOR_PTR_KEY, executor_ptr_index)
+    var ioc = seq_asio_ioc()
 
-    var ptr = seq_int_to_voidptr(executor_ptr_index)
-    seq_photon_thread_create_and_migrate_to_work_pool(__executor_run_entry, ptr)
-    seq_photon_thread_create_and_migrate_to_work_pool(
-        __executor_perform_tasks_entry, ptr
-    )
-
-    logi("The program is prepared and ready, awaiting events...")
-    run_forever()
-
-    logi("Done!!!")
-
-    _ = executor ^
+    while True:
+        seq_asio_ioc_poll(ioc)
+        executor.run_once()
 
 
 fn print_usage():
@@ -170,12 +148,12 @@ fn main() raises:
 
     init_log(log_level, log_file)
     # seq_init_net(0)
-    seq_init_net(1)
+    # seq_init_net(1)
 
     logi("Initialization return result: " + str(ret))
 
     seq_init_signal(handle_term)
-    seq_init_photon_signal(photon_handle_term)
+    # seq_init_photon_signal(photon_handle_term)
 
     # Define global object
     var coc = ObjectContainer[OnConnectWrapper]()
@@ -194,7 +172,7 @@ fn main() raises:
 
     seq_set_global_string(CURRENT_STRATEGY_KEY, app_config.strategy)
 
-    run(app_config)
+    run_strategy(app_config)
 
     _ = coc ^
     _ = hoc ^

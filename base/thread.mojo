@@ -431,16 +431,17 @@ alias sleep = seq_photon_thread_sleep_s
 alias sleep_ms = seq_photon_thread_sleep_ms
 alias sleep_us = seq_photon_thread_sleep_us
 
-alias on_timer_callback = fn () capturing -> UInt64
+alias on_timer_callback = fn () escaping -> UInt64
 alias on_timer = fn () -> UInt64
 
 
 fn on_tc_timer(ptr: Int) raises -> UInt64:
     # print("on_tc_timer ptr=" + str(ptr))
-    var _timer_callback = unsafe.bitcast[on_timer_callback](ptr).load()
-    var ret = _timer_callback()
+    # var _timer_callback = unsafe.bitcast[on_timer_callback](ptr).load()
+    # var ret = _timer_callback()
     # print("on_tc_timer done")
-    return ret
+    # return ret
+    return 0
 
 
 @value
@@ -456,7 +457,7 @@ struct TimedClosureExecutor:
         callback: Pointer[on_timer_callback],
         repeating: Bool = True,
     ):
-        var callback_ptr = callback.__as_index()
+        var callback_ptr = int(callback)
         var ptr = seq_photon_timed_closure_executor_new(
             default_timeout, on_tc_timer, callback_ptr, repeating
         )
@@ -595,7 +596,7 @@ struct ArgData:
 
 
 fn to_mem_ref_ptr[T: AnyRegType](owned t: T) -> Int:
-    return Pointer[T].address_of(t).__as_index()
+    return int(Pointer[T].address_of(t))
 
 
 fn mem_ref_ptr_to_value[T: AnyRegType](ptr: Int) -> T:

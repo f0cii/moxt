@@ -79,6 +79,9 @@ fn test_fixed() raises:
 
     assert_true(-Fixed(-0.1) == Fixed(0.1))
 
+    var a0_1 = Fixed("0.10000000000000001")
+    assert_true(a0_1 == Fixed(0.1))
+
 
 fn test_hmac_sha256_b64() raises:
     var a = hmac_sha256_b64(String("abc"), String("abb"))
@@ -777,9 +780,9 @@ fn main() raises:
     # test_ti_call()
     # test_ti_call_at_index()
     # test_ti_call_at_index2()
-    # test_fixed()
+    test_fixed()
     # test_queue()
-    test_httpget()
+    # test_httpget()
 
 
     for i in range (n):

@@ -45,6 +45,10 @@ struct Executor[T: BaseStrategy](Movable, Runable, IExecutor):
     var _platform: Pointer[Platform]
 
     fn __init__(inout self, config: AppConfig, owned strategy: T) raises:
+        logi("Executor.__init__")
+        logi("config.testnet: " + str(config.testnet))
+        logi("config.access_key: " + config.access_key)
+        logi("config.secret_key: " + config.secret_key)
         self._client = BybitClient(
             testnet=config.testnet,
             access_key=config.access_key,
@@ -373,8 +377,25 @@ struct Executor[T: BaseStrategy](Movable, Runable, IExecutor):
     fn is_initialized(self) -> Bool:
         return self._is_initialized.load()
 
+    fn run_once(inout self):
+        if not self._is_running.load():
+            return
+        if self._stop_requested.load():
+            logi("Executor stopping...")
+            self._is_running.store(False)
+            self._is_stopped.store(True)
+            logi("Executor stopped")
+            return
+        try:
+            # logi("run tick")
+            self._strategy.on_tick()
+        except err:
+            loge("on_tick error: " + str(err))
+
     fn run(inout self):
+        logi("Executor starting...")
         while self._is_running.load():
+            # logi("run loop")
             # Check for stop request
             if self._stop_requested.load():
                 logi("Executor stopping...")
@@ -384,6 +405,7 @@ struct Executor[T: BaseStrategy](Movable, Runable, IExecutor):
                 return
 
             try:
+                # logi("run tick")
                 self._strategy.on_tick()
             except err:
                 loge("on_tick error: " + str(err))
@@ -394,5 +416,5 @@ struct Executor[T: BaseStrategy](Movable, Runable, IExecutor):
         Perform periodic cleanup
         """
         while self._is_running.load():
-            # logi("perform_tasks")
+            logi("perform_tasks")
             _ = sleep(1)

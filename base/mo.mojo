@@ -1189,6 +1189,14 @@ fn seq_ssmap_size(p: c_void_pointer) -> c_size_t:
     return external_call["seq_ssmap_size", c_size_t, c_void_pointer](p)
 
 
+fn seq_asio_ioc() -> c_void_pointer:
+    return external_call["seq_asio_ioc", c_void_pointer]()
+
+
+fn seq_asio_ioc_poll(ioc: c_void_pointer) -> None:
+    external_call["seq_asio_ioc_poll", NoneType, c_void_pointer](ioc)
+
+
 fn seq_websocket_new(
     host: c_char_pointer, port: c_char_pointer, path: c_char_pointer, tls_version: Int
 ) -> c_void_pointer:

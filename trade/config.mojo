@@ -4,6 +4,7 @@ from pathlib.path import Path
 from base.fixed import Fixed
 from base.moutil import *
 from core.env import *
+from base.mo import *
 
 
 @value
@@ -67,6 +68,7 @@ fn load_config(filename: String) raises -> AppConfig:
     config.secret_key = str(dict["secret_key"])
     config.category = str(dict["category"])
     config.symbols = str(dict["symbols"])
+    logi("load_config symbols: " + config.symbols)
     config.depth = strtoi(str(dict["depth"]))
     config.strategy = str(dict["strategy"]["name"])
     var params = dict["params"]

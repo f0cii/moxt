@@ -4,6 +4,7 @@ from ._libc import c_gettimeofday, c_localtime, c_gmtime, c_strptime
 from ._libc import CTimeval, CTm
 from .timezone import TimeZone
 from .timedelta import TimeDelta
+from .formatter import formatter
 from .constants import _DAYS_BEFORE_MONTH, _DAYS_IN_MONTH
 from python.object import PythonObject
 from python import Python
@@ -15,7 +16,7 @@ alias _DI4Y = 1461  #    "    "   "   "   4   "
 
 
 @value
-struct Morrow:
+struct Morrow(StringableRaising):
     var year: Int
     var month: Int
     var day: Int
@@ -119,7 +120,7 @@ struct Morrow:
     @staticmethod
     fn strptime(date_str: String, fmt: String, tz_str: String) raises -> Self:
         """
-        Create a Morrow instance by time_zone_string with utc format
+        Create a Morrow instance by time_zone_string with utc format.
 
         Usage::
 
@@ -128,6 +129,26 @@ struct Morrow:
         """
         var tzinfo = TimeZone.from_utc(tz_str)
         return Self.strptime(date_str, fmt, tzinfo)
+
+    fn format(self, fmt: String = "YYYY-MM-DD HH:mm:ss ZZ") raises -> String:
+        """Returns a string representation of the `Morrow`
+        formatted according to the provided format string.
+
+        :param fmt: the format string.
+
+        Usage::
+            >>> var m = Morrow.now()
+            >>> m.format('YYYY-MM-DD HH:mm:ss ZZ')
+            '2013-05-09 03:56:47 -00:00'
+
+            >>> m.format('MMMM DD, YYYY')
+            'May 09, 2013'
+
+            >>> m.format()
+            '2013-05-09 03:56:47 -00:00'
+
+        """
+        return formatter.format(self, fmt)
 
     fn isoformat(
         self, sep: String = "T", timespec: StringLiteral = "auto"
@@ -191,8 +212,7 @@ struct Morrow:
         if self.tz.is_none():
             return sep.join(date_str, time_str)
         else:
-            # return sep.join(date_str, time_str) + self.tz.format()
-            return sep.join(date_str, time_str)
+            return sep.join(date_str, time_str) + self.tz.format()
 
     fn toordinal(self) raises -> Int:
         """Return proleptic Gregorian ordinal for the year, month and day.
@@ -276,6 +296,11 @@ struct Morrow:
         # Now the year and month are correct, and n is the offset from the
         # start of that month:  we're done!
         return Self(year, month, n + 1)
+
+    fn isoweekday(self) raises -> Int:
+        # "Return day of the week, where Monday == 1 ... Sunday == 7."
+        # 1-Jan-0001 is a Monday
+        return self.toordinal() % 7 or 7
 
     fn __str__(self) raises -> String:
         return self.isoformat()

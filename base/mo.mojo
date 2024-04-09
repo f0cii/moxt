@@ -79,6 +79,10 @@ fn seq_nanoid() -> String:
     return c_str_to_string(result, n)
 
 
+fn seq_snowflake_id() -> Int64:
+    return external_call["seq_snowflake_id", Int64]()
+
+
 # var LOG_LEVEL_DBG: UInt8 = 0
 # var LOG_LEVEL_INF: UInt8 = 1
 # var LOG_LEVEL_WRN: UInt8 = 2

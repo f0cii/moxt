@@ -4,6 +4,7 @@ secret_key = ""
 category = "linear"
 symbols = "BTCUSDT"
 depth = 1
+is_local_based = true
 
 [strategy]
 name = "SmartGridStrategy"

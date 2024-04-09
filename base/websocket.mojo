@@ -1,6 +1,8 @@
+from sys.ffi import _get_global
 from .c import *
 from .mo import *
 from .moutil import *
+from .containers import ObjectContainer
 
 
 alias TLS1_1_VERSION = 0x0302
@@ -212,3 +214,57 @@ def register_websocket(ws: c_void_pointer) -> None:
     seq_websocket_set_on_connect(ws, websocket_connect_callback)
     seq_websocket_set_on_heartbeat(ws, websocket_heartbeat_callback)
     seq_websocket_set_on_message(ws, websocket_message_callback)
+
+
+# var coc = ObjectContainer[OnConnectWrapper]()
+# var hoc = ObjectContainer[OnHeartbeatWrapper]()
+# var moc = ObjectContainer[OnMessageWrapper]()
+
+alias OnConnectWrapperContainer = ObjectContainer[OnConnectWrapper]
+alias OnHeartbeatWrapperContainer = ObjectContainer[OnHeartbeatWrapper]
+alias OnMessageWrapperContainer = ObjectContainer[OnMessageWrapper]
+
+
+fn coc_ptr() -> Pointer[OnConnectWrapperContainer]:
+    var ptr = _get_global["__coc", _init_coc, _destroy_coc]()
+    return ptr.bitcast[OnConnectWrapperContainer]()
+
+
+fn _init_coc(payload: Pointer[NoneType]) -> Pointer[NoneType]:
+    var ptr = Pointer[OnConnectWrapperContainer].alloc(1)
+    ptr[] = OnConnectWrapperContainer()
+    return ptr.bitcast[NoneType]()
+
+
+fn _destroy_coc(p: Pointer[NoneType]):
+    p.free()
+
+
+fn hoc_ptr() -> Pointer[OnHeartbeatWrapperContainer]:
+    var ptr = _get_global["__hoc", _init_hoc, _destroy_hoc]()
+    return ptr.bitcast[OnHeartbeatWrapperContainer]()
+
+
+fn _init_hoc(payload: Pointer[NoneType]) -> Pointer[NoneType]:
+    var ptr = Pointer[OnHeartbeatWrapperContainer].alloc(1)
+    ptr[] = OnHeartbeatWrapperContainer()
+    return ptr.bitcast[NoneType]()
+
+
+fn _destroy_hoc(p: Pointer[NoneType]):
+    p.free()
+
+
+fn moc_ptr() -> Pointer[OnMessageWrapperContainer]:
+    var ptr = _get_global["__moc", _init_moc, _destroy_moc]()
+    return ptr.bitcast[OnMessageWrapperContainer]()
+
+
+fn _init_moc(payload: Pointer[NoneType]) -> Pointer[NoneType]:
+    var ptr = Pointer[OnMessageWrapperContainer].alloc(1)
+    ptr[] = OnMessageWrapperContainer()
+    return ptr.bitcast[NoneType]()
+
+
+fn _destroy_moc(p: Pointer[NoneType]):
+    p.free()

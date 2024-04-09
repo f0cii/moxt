@@ -65,19 +65,13 @@ fn test_websocket() raises:
     var ws = WebSocket(host=host, port=port, path=path)
     var id = ws.get_id()
     var on_connect = ws.get_on_connect()
-    var on_connect_ptr = int(Pointer[on_connect_callback].address_of(
-        on_connect
-    ))
+    var on_connect_ptr = int(Pointer[on_connect_callback].address_of(on_connect))
     # print("on_connect_ptr: " + str(aon_connect_ptr))
     var on_heartbeat = ws.get_on_heartbeat()
-    var on_heartbeat_ptr = int(Pointer[on_heartbeat_callback].address_of(
-        on_heartbeat
-    ))
+    var on_heartbeat_ptr = int(Pointer[on_heartbeat_callback].address_of(on_heartbeat))
     # print("on_heartbeat_ptr: " + str(on_heartbeat_ptr))
     var on_message = ws.get_on_message()
-    var on_message_ptr = int(Pointer[on_message_callback].address_of(
-        on_message
-    ))
+    var on_message_ptr = int(Pointer[on_message_callback].address_of(on_message))
     # print("on_message_ptr: " + str(on_message_ptr))
     set_on_connect(id, on_connect_ptr)
     set_on_heartbeat(id, on_heartbeat_ptr)
@@ -295,7 +289,9 @@ fn test_binanceclient() raises:
 
     var order_start = time_us()
 
-    var place_order_res = client.place_order(symbol, side, type_, position_side, quantity, price)
+    var place_order_res = client.place_order(
+        symbol, side, type_, position_side, quantity, price
+    )
     logi("res=" + str(place_order_res))
 
     var cancel_order_res = client.cancel_order(symbol, order_id="237740210409")
@@ -430,18 +426,6 @@ fn main() raises:
     seq_init_signal(handle_term)
     seq_init_photon_signal(photon_handle_term)
 
-    var coc = ObjectContainer[OnConnectWrapper]()
-    var hoc = ObjectContainer[OnHeartbeatWrapper]()
-    var moc = ObjectContainer[OnMessageWrapper]()
-
-    var coc_ref = Reference(coc).get_unsafe_pointer()
-    var hoc_ref = Reference(hoc).get_unsafe_pointer()
-    var moc_ref = Reference(moc).get_unsafe_pointer()
-
-    set_global_pointer(WS_ON_CONNECT_WRAPPER_PTR_KEY, int(coc_ref))
-    set_global_pointer(WS_ON_HEARTBEAT_WRAPPER_PTR_KEY, int(hoc_ref))
-    set_global_pointer(WS_ON_MESSAGE_WRAPPER_PTR_KEY, int(moc_ref))
-
     # while True:
     # test_httpclient_perf()
     # test_binance_sign()
@@ -453,7 +437,3 @@ fn main() raises:
 
     logi("The program is prepared and ready, awaiting events...")
     run_forever()
-
-    _ = coc ^
-    _ = hoc ^
-    _ = moc ^

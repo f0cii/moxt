@@ -3,6 +3,7 @@ from base.sj_ondemand import OndemandParser
 from base.sj_dom import DomParser
 from base.c import *
 from base.mo import *
+from base.fixed import Fixed
 from base.moutil import *
 from base.httpclient import *
 
@@ -94,8 +95,8 @@ struct BybitClient:
 
         # {"retCode":0,"retMsg":"OK","result":{"category":"linear","list":[{"symbol":"BTCUSDT","contractType":"LinearPerpetual","status":"Trading","baseCoin":"BTC","quoteCoin":"USDT","launchTime":"1584230400000","deliveryTime":"0","deliveryFeeRate":"","priceScale":"2","leverageFilter":{"minLeverage":"1","maxLeverage":"100.00","leverageStep":"0.01"},"priceFilter":{"minPrice":"0.10","maxPrice":"199999.80","tickSize":"0.10"},"lotSizeFilter":{"maxOrderQty":"100.000","minOrderQty":"0.001","qtyStep":"0.001","postOnlyMaxOrderQty":"1000.000"},"unifiedMarginTrade":true,"fundingInterval":480,"settleCoin":"USDT","copyTrading":"both"}],"nextPageCursor":""},"retExtInfo":{},"time":1701762078208}
 
-        var tick_size: Float64 = 0
-        var stepSize: Float64 = 0
+        var tick_size: Fixed = Fixed.zero
+        var stepSize: Fixed = Fixed.zero
 
         var parser = OndemandParser(ParserBufferSize)
         var doc = parser.parse(ret.text)
@@ -122,9 +123,9 @@ struct BybitClient:
                 continue
 
             var priceFilter = obj.get_object("priceFilter")
-            tick_size = strtod(priceFilter.get_str("tickSize"))
+            tick_size = Fixed(priceFilter.get_str("tickSize"))
             var lotSizeFilter = obj.get_object("lotSizeFilter")
-            stepSize = strtod(lotSizeFilter.get_str("qtyStep"))
+            stepSize = Fixed(lotSizeFilter.get_str("qtyStep"))
 
             # logi("tick_size: " + str(tick_size))
             # logi("stepSize: " + str(stepSize))
@@ -265,8 +266,8 @@ struct BybitClient:
             var obj = list_iter_a.get()
             var i_arr_list = obj.array()
 
-            var price = strtod(i_arr_list.at_str(0))
-            var qty = strtod(i_arr_list.at_str(1))
+            var price = i_arr_list.at_str(0)
+            var qty = i_arr_list.at_str(1)
 
             asks.append(OrderBookItem(price, qty))
             _ = obj ^
@@ -282,8 +283,8 @@ struct BybitClient:
             var obj = list_iter_b.get()
             var i_arr_list = obj.array()
 
-            var price = strtod(i_arr_list.at_str(0))
-            var qty = strtod(i_arr_list.at_str(1))
+            var price = i_arr_list.at_str(0)
+            var qty = i_arr_list.at_str(1)
 
             bids.append(OrderBookItem(price, qty))
 
@@ -967,7 +968,8 @@ struct BybitClient:
     ) raises -> None:
         if not sign:
             return
-        var time_ms_str = str(time_ns() / 1e6)
+        var time_ms_str = str(int(time_ns() / 1e6))
+        # logi("time_ms_str=" + time_ms_str)
         var recv_window_str = "15000"
         # logd("do_sign: " + data)
         var payload = data

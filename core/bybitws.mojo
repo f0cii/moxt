@@ -16,6 +16,9 @@ from base.websocket import (
     set_on_connect,
     set_on_heartbeat,
     set_on_message,
+    coc_ptr,
+    hoc_ptr,
+    moc_ptr,
 )
 from base.yyjson import yyjson_doc, yyjson_mut_doc
 from core.sign import hmac_sha256_hex
@@ -158,29 +161,32 @@ struct BybitWS:
 
     fn set_on_connect(self, owned wrapper: OnConnectWrapper):
         var id = self.get_id()
-        var coc_ptr = get_global_pointer(WS_ON_CONNECT_WRAPPER_PTR_KEY)
-        var coc_any_ptr = AnyPointer[ObjectContainer[OnConnectWrapper]].__from_index(
-            coc_ptr
-        )
-        var wrapper_ptr = coc_any_ptr[].emplace_as_index(wrapper)
+        # var coc_ptr = get_global_pointer(WS_ON_CONNECT_WRAPPER_PTR_KEY)
+        # var coc_any_ptr = AnyPointer[ObjectContainer[OnConnectWrapper]].__from_index(
+        #     coc_ptr
+        # )
+        # var wrapper_ptr = coc_any_ptr[].emplace_as_index(wrapper)
+        var wrapper_ptr = coc_ptr()[].emplace_as_index(wrapper)
         set_on_connect(id, wrapper_ptr)
 
     fn set_on_heartbeat(self, owned wrapper: OnHeartbeatWrapper):
         var id = self.get_id()
-        var coc_ptr = get_global_pointer(WS_ON_HEARTBEAT_WRAPPER_PTR_KEY)
-        var coc_any_ptr = AnyPointer[ObjectContainer[OnHeartbeatWrapper]].__from_index(
-            coc_ptr
-        )
-        var wrapper_ptr = coc_any_ptr[].emplace_as_index(wrapper)
+        # var coc_ptr = get_global_pointer(WS_ON_HEARTBEAT_WRAPPER_PTR_KEY)
+        # var coc_any_ptr = AnyPointer[ObjectContainer[OnHeartbeatWrapper]].__from_index(
+        #     coc_ptr
+        # )
+        # var wrapper_ptr = coc_any_ptr[].emplace_as_index(wrapper)
+        var wrapper_ptr = hoc_ptr()[].emplace_as_index(wrapper)
         set_on_heartbeat(id, wrapper_ptr)
 
     fn set_on_message(self, owned wrapper: OnMessageWrapper):
         var id = self.get_id()
-        var coc_ptr = get_global_pointer(WS_ON_MESSAGE_WRAPPER_PTR_KEY)
-        var coc_any_ptr = AnyPointer[ObjectContainer[OnMessageWrapper]].__from_index(
-            coc_ptr
-        )
-        var wrapper_ptr = coc_any_ptr[].emplace_as_index(wrapper)
+        # var coc_ptr = get_global_pointer(WS_ON_MESSAGE_WRAPPER_PTR_KEY)
+        # var coc_any_ptr = AnyPointer[ObjectContainer[OnMessageWrapper]].__from_index(
+        #     coc_ptr
+        # )
+        # var wrapper_ptr = coc_any_ptr[].emplace_as_index(wrapper)
+        var wrapper_ptr = moc_ptr()[].emplace_as_index(wrapper)
         set_on_message(id, wrapper_ptr)
 
     fn set_subscription(inout self, topics: List[String]) raises:

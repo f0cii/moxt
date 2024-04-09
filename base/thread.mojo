@@ -1,4 +1,6 @@
+from sys.ffi import _get_global
 from memory import unsafe
+from collections.optional import Optional
 from .c import *
 from .mo import *
 from base.moutil import *
@@ -340,9 +342,28 @@ struct iovec:
         var c_ptr = rebind[c_void_pointer, DTypePointer[DType.uint8]](ptr)
         return Self {iov_base: c_ptr, iov_len: data_len}
 
+    fn __init__(data: (DTypePointer[DType.int8], Int)) -> Self:
+        var ptr = data.get[0, DTypePointer[DType.uint8]]()
+        var data_len = data.get[1, Int]()
+        var c_ptr = rebind[c_void_pointer, DTypePointer[DType.uint8]](ptr)
+        return Self {iov_base: c_ptr, iov_len: data_len}
+
+    fn __init__(s: String) -> Self:
+        var buff = Pointer[UInt8].alloc(len(s))
+        memcpy(rebind[DTypePointer[DType.int8]](buff), s._as_ptr(), len(s))
+        return Self {iov_base: buff, iov_len: len(s)}
+
     fn to_data(self) -> (DTypePointer[DType.uint8], Int):
         var ptr = rebind[DTypePointer[DType.uint8]](self.iov_base)
         return (ptr, self.iov_len)
+
+    fn to_str(self) -> String:
+        var ptr = rebind[DTypePointer[DType.int8]](self.iov_base)
+        return String(StringRef(ptr, self.iov_len))
+
+    fn free(self):
+        var buff = rebind[Pointer[UInt8]](self.iov_base)
+        buff.free()
 
 
 # Create queue
@@ -713,6 +734,7 @@ fn run_coro(f: CoroFunction):
     sem.free()
 
 
+@value
 struct LockfreeQueue:
     var ptr: c_void_pointer
 
@@ -723,7 +745,7 @@ struct LockfreeQueue:
         self.ptr = existing.ptr
         existing.ptr = c_void_pointer.get_null()
 
-    fn __del__(owned self):
+    fn free(owned self):
         if self.ptr != c_void_pointer.get_null():
             seq_lockfree_queue_free(self.ptr)
 
@@ -732,3 +754,34 @@ struct LockfreeQueue:
 
     fn pop(self, data: Pointer[iovec]) -> Bool:
         return seq_lockfree_queue_pop(self.ptr, data)
+
+    fn push(self, s: String) -> Bool:
+        var iv = iovec(s)
+        return self.push(Pointer[iovec].address_of(iv))
+
+    fn pop(self) -> Optional[String]:
+        var iv = iovec()
+        var ok = self.pop(Pointer[iovec].address_of(iv))
+        if not ok:
+            return None
+        else:
+            var s = iv.to_str()
+            iv.free()
+            return s
+
+
+fn lockfree_queue_itf[name: StringLiteral]() -> Pointer[LockfreeQueue]:
+    var ptr = _get_global[
+        "LockfreeQueue:" + name, _init_lockfree_queue, _destroy_lockfree_queue
+    ]()
+    return ptr.bitcast[LockfreeQueue]()
+
+
+fn _init_lockfree_queue(payload: Pointer[NoneType]) -> Pointer[NoneType]:
+    var ptr = Pointer[LockfreeQueue].alloc(1)
+    ptr[] = LockfreeQueue()
+    return ptr.bitcast[NoneType]()
+
+
+fn _destroy_lockfree_queue(p: Pointer[NoneType]):
+    p.free()

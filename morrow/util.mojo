@@ -1,3 +1,5 @@
+from collections.vector import DynamicVector
+
 from .constants import MAX_TIMESTAMP, MAX_TIMESTAMP_MS, MAX_TIMESTAMP_US
 from .constants import _DAYS_IN_MONTH, _DAYS_BEFORE_MONTH
 
@@ -46,19 +48,6 @@ def normalize_timestamp(timestamp: Float64) -> Float64:
                 "The specified timestamp " + String(timestamp) + "is too large."
             )
     return timestamp
-
-
-fn num2str(n: Int, l: Int) -> String:
-    """Transfer Int to String with 0 surffix to match length."""
-    var x = List[Int8](l)
-    for i in range(l, 0, -1):
-        if 10 ** (i - 1) > n:
-            x.push_back(48)
-        else:
-            x.push_back(48 + (n % (10**i) // (10 ** (i - 1))))
-    # return String(x.data, l)
-
-    return String(x.data.value, l)
 
 
 fn _repeat_string(string: String, n: Int) -> String:

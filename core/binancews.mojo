@@ -85,29 +85,32 @@ struct BinanceWS:
 
     fn set_on_connect(self, owned wrapper: OnConnectWrapper):
         var id = self.get_id()
-        var coc_ptr = get_global_pointer(WS_ON_CONNECT_WRAPPER_PTR_KEY)
-        var coc_any_ptr = AnyPointer[ObjectContainer[OnConnectWrapper]].__from_index(
-            coc_ptr
-        )
-        var wrapper_ptr = coc_any_ptr[].emplace_as_index(wrapper)
+        # var coc_ptr = get_global_pointer(WS_ON_CONNECT_WRAPPER_PTR_KEY)
+        # var coc_any_ptr = AnyPointer[ObjectContainer[OnConnectWrapper]].__from_index(
+        #     coc_ptr
+        # )
+        # var wrapper_ptr = coc_any_ptr[].emplace_as_index(wrapper)
+        var wrapper_ptr = coc_ptr()[].emplace_as_index(wrapper)
         seq_set_global_int(id, wrapper_ptr)
 
     fn set_on_heartbeat(self, owned wrapper: OnHeartbeatWrapper):
         var id = self.get_id()
-        var coc_ptr = get_global_pointer(WS_ON_HEARTBEAT_WRAPPER_PTR_KEY)
-        var coc_any_ptr = AnyPointer[ObjectContainer[OnHeartbeatWrapper]].__from_index(
-            coc_ptr
-        )
-        var wrapper_ptr = coc_any_ptr[].emplace_as_index(wrapper)
+        # var coc_ptr = get_global_pointer(WS_ON_HEARTBEAT_WRAPPER_PTR_KEY)
+        # var coc_any_ptr = AnyPointer[ObjectContainer[OnHeartbeatWrapper]].__from_index(
+        #     coc_ptr
+        # )
+        # var wrapper_ptr = coc_any_ptr[].emplace_as_index(wrapper)
+        var wrapper_ptr = hoc_ptr()[].emplace_as_index(wrapper)
         seq_set_global_int(id, wrapper_ptr)
 
     fn set_on_message(self, owned wrapper: OnMessageWrapper):
         var id = self.get_id()
-        var coc_ptr = get_global_pointer(WS_ON_MESSAGE_WRAPPER_PTR_KEY)
-        var coc_any_ptr = AnyPointer[ObjectContainer[OnMessageWrapper]].__from_index(
-            coc_ptr
-        )
-        var wrapper_ptr = coc_any_ptr[].emplace_as_index(wrapper)
+        # var coc_ptr = get_global_pointer(WS_ON_MESSAGE_WRAPPER_PTR_KEY)
+        # var coc_any_ptr = AnyPointer[ObjectContainer[OnMessageWrapper]].__from_index(
+        #     coc_ptr
+        # )
+        # var wrapper_ptr = coc_any_ptr[].emplace_as_index(wrapper)
+        var wrapper_ptr = moc_ptr()[].emplace_as_index(wrapper)
         seq_set_global_int(id, wrapper_ptr)
 
     fn subscribe(self):

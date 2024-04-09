@@ -1,16 +1,5 @@
+from sys.ffi import _get_global
 from base.mo import seq_set_global_int, seq_get_global_int
-
-
-# Define the storage key for global pointers
-alias GLOBAL_INT_KEY_START = 10000
-alias TRADE_EXECUTOR_PTR_KEY = GLOBAL_INT_KEY_START + 1
-alias WS_ON_CONNECT_WRAPPER_PTR_KEY = GLOBAL_INT_KEY_START + 2
-alias WS_ON_HEARTBEAT_WRAPPER_PTR_KEY = GLOBAL_INT_KEY_START + 3
-alias WS_ON_MESSAGE_WRAPPER_PTR_KEY = GLOBAL_INT_KEY_START + 4
-
-
-alias GLOBAL_STRING_KEY_START = 10000
-alias CURRENT_STRATEGY_KEY = GLOBAL_STRING_KEY_START + 1
 
 
 # Set global pointer
@@ -23,3 +12,111 @@ fn set_global_pointer(key: Int, pointer: Int):
 @always_inline
 fn get_global_pointer(key: Int) -> Int:
     return seq_get_global_int(key)
+
+
+alias SignalHandler = fn (Int) -> None
+
+
+# SEQ_FUNC void seq_register_signal_handler(int signum, SignalHandler handler)
+fn seq_register_signal_handler(signum: Int, handler: SignalHandler):
+    external_call["seq_register_signal_handler", NoneType, Int, SignalHandler](
+        signum, handler
+    )
+
+
+@value
+struct __G:
+    var stop_requested_flag: Bool
+    var stopped_flag: Bool
+    var current_strategy: String
+    var executor_ptr: Int
+    var algo_id: Int
+    var vars: Dict[String, String]
+
+    fn __init__(inout self):
+        self.stop_requested_flag = False
+        self.stopped_flag = False
+        self.current_strategy = ""
+        self.executor_ptr = 0
+        self.algo_id = 0
+        self.vars = Dict[String, String]()
+
+
+fn _GLOBAL() -> Pointer[__G]:
+    var p = _get_global["_GLOBAL", _init_global, _destroy_global]()
+    return p.bitcast[__G]()
+
+
+fn _init_global(payload: Pointer[NoneType]) -> Pointer[NoneType]:
+    # var p = Pointer[__G].alloc(1)
+    # p[] = __G()
+    # return p.bitcast[NoneType]()
+    var p = AnyPointer[__G].alloc(1)
+    p.emplace_value(__G())
+    var data = Pointer[__G].__from_index(int(p))
+    return data.bitcast[NoneType]()
+
+
+fn _destroy_global(p: Pointer[NoneType]):
+    p.free()
+
+
+fn _GLOBAL_INT[name: StringLiteral]() -> Pointer[Int]:
+    var p = _get_global[name, _initialize_int, _destroy_int]()
+    return p.bitcast[Int]()
+
+
+fn _initialize_int(payload: Pointer[NoneType]) -> Pointer[NoneType]:
+    var data = Pointer[Int].alloc(1)
+    data.store(0)
+    return data.bitcast[NoneType]()
+
+
+fn _destroy_int(p: Pointer[NoneType]):
+    p.free()
+
+
+fn _GLOBAL_FLOAT[name: StringLiteral]() -> Pointer[Float64]:
+    var p = _get_global[name, _initialize_float64, _destroy_float64]()
+    return p.bitcast[Float64]()
+
+
+fn _initialize_float64(payload: Pointer[NoneType]) -> Pointer[NoneType]:
+    var data = Pointer[Float64].alloc(1)
+    data.store(0)
+    return data.bitcast[NoneType]()
+
+
+fn _destroy_float64(p: Pointer[NoneType]):
+    p.free()
+
+
+fn _GLOBAL_BOOL[name: StringLiteral]() -> Pointer[Bool]:
+    var p = _get_global[name, _initialize_bool, _destroy_bool]()
+    return p.bitcast[Bool]()
+
+
+fn _initialize_bool(payload: Pointer[NoneType]) -> Pointer[NoneType]:
+    var data = Pointer[Bool].alloc(1)
+    data.store(False)
+    return data.bitcast[NoneType]()
+
+
+fn _destroy_bool(p: Pointer[NoneType]):
+    p.free()
+
+
+fn _GLOBAL_STRING[name: StringLiteral]() -> Pointer[String]:
+    var p = _get_global[name, _initialize_string, _destroy_string]()
+    return p.bitcast[String]()
+
+
+fn _initialize_string(payload: Pointer[NoneType]) -> Pointer[NoneType]:
+    var p = AnyPointer[String].alloc(1)
+    p.emplace_value(String(""))
+    var data = Pointer[String].__from_index(int(p))
+    return data.bitcast[NoneType]()
+
+
+fn _destroy_string(p: Pointer[NoneType]):
+    p.free()

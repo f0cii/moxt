@@ -87,7 +87,7 @@ fn c_gmtime(owned tv_sec: Int) -> CTm:
 
 
 fn to_char_ptr(s: String) -> Pointer[c_char]:
-    """only ASCII-based strings"""
+    """Only ASCII-based strings."""
     var ptr = Pointer[c_char]().alloc(len(s))
     for i in range(len(s)):
         ptr.store(i, ord(s[i]))

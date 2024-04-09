@@ -6,6 +6,7 @@ from core.bybitclient import BybitClient
 from core.bybitmodel import *
 from core.bybitws import *
 from base.mo import logd, logi, logw, loge
+import base.log
 from .config import AppConfig
 from .platform import *
 from .base_strategy import *
@@ -261,13 +262,9 @@ struct Executor[T: BaseStrategy](Movable, Runable, IExecutor):
 
         # logd("asks=" + str(len(asks)) + " bids=" + str(len(bids)))
 
-        self._platform[].on_update_orderbook(
-            symbol, type_, asks, bids
-        )
+        self._platform[].on_update_orderbook(symbol, type_, asks, bids)
         if self.is_initialized():
-            var ob = self._platform[].get_orderbook(
-                symbol, 5
-            )
+            var ob = self._platform[].get_orderbook(symbol, 5)
             self._strategy.on_orderbook(ob)
 
         # logd("process_orderbook_message done")
@@ -391,9 +388,13 @@ struct Executor[T: BaseStrategy](Movable, Runable, IExecutor):
             self._strategy.on_tick()
         except err:
             loge("on_tick error: " + str(err))
+            sleep(3)
 
     fn run(inout self):
         logi("Executor starting...")
+        # 定义时间，之后用来控制循环，间隔100ms
+        var log_servie = log.log_service_itf()
+        var last = time_ns()
         while self._is_running.load():
             # logi("run loop")
             # Check for stop request
@@ -404,12 +405,22 @@ struct Executor[T: BaseStrategy](Movable, Runable, IExecutor):
                 logi("Executor stopped")
                 return
 
+            # Check for log messages
+            _ = log_servie[].perform()
+
+            # Check if it's time to run
+            var now = time_ns()
+            if now - last < 100 * 1000 * 1000:
+                continue
+
             try:
                 # logi("run tick")
                 self._strategy.on_tick()
             except err:
                 loge("on_tick error: " + str(err))
-            _ = sleep_us(1000 * 100)
+                sleep(10)
+
+            last = now
 
     fn perform_tasks(inout self):
         """

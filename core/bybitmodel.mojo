@@ -23,8 +23,8 @@ struct ServerTime(Stringable):
 @value
 struct ExchangeInfo(Stringable):
     var symbol: String
-    var tick_size: Float64  # Price 0.01
-    var step_size: Float64  # Size 0.001
+    var tick_size: Fixed  # Price 0.01
+    var step_size: Fixed  # Size 0.001
 
     fn __str__(self) -> String:
         return (
@@ -104,8 +104,8 @@ struct OrderBookItem(Stringable, CollectionElement):
     A single record from the order book
     """
 
-    var price: Float64
-    var qty: Float64
+    var price: Fixed
+    var qty: Fixed
 
     fn __str__(self) -> String:
         return (

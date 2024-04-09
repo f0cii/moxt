@@ -15,6 +15,7 @@ struct AppConfig(Stringable):
     var category: String
     var symbols: String
     var depth: Int
+    var is_local_based: Bool
     var strategy: String
     var params: Dict[String, String]
 
@@ -26,6 +27,7 @@ struct AppConfig(Stringable):
         self.category = ""
         self.symbols = ""
         self.depth = 1
+        self.is_local_based = True
         self.strategy = ""
         self.params = Dict[String, String]()
 
@@ -42,6 +44,8 @@ struct AppConfig(Stringable):
             + self.access_key
             + ", secret_key="
             + self.secret_key
+            + ", is_local_based="
+            + str(self.is_local_based)
             + ", category="
             + self.category
             + ", symbols="
@@ -70,6 +74,7 @@ fn load_config(filename: String) raises -> AppConfig:
     config.symbols = str(dict["symbols"])
     logi("load_config symbols: " + config.symbols)
     config.depth = strtoi(str(dict["depth"]))
+    config.is_local_based = str_to_bool(str(dict["is_local_based"]))
     config.strategy = str(dict["strategy"]["name"])
     var params = dict["params"]
     var iterator = py.iter(params)

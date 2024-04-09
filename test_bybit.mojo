@@ -69,19 +69,13 @@ fn test_websocket() raises:
     var ws = WebSocket(host=host, port=port, path=path)
     var id = ws.get_id()
     var on_connect = ws.get_on_connect()
-    var on_connect_ptr = int(Pointer[on_connect_callback].address_of(
-        on_connect
-    ))
+    var on_connect_ptr = int(Pointer[on_connect_callback].address_of(on_connect))
     # print("on_connect_ptr: " + str(aon_connect_ptr))
     var on_heartbeat = ws.get_on_heartbeat()
-    var on_heartbeat_ptr = int(Pointer[on_heartbeat_callback].address_of(
-        on_heartbeat
-    ))
+    var on_heartbeat_ptr = int(Pointer[on_heartbeat_callback].address_of(on_heartbeat))
     # print("on_heartbeat_ptr: " + str(on_heartbeat_ptr))
     var on_message = ws.get_on_message()
-    var on_message_ptr = int(Pointer[on_message_callback].address_of(
-        on_message
-    ))
+    var on_message_ptr = int(Pointer[on_message_callback].address_of(on_message))
     # print("on_message_ptr: " + str(on_message_ptr))
     set_on_connect(id, on_connect_ptr)
     set_on_heartbeat(id, on_heartbeat_ptr)
@@ -172,7 +166,9 @@ fn test_bybitclient() raises:
 
     # <ExchangeInfo: symbol=BTCUSDT, tick_size=0.10000000000000001, step_size=0.001>
 
-    var kline = client.fetch_kline(category, symbol, interval="1", limit=5, start=0, end=0)
+    var kline = client.fetch_kline(
+        category, symbol, interval="1", limit=5, start=0, end=0
+    )
     for item in kline:
         logi(str(item[]))
 
@@ -230,6 +226,96 @@ fn test_bybitclient() raises:
 
     # var res = client.place_order(category, symbol, "Sell", "Market", qty, "", position_idx=1)
     # logi("res=" + str(res))
+
+    logi("Done!!!")
+
+    run_forever()
+
+    _ = client ^
+
+
+fn test_ob_price() raises:
+    # [2024-04-01 16:38:21.662] [debug] res.status_code=200 text={"retCode":0,"retMsg":"OK","result":{"s":"BTCUSDT","b":[["69445.9","49.567"],["69445.7","87.003"],["69445.6","38.998"],["69445.5","57.319"],["69445.3","96.109"]],"a":[["69448.3","106.435"],["69448.5","93.792"],["69448.7","81.649"],["69448.9","75.391"],["69449.1","40.254"]],"ts":1711960701415,"u":1603656,"seq":9092034245},"retExtInfo":{},"time":1711960701661}
+    # [2024-04-01 16:38:21.662] [info] ask.value=69448300000000000 bid.value=69445899999999992
+    # [2024-04-01 16:38:21.662] [info] ask=69448.3 bid=69445.899999999992
+    # [2024-04-01 16:38:21.662] [info] mid=69447.099999999996
+    var app_config = load_config("config.toml")
+
+    var access_key = app_config.access_key
+    var secret_key = app_config.secret_key
+    var testnet = app_config.testnet
+    var client = BybitClient(
+        testnet=testnet, access_key=access_key, secret_key=secret_key
+    )
+
+    client.set_verbose(True)
+
+    var category = "linear"
+    var symbol = "BTCUSDT"
+    # var symbol = "XRPUSDT"
+
+    var text = '{"retCode":0,"retMsg":"OK","result":{"s":"BTCUSDT","b":[["69445.9","49.567"],["69445.7","87.003"],["69445.6","38.998"],["69445.5","57.319"],["69445.3","96.109"]],"a":[["69448.3","106.435"],["69448.5","93.792"],["69448.7","81.649"],["69448.9","75.391"],["69449.1","40.254"]],"ts":1711960701415,"u":1603656,"seq":9092034245},"retExtInfo":{},"time":1711960701661}'
+
+    var asks = List[OrderBookItem]()
+    var bids = List[OrderBookItem]()
+
+    var parser = DomParser(1024 * 100)
+    var doc = parser.parse(text)
+    var ret_code = doc.get_int("retCode")
+    var ret_msg = doc.get_str("retMsg")
+    if ret_code != 0:
+        raise Error("error retCode=" + str(ret_code) + ", retMsg=" + ret_msg)
+
+    var result = doc.get_object("result")
+    var a_list = result.get_array("a")
+
+    var list_iter_a = a_list.iter()
+
+    while list_iter_a.has_element():
+        var obj = list_iter_a.get()
+        var i_arr_list = obj.array()
+
+        var price = i_arr_list.at_str(0)
+        var qty = i_arr_list.at_str(1)
+
+        asks.append(OrderBookItem(price, qty))
+        _ = obj ^
+        list_iter_a.step()
+
+    _ = a_list ^
+
+    var b_list = result.get_array("b")
+
+    var list_iter_b = b_list.iter()
+
+    while list_iter_b.has_element():
+        var obj = list_iter_b.get()
+        var i_arr_list = obj.array()
+
+        var price = i_arr_list.at_str(0)
+        var qty = i_arr_list.at_str(1)
+
+        bids.append(OrderBookItem(price, qty))
+
+        list_iter_b.step()
+
+    _ = b_list ^
+
+    _ = result ^
+    _ = doc ^
+    _ = parser ^
+
+    var ob = OrderBook(asks, bids)
+
+    # var ob = client.fetch_orderbook(category, symbol, 5)
+    logi("ob=" + str(ob))
+
+    var ask = Fixed(ob.asks[0].price)
+    var bid = Fixed(ob.bids[0].price)
+    logi("ask.value=" + str(ask.value()) + " bid.value=" + str(bid.value()))
+    logi("ask=" + str(ask) + " bid=" + str(bid))
+    var mid = (ask / Fixed(2)) + (bid / Fixed(2))
+    logi("mid=" + str(mid))
 
     logi("Done!!!")
 
@@ -371,31 +457,12 @@ fn main() raises:
     seq_init_signal(handle_term)
     seq_init_photon_signal(photon_handle_term)
 
-    var coc = ObjectContainer[OnConnectWrapper]()
-    var hoc = ObjectContainer[OnHeartbeatWrapper]()
-    var moc = ObjectContainer[OnMessageWrapper]()
-
-    var coc_ref = Reference(coc).get_unsafe_pointer()
-    var hoc_ref = Reference(hoc).get_unsafe_pointer()
-    var moc_ref = Reference(moc).get_unsafe_pointer()
-
-    set_global_pointer(WS_ON_CONNECT_WRAPPER_PTR_KEY, int(coc_ref))
-    set_global_pointer(WS_ON_HEARTBEAT_WRAPPER_PTR_KEY, int(hoc_ref))
-    set_global_pointer(WS_ON_MESSAGE_WRAPPER_PTR_KEY, int(moc_ref))
-
     # while True:
     # test_httpclient_perf()
     # test_bybitclient()
     # test_bybitws()
 
-    var ns = time_ns()
-    logi("ns=" + str(ns))
-    var expires = str(int(ns / 1e6 + 5000))
-    logi("expires=" + expires)
+    test_ob_price()
 
     # logi("The program is prepared and ready, awaiting events...")
     # run_forever()
-
-    _ = coc ^
-    _ = hoc ^
-    _ = moc ^

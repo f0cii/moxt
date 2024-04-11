@@ -230,7 +230,10 @@ struct GridInfo(Stringable):
         var range_high = current_price * x
         var range_low = current_price / x
 
-        if self.cells[0].price <= range_low and self.cells[-1].price >= range_high:
+        if (
+            self.cells[0].price <= range_low
+            and self.cells[-1].price >= range_high
+        ):
             return
 
         while self.cells[-1].price <= range_high:
@@ -250,14 +253,14 @@ struct GridInfo(Stringable):
         var price = math.pow(1.0 + self.grid_interval.to_float(), offset).cast[
             DType.float64
         ]() * self.base_price.to_float()
-        var a = math.pow(Float64(10.0), self.precision)
-        var rounded = math.round(price * a) / a
-        return rounded
+        # var a = math.pow(Float64(10.0), self.precision)
+        # var rounded = math.round(price * a) / a
+        return Fixed(price).round(self.precision)
 
     fn get_cell_level_by_price(self, price: Fixed) -> Int:
-        var offset = math.log(price.to_float() / self.base_price.to_float()) / math.log(
-            1 + self.grid_interval.to_float()
-        )
+        var offset = math.log(
+            price.to_float() / self.base_price.to_float()
+        ) / math.log(1 + self.grid_interval.to_float())
         return math.round(offset).to_int()
 
     fn new_grid_cell(self, level: Int, price: Fixed) -> GridCellInfo:

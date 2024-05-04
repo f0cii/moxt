@@ -2,13 +2,17 @@ from sys import argv
 from sys.param_env import is_defined, env_get_int, env_get_string
 import time
 from testing import assert_equal, assert_true, assert_false
-from algorithm.functional import parallelize, async_parallelize
+from algorithm.functional import parallelize
 from base.containers import ObjectContainer
 from base.c import *
 from base.mo import *
 from base.globals import _GLOBAL
 from base.thread import *
-from base.websocket import OnConnectWrapper, OnHeartbeatWrapper, OnMessageWrapper
+from base.websocket import (
+    OnConnectWrapper,
+    OnHeartbeatWrapper,
+    OnMessageWrapper,
+)
 from trade.config import *
 from trade.base_strategy import *
 from trade.executor import *
@@ -48,7 +52,11 @@ struct Param(CollectionElement, Stringable):
     var value: String
 
     fn __init__(
-        inout self, name: String, description: String, type: String, value: String
+        inout self,
+        name: String,
+        description: String,
+        type: String,
+        value: String,
     ):
         self.name = name
         self.description = ""
@@ -65,7 +73,12 @@ struct StrategyParams(CollectionElement, Stringable):
     var params: Dict[String, Param]
     var redis: RedisSettings
 
-    fn __init__(inout self, apikeys: List[ApiKey], params: Dict[String, Param], redis: RedisSettings):
+    fn __init__(
+        inout self,
+        apikeys: List[ApiKey],
+        params: Dict[String, Param],
+        redis: RedisSettings,
+    ):
         self.apikeys = apikeys
         self.params = params
         self.redis = redis
@@ -169,15 +182,15 @@ fn parse_strategy_param(param_str: String) raises -> StrategyParams:
         params[name] = Param(name, description, type, value)
 
         params_array_iter.step()
-    
+
     var redisSettings = RedisSettings()
     redisSettings.host = redis.get_str("host")
     redisSettings.port = redis.get_int("port")
     redisSettings.password = redis.get_str("pass")
     redisSettings.db = redis.get_int("db")
 
-    _ = doc ^
-    _ = dom_parser ^
+    _ = doc^
+    _ = dom_parser^
 
     return StrategyParams(apikeys, params, redisSettings)
 
@@ -185,25 +198,29 @@ fn parse_strategy_param(param_str: String) raises -> StrategyParams:
 fn parse_strategy_param_to_app_config(
     strategy_param: StrategyParams,
 ) raises -> AppConfig:
-    var app_config = AppConfig()
     if len(strategy_param.apikeys) == 0:
         raise "apikeys is empty"
 
     var apikey = strategy_param.apikeys[0]
     var params = strategy_param.params
 
-    app_config.access_key = apikey.access_key
-    app_config.secret_key = apikey.secret_key
-    app_config.testnet = apikey.testnet
-    app_config.category = "linear"
-    app_config.depth = 1
-
     if "symbols" not in params:
         raise "symbols is empty"
 
-    app_config.symbols = params["symbols"].value
+    var app_config = AppConfig()
+    var app_config_ref = Reference(app_config)
+
+    app_config_ref[].access_key = apikey.access_key
+    app_config_ref[].secret_key = apikey.secret_key
+    app_config_ref[].testnet = apikey.testnet
+    app_config_ref[].category = "linear"
+    app_config_ref[].depth = 1
+
+    var symbols = params["symbols"].value
+
+    app_config_ref[].symbols = symbols
     for e in params.items():
-        app_config.params[e[].key] = e[].value.value
+        app_config_ref[].params[e[].key] = e[].value.value
 
     return app_config
 
@@ -227,14 +244,14 @@ fn stop_strategy_now():
 
     if strategy == "GridStrategy":
         logi("GridStrategy")
-        var executor_ptr_0 = Pointer[Executor[GridStrategy]].__from_index(
-            executor_ptr
+        var executor_ptr_0 = Pointer[Executor[GridStrategy]](
+            address=executor_ptr
         )
         executor_ptr_0[].stop_now()
     elif strategy == "GridStrategy2":
         logi("GridStrategy")
-        var executor_ptr_0 = Pointer[Executor[GridStrategy]].__from_index(
-            executor_ptr
+        var executor_ptr_0 = Pointer[Executor[GridStrategy]](
+            address=executor_ptr
         )
         executor_ptr_0[].stop_now()
     else:
@@ -243,9 +260,9 @@ fn stop_strategy_now():
 
 fn __run[T: BaseStrategy](app_config: AppConfig) raises:
     var strategy = create_strategy[T](app_config)
-    var executor = Executor[T](app_config, strategy ^)
+    var executor = Executor[T](app_config, strategy^)
 
-    var executor_ptr = Reference(executor).get_unsafe_pointer()
+    var executor_ptr = UnsafePointer.address_of(executor)
     _GLOBAL()[].executor_ptr = int(executor_ptr)
 
     executor.start()
@@ -303,7 +320,9 @@ fn print_usage():
     print("Options:")
     print("  -log-level <string> Set the logging level (default: INFO)")
     print("  -log-file <string> Set the log file name (default: app.log)")
-    print("  -c <string> Set the configuration file name (default: config.toml)")
+    print(
+        "  -c <string> Set the configuration file name (default: config.toml)"
+    )
 
 
 fn main() raises:

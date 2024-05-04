@@ -19,10 +19,10 @@ fn set_global_value_ptr[V: AnyRegType](id: Int, v: Pointer[V]) -> Int:
     return ptr
 
 
-@always_inline
-fn get_global_value[V: AnyRegType](id: Int) -> V:
-    var ptr = seq_get_global_int(id)
-    return unsafe.bitcast[V](ptr).load()
+# @always_inline
+# fn get_global_value[V: AnyRegType](id: Int) -> V:
+#     var ptr = seq_get_global_int(id)
+#     return unsafe.bitcast[V](ptr).load()
 
 
 @always_inline
@@ -32,7 +32,7 @@ fn strtoi(s: StringLiteral) -> Int:
 
 @always_inline
 fn strtoi(s: String) -> Int:
-    return seq_strtoi(s._buffer.data.value, len(s))
+    return seq_strtoi(s._as_ptr()._as_scalar_pointer(), len(s))
 
 
 @always_inline
@@ -42,7 +42,7 @@ fn strtod(s: StringLiteral) -> Float64:
 
 @always_inline
 fn strtod(s: String) -> Float64:
-    return seq_strtod(s._buffer.data.value, len(s))
+    return seq_strtod(s._as_ptr()._as_scalar_pointer(), len(s))
 
 
 def str_to_bool(s: String) -> Bool:

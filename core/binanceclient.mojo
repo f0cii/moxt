@@ -11,7 +11,6 @@ from base.yyjson import yyjson_mut_doc
 from .binancemodel import (
     OrderInfo,
 )
-from base.str_utils import *
 from core.sign import hmac_sha256_hex
 from ylstdlib.time import time_ns
 

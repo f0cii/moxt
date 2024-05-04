@@ -25,7 +25,11 @@ from core.sign import hmac_sha256_hex
 from ylstdlib.time import time_ns
 from base.sj_ondemand import OndemandParser
 from base.containers import ObjectContainer
-from base.websocket import OnConnectWrapper, OnHeartbeatWrapper, OnMessageWrapper
+from base.websocket import (
+    OnConnectWrapper,
+    OnHeartbeatWrapper,
+    OnMessageWrapper,
+)
 
 
 alias ParserBufferSize = 1000 * 100
@@ -162,7 +166,7 @@ struct BybitWS:
     fn set_on_connect(self, owned wrapper: OnConnectWrapper):
         var id = self.get_id()
         # var coc_ptr = get_global_pointer(WS_ON_CONNECT_WRAPPER_PTR_KEY)
-        # var coc_any_ptr = AnyPointer[ObjectContainer[OnConnectWrapper]].__from_index(
+        # var coc_any_ptr = UnsafePointer[ObjectContainer[OnConnectWrapper]].__from_index(
         #     coc_ptr
         # )
         # var wrapper_ptr = coc_any_ptr[].emplace_as_index(wrapper)
@@ -172,7 +176,7 @@ struct BybitWS:
     fn set_on_heartbeat(self, owned wrapper: OnHeartbeatWrapper):
         var id = self.get_id()
         # var coc_ptr = get_global_pointer(WS_ON_HEARTBEAT_WRAPPER_PTR_KEY)
-        # var coc_any_ptr = AnyPointer[ObjectContainer[OnHeartbeatWrapper]].__from_index(
+        # var coc_any_ptr = UnsafePointer[ObjectContainer[OnHeartbeatWrapper]].__from_index(
         #     coc_ptr
         # )
         # var wrapper_ptr = coc_any_ptr[].emplace_as_index(wrapper)
@@ -182,7 +186,7 @@ struct BybitWS:
     fn set_on_message(self, owned wrapper: OnMessageWrapper):
         var id = self.get_id()
         # var coc_ptr = get_global_pointer(WS_ON_MESSAGE_WRAPPER_PTR_KEY)
-        # var coc_any_ptr = AnyPointer[ObjectContainer[OnMessageWrapper]].__from_index(
+        # var coc_any_ptr = UnsafePointer[ObjectContainer[OnMessageWrapper]].__from_index(
         #     coc_ptr
         # )
         # var wrapper_ptr = coc_any_ptr[].emplace_as_index(wrapper)
@@ -191,8 +195,8 @@ struct BybitWS:
 
     fn set_subscription(inout self, topics: List[String]) raises:
         for topic in topics:
-            logd("topic: " + topic)
-            self._subscription_topics.append(topic)
+            logd("topic: " + topic[])
+            self._subscription_topics.append(topic[])
             logd("len=" + str(len(self._subscription_topics)))
 
     fn subscribe(self):
@@ -223,7 +227,7 @@ struct BybitWS:
             loge("subscribe err " + str(err))
 
     fn get_on_connect(self) -> on_connect_callback:
-        var self_ptr = Reference(self).get_unsafe_pointer()
+        var self_ptr = UnsafePointer.address_of(self)
 
         fn wrapper() -> None:
             self_ptr[].on_connect()
@@ -231,7 +235,7 @@ struct BybitWS:
         return wrapper
 
     fn get_on_heartbeat(self) -> on_heartbeat_callback:
-        var self_ptr = Reference(self).get_unsafe_pointer()
+        var self_ptr = UnsafePointer.address_of(self)
 
         fn wrapper():
             self_ptr[].on_heartbeat()
@@ -316,14 +320,14 @@ struct BybitWS:
         elif op == "pong":
             pass
 
-        _ = doc ^
-        _ = parser ^
+        _ = doc^
+        _ = parser^
 
     fn release(self) -> None:
         seq_websocket_delete(self._ptr)
 
     fn send(self, text: String) -> None:
-        seq_websocket_send(self._ptr, text._buffer.data.value, len(text))
+        seq_websocket_send(self._ptr, text._as_ptr()._as_scalar_pointer(), len(text))
 
     fn connect(self):
         seq_websocket_connect(self._ptr)

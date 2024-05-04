@@ -65,7 +65,9 @@ fn seq_atomic_int64_store(
     p: c_void_pointer,
     i: Int64,
 ) -> None:
-    external_call["seq_atomic_int64_store", NoneType, c_void_pointer, Int64](p, i)
+    external_call["seq_atomic_int64_store", NoneType, c_void_pointer, Int64](
+        p, i
+    )
 
 
 # SEQ_FUNC TimedClosureExecutor *
@@ -91,9 +93,9 @@ fn seq_photon_timed_closure_executor_new(
 # SEQ_FUNC void
 # seq_photon_timed_closure_executor_free(TimedClosureExecutor *executor);
 fn seq_photon_timed_closure_executor_free(executor: c_void_pointer) -> None:
-    external_call["seq_photon_timed_closure_executor_free", NoneType, c_void_pointer](
-        executor
-    )
+    external_call[
+        "seq_photon_timed_closure_executor_free", NoneType, c_void_pointer
+    ](executor)
 
 
 # SEQ_FUNC photon::Timer *
@@ -102,7 +104,9 @@ fn seq_photon_timed_closure_executor_get_timer(
     executor: c_void_pointer,
 ) -> c_void_pointer:
     return external_call[
-        "seq_photon_timed_closure_executor_get_timer", c_void_pointer, c_void_pointer
+        "seq_photon_timed_closure_executor_get_timer",
+        c_void_pointer,
+        c_void_pointer,
     ](executor)
 
 
@@ -118,14 +122,16 @@ fn seq_photon_timer_new(
 
 # SEQ_FUNC int seq_photon_timer_reset(photon::Timer *timer, uint64_t new_timeout);
 fn seq_photon_timer_reset(timer: c_void_pointer, new_timeout: UInt64) -> c_int:
-    return external_call["seq_photon_timer_reset", c_int, c_void_pointer, UInt64](
-        timer, new_timeout
-    )
+    return external_call[
+        "seq_photon_timer_reset", c_int, c_void_pointer, UInt64
+    ](timer, new_timeout)
 
 
 # SEQ_FUNC int seq_photon_timer_cancel(photon::Timer *timer);
 fn seq_photon_timer_cancel(timer: c_void_pointer) -> c_int:
-    return external_call["seq_photon_timer_cancel", c_int, c_void_pointer](timer)
+    return external_call["seq_photon_timer_cancel", c_int, c_void_pointer](
+        timer
+    )
 
 
 # SEQ_FUNC int seq_photon_timer_stop(photon::Timer *timer);
@@ -147,9 +153,9 @@ fn seq_photon_mutex_free(mu: c_void_pointer) -> None:
 #     return mu->lock(timeout);
 # }
 fn seq_photon_mutex_lock(mu: c_void_pointer, timeout: UInt64) -> c_int:
-    return external_call["seq_photon_mutex_lock", c_int, c_void_pointer, UInt64](
-        mu, timeout
-    )
+    return external_call[
+        "seq_photon_mutex_lock", c_int, c_void_pointer, UInt64
+    ](mu, timeout)
 
 
 # SEQ_FUNC int seq_photon_mutex_try_lock(photon::mutex *mu) {
@@ -180,14 +186,18 @@ fn seq_photon_spinlock_free(lock: c_void_pointer) -> None:
 #     return lock->lock();
 # }
 fn seq_photon_spinlock_lock(lock: c_void_pointer) -> c_int:
-    return external_call["seq_photon_spinlock_lock", c_int, c_void_pointer](lock)
+    return external_call["seq_photon_spinlock_lock", c_int, c_void_pointer](
+        lock
+    )
 
 
 # SEQ_FUNC int seq_photon_spinlock_try_lock(photon::spinlock *lock) {
 #     return lock->try_lock();
 # }
 fn seq_photon_spinlock_try_lock(lock: c_void_pointer) -> c_int:
-    return external_call["seq_photon_spinlock_try_lock", c_int, c_void_pointer](lock)
+    return external_call["seq_photon_spinlock_try_lock", c_int, c_void_pointer](
+        lock
+    )
 
 
 # SEQ_FUNC void seq_photon_spinlock_unlock(photon::spinlock *lock) {
@@ -209,7 +219,9 @@ fn seq_photon_condition_variable_new() -> c_void_pointer:
 #     delete cond;
 # }
 fn seq_photon_condition_variable_free(cond: c_void_pointer) -> None:
-    external_call["seq_photon_condition_variable_free", NoneType, c_void_pointer](cond)
+    external_call[
+        "seq_photon_condition_variable_free", NoneType, c_void_pointer
+    ](cond)
 
 
 # SEQ_FUNC int
@@ -221,7 +233,10 @@ fn seq_photon_condition_variable_wait_no_lock(
     cond: c_void_pointer, timeout: UInt64
 ) -> c_int:
     return external_call[
-        "seq_photon_condition_variable_wait_no_lock", c_int, c_void_pointer, UInt64
+        "seq_photon_condition_variable_wait_no_lock",
+        c_int,
+        c_void_pointer,
+        UInt64,
     ](cond, timeout)
 
 
@@ -229,9 +244,13 @@ fn seq_photon_condition_variable_wait_no_lock(
 # seq_photon_condition_variable_notify_one(photon::condition_variable *cond) {
 #     return cond->notify_one();
 # }
-fn seq_photon_condition_variable_notify_one(cond: c_void_pointer) -> c_void_pointer:
+fn seq_photon_condition_variable_notify_one(
+    cond: c_void_pointer,
+) -> c_void_pointer:
     return external_call[
-        "seq_photon_condition_variable_notify_one", c_void_pointer, c_void_pointer
+        "seq_photon_condition_variable_notify_one",
+        c_void_pointer,
+        c_void_pointer,
     ](cond)
 
 
@@ -283,7 +302,9 @@ fn seq_photon_semaphore_signal(sem: c_void_pointer, count: UInt64) -> c_int:
 #     return sem->count();
 # }
 fn seq_photon_semaphore_count(sem: c_void_pointer) -> UInt64:
-    return external_call["seq_photon_semaphore_count", UInt64, c_void_pointer](sem)
+    return external_call["seq_photon_semaphore_count", UInt64, c_void_pointer](
+        sem
+    )
 
 
 # SEQ_FUNC photon::rwlock *seq_photon_rwlock_new() {
@@ -321,7 +342,9 @@ fn seq_photon_rwlock_lock(
 #     return rwlock->unlock();
 # }
 fn seq_photon_rwlock_unlock(rwlock: c_void_pointer) -> c_int:
-    return external_call["seq_photon_rwlock_unlock", c_int, c_void_pointer](rwlock)
+    return external_call["seq_photon_rwlock_unlock", c_int, c_void_pointer](
+        rwlock
+    )
 
 
 @value
@@ -590,8 +613,8 @@ struct ArgData:
 
     fn __moveinit__(inout self, owned existing: Self):
         # print("__moveinit__")
-        self._data = existing._data ^
-        self._run = existing._run ^
+        self._data = existing._data^
+        self._run = existing._run^
 
     fn __del__(owned self):
         # print("__del__")
@@ -616,12 +639,12 @@ struct ArgData:
         return self._run(self._data)
 
 
-fn to_mem_ref_ptr[T: AnyRegType](owned t: T) -> Int:
+fn to_mem_ref_ptr[T: AnyType](owned t: T) -> Int:
     return int(Pointer[T].address_of(t))
 
 
-fn mem_ref_ptr_to_value[T: AnyRegType](ptr: Int) -> T:
-    return unsafe.bitcast[T](ptr).load()
+fn mem_ref_ptr_to_value[T: AnyRegType](p: Int) -> UnsafePointer[T]:
+    return UnsafePointer[T](address=p)
 
 
 @value
@@ -657,7 +680,7 @@ struct ArgDataRef:
         return seq_int_to_voidptr(to_mem_ref_ptr[Self](s))
 
     @staticmethod
-    fn from_ptr(ptr: Int) -> Self:
+    fn from_ptr(ptr: Int) -> UnsafePointer[Self]:
         return mem_ref_ptr_to_value[Self](ptr)
 
     fn get(self) -> ArgData:
@@ -674,8 +697,8 @@ struct ArgDataRef:
     @staticmethod
     fn from_ptr_as_owned_value(ptr: Int) -> ArgData:
         var value = mem_ref_ptr_to_value[Self](ptr)
-        var data = __get_address_as_owned_value(value.data.offset(0).address)
-        value.data.free()
+        var data = __get_address_as_owned_value(value[].data.offset(0).address)
+        value[].data.free()
         return data
 
     fn free(self):

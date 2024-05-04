@@ -43,7 +43,7 @@ struct Executor[T: BaseStrategy](Movable, Runable, IExecutor):
     var _is_running: AtomicBool  # Is it currently running
     var _stop_requested: AtomicBool  # Indicate whether a stop request has been received
     var _is_stopped: AtomicBool  # Has it already ceased
-    var _platform: Pointer[Platform]
+    var _platform: UnsafePointer[Platform]
 
     fn __init__(inout self, config: AppConfig, owned strategy: T) raises:
         logi("Executor.__init__")
@@ -78,7 +78,7 @@ struct Executor[T: BaseStrategy](Movable, Runable, IExecutor):
             category=config.category,
             topics=private_topic,
         )
-        self._strategy = strategy ^
+        self._strategy = strategy^
         self._is_initialized = AtomicBool(False)
         self._is_running = AtomicBool(False)
         self._stop_requested = AtomicBool(False)
@@ -87,10 +87,10 @@ struct Executor[T: BaseStrategy](Movable, Runable, IExecutor):
 
     fn __moveinit__(inout self, owned existing: Self):
         print("Executor.__moveinit__")
-        self._client = existing._client ^
-        self._public_ws = existing._public_ws ^
-        self._private_ws = existing._private_ws ^
-        self._strategy = existing._strategy ^
+        self._client = existing._client^
+        self._public_ws = existing._public_ws^
+        self._private_ws = existing._private_ws^
+        self._strategy = existing._strategy^
         self._is_initialized = AtomicBool(existing._is_initialized.load())
         self._is_running = AtomicBool(existing._is_running.load())
         self._stop_requested = AtomicBool(existing._stop_requested.load())
@@ -145,17 +145,17 @@ struct Executor[T: BaseStrategy](Movable, Runable, IExecutor):
             loge("on_exit error: " + str(err))
         logi("Executor.stop done")
 
-    # fn _get_ptr[T: Movable](inout self) -> AnyPointer[T]:
+    # fn _get_ptr[T: Movable](inout self) -> UnsafePointer[T]:
     #     # constrained[Self._check[T]() != -1, "not a union element type"]()
     #     var ptr = Pointer.address_of(self).address
-    #     var result = AnyPointer[T]()
+    #     var result = UnsafePointer[T]()
     #     result.value = __mlir_op.`pop.pointer.bitcast`[
     #         _type = __mlir_type[`!kgen.pointer<:`, Movable, ` `, T, `>`]
     #     ](ptr)
     #     return result
 
     fn get_private_on_message(inout self) -> on_message_callback:
-        var self_ptr = Reference(self).get_unsafe_pointer()
+        var self_ptr = UnsafePointer.address_of(self)
 
         fn wrapper(data: c_char_pointer, data_len: Int):
             self_ptr[].on_private_message(data, data_len)
@@ -163,7 +163,7 @@ struct Executor[T: BaseStrategy](Movable, Runable, IExecutor):
         return wrapper
 
     fn get_public_on_message(inout self) -> on_message_callback:
-        var self_ptr = Reference(self).get_unsafe_pointer()
+        var self_ptr = UnsafePointer.address_of(self)
 
         fn wrapper(data: c_char_pointer, data_len: Int):
             self_ptr[].on_public_message(data, data_len)
@@ -188,12 +188,13 @@ struct Executor[T: BaseStrategy](Movable, Runable, IExecutor):
         elif topic == "execution":
             pass
         elif topic == "wallet":
-            pass
+            logi("wallet message: " + s)
+            self.process_wallet_message(doc)
         elif topic != "":
             return
 
-        _ = doc ^
-        _ = parser ^
+        _ = doc^
+        _ = parser^
 
         self._private_ws.on_message(s)
 
@@ -210,12 +211,14 @@ struct Executor[T: BaseStrategy](Movable, Runable, IExecutor):
             if "orderbook." in topic:
                 self.process_orderbook_message(doc)
 
-            _ = doc ^
-            _ = parser ^
+            _ = doc^
+            _ = parser^
         except err:
             loge("on_public_message error: " + str(err))
 
-    fn process_orderbook_message(inout self, inout doc: DomElement) raises -> None:
+    fn process_orderbook_message(
+        inout self, inout doc: DomElement
+    ) raises -> None:
         # logd("process_orderbook_message")
         # {"topic":"orderbook.1.BTCUSDT","type":"snapshot","ts":1702645020909,"data":{"s":"BTCUSDT","b":[["42663.50","0.910"]],"a":[["42663.60","11.446"]],"u":2768099,"seq":108881526829},"cts":1702645020906}
         # {"topic":"orderbook.1.BTCUSDT","type":"snapshot","ts":1703834857207,"data":{"s":"BTCUSDT","b":[["42489.90","130.419"]],"a":[["42493.80","132.979"]],"u":326106,"seq":8817548764},"cts":1703834853055}
@@ -238,10 +241,10 @@ struct Executor[T: BaseStrategy](Movable, Runable, IExecutor):
             # logd("price: " + str(price))
             # logd("qty: " + str(qty))
             asks.append(OrderBookLevel(price, qty))
-            _ = a_obj ^
+            _ = a_obj^
             a_iter.step()
 
-        _ = a ^
+        _ = a^
 
         var b = data.get_array("b")
         var b_iter = b.iter()
@@ -257,8 +260,8 @@ struct Executor[T: BaseStrategy](Movable, Runable, IExecutor):
             _ = b_obj
             b_iter.step()
 
-        _ = b ^
-        _ = data ^
+        _ = b^
+        _ = data^
 
         # logd("asks=" + str(len(asks)) + " bids=" + str(len(bids)))
 
@@ -315,9 +318,11 @@ struct Executor[T: BaseStrategy](Movable, Runable, IExecutor):
 
             iter.step()
 
-        _ = data ^
+        _ = data^
 
-    fn process_position_message(inout self, inout doc: OndemandDocument) -> None:
+    fn process_position_message(
+        inout self, inout doc: OndemandDocument
+    ) -> None:
         var data = doc.get_array("data")
 
         var positions = List[PositionInfo]()
@@ -369,7 +374,96 @@ struct Executor[T: BaseStrategy](Movable, Runable, IExecutor):
 
             iter.step()
 
-        _ = data ^
+        _ = data^
+
+    fn process_wallet_message(inout self, inout doc: OndemandDocument) -> None:
+        var data = doc.get_array("data")
+
+        # {"topic":"wallet","id":"1713588734196211293-1465508-BTCUSDT","creationTime":1713588734198,"data":[{"accountType":"CONTRACT","accountIMRate":"","accountMMRate":"","accountLTV":"","totalEquity":"","totalWalletBalance":"","totalMarginBalance":"","totalAvailableBalance":"","totalPerpUPL":"","totalInitialMargin":"","totalMaintenanceMargin":"","coin":[{"coin":"USDT","equity":"1290.1674867","usdValue":"","walletBalance":"1290.1673867","availableToWithdraw":"1037.34792527","borrowAmount":"","availableToBorrow":"","accruedInterest":"","totalOrderIM":"188.6517014","totalPositionIM":"64.16776003","totalPositionMM":"","unrealisedPnl":"0.0001","cumRealisedPnl":"790.1673867"}]}]}
+        # {
+        #     "topic": "wallet",
+        #     "id": "1713588734196211293-1465508-BTCUSDT",
+        #     "creationTime": 1713588734198,
+        #     "data": [{
+        #             "accountType": "CONTRACT",
+        #             "accountIMRate": "",
+        #             "accountMMRate": "",
+        #             "accountLTV": "",
+        #             "totalEquity": "",
+        #             "totalWalletBalance": "",
+        #             "totalMarginBalance": "",
+        #             "totalAvailableBalance": "",
+        #             "totalPerpUPL": "",
+        #             "totalInitialMargin": "",
+        #             "totalMaintenanceMargin": "",
+        #             "coin": [{
+        #                     "coin": "USDT",
+        #                     "equity": "1290.1674867",
+        #                     "usdValue": "",
+        #                     "walletBalance": "1290.1673867",
+        #                     "availableToWithdraw": "1037.34792527",
+        #                     "borrowAmount": "",
+        #                     "availableToBorrow": "",
+        #                     "accruedInterest": "",
+        #                     "totalOrderIM": "188.6517014",
+        #                     "totalPositionIM": "64.16776003",
+        #                     "totalPositionMM": "",
+        #                     "unrealisedPnl": "0.0001",
+        #                     "cumRealisedPnl": "790.1673867"
+        #                 }
+        #             ]
+        #         }
+        #     ]
+        # }
+
+        var accounts = List[Account]()
+
+        var iter = data.iter()
+        while iter.has_value():
+            var item = iter.get_object()
+            var coin_arr = item.get_array("coin")
+            var iter1 = coin_arr.iter()
+            while iter1.has_value():
+                var coin_obj = iter1.get_object()
+                var coin = coin_obj.get_str("coin")  # USDT
+                var equity = Fixed(coin_obj.get_str("equity"))
+                var wallet_balance = Fixed(coin_obj.get_str("walletBalance"))
+                var available_to_withdraw = Fixed(
+                    coin_obj.get_str("availableToWithdraw")
+                )
+                var total_order_im = Fixed(coin_obj.get_str("totalOrderIM"))
+                var total_position_im = Fixed(
+                    coin_obj.get_str("totalPositionIM")
+                )
+                var unrealised_pnl = Fixed(coin_obj.get_str("unrealisedPnl"))
+                var cum_realised_pnl = Fixed(coin_obj.get_str("cumRealisedPnl"))
+                # logi("coin: " + coin)
+                # logi("equity: " + equity)
+                # logi("wallet_balance: " + wallet_balance)
+                # logi("available_to_withdraw: " + available_to_withdraw)
+                # logi("total_order_im: " + total_order_im)
+                # logi("total_position_im: " + total_position_im)
+                # logi("unrealised_pnl: " + unrealised_pnl)
+                # logi("cum_realised_pnl: " + cum_realised_pnl)
+                var account = Account(
+                    coin=coin,
+                    equity=equity,
+                    wallet_balance=wallet_balance,
+                    available_to_withdraw=available_to_withdraw,
+                    total_order_margin=total_order_im,
+                    total_position_margin=total_position_im,
+                    unrealised_pnl=unrealised_pnl,
+                    cum_realised_pnl=cum_realised_pnl,
+                )
+                accounts.append(account)
+                iter1.step()
+            _ = coin_arr^
+            _ = item^
+            iter.step()
+
+        _ = data^
+
+        self._platform[].on_update_accounts(accounts)
 
     fn is_initialized(self) -> Bool:
         return self._is_initialized.load()

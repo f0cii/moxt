@@ -1,3 +1,4 @@
+from os import getenv
 from .c import *
 
 
@@ -23,13 +24,14 @@ struct Redis:
 
     fn get(self, key: String) -> String:
         return seq_redis_get(self.p, key)
-    
+
     fn rpush(self, key: String, value: String) -> Int64:
         return seq_redis_rpush(self.p, key, value)
 
 
 fn test_redis() -> None:
-    var redis = Redis("1.94.26.93", 6379, "X3fV!9zP$8yM*2dQ", 0, 3000)
+    var password = getenv("REDIS_PASSWORD", "")
+    var redis = Redis("1.94.26.93", 6379, password, 0, 3000)
     var ok = redis.set("test_0", "1")
     print(ok)
     var s = redis.get("test_0")
@@ -37,7 +39,8 @@ fn test_redis() -> None:
 
 
 fn test_redis_raw() -> None:
-    var redis = seq_redis_new("1.94.26.93", 6379, "X3fV!9zP$8yM*2dQ", 0, 1000)
+    var password = getenv("REDIS_PASSWORD", "")
+    var redis = seq_redis_new("1.94.26.93", 6379, password, 0, 1000)
     var ok = seq_redis_set(redis, "test_0", "1")
     print(ok)
     var s = seq_redis_get(redis, "test_0")
@@ -51,10 +54,10 @@ fn seq_redis_new(
     return __mlir_op.`pop.external_call`[
         func = "seq_redis_new".value, _type=c_void_pointer
     ](
-        host._buffer.data.value,
+        host._buffer.data,
         len(host),
         port,
-        password._buffer.data.value,
+        password._buffer.data,
         len(password),
         db,
         timeout_ms,
@@ -72,9 +75,9 @@ fn seq_redis_set(redis: c_void_pointer, key: String, value: String) -> Bool:
         c_size_t,
     ](
         redis,
-        key._buffer.data.value,
+        key._as_ptr()._as_scalar_pointer(),
         len(key),
-        value._buffer.data.value,
+        value._as_ptr()._as_scalar_pointer(),
         len(value),
     )
 
@@ -90,7 +93,7 @@ fn seq_redis_get(redis: c_void_pointer, key: String) -> String:
         c_size_t,
     ](
         redis,
-        key._buffer.data.value,
+        key._as_ptr()._as_scalar_pointer(),
         len(key),
         value_data,
         Pointer[c_size_t].address_of(value_len),
@@ -105,7 +108,7 @@ fn seq_redis_get(redis: c_void_pointer, key: String) -> String:
 
 
 fn seq_redis_rpush(redis: c_void_pointer, key: String, value: String) -> Int64:
-    return external_call[
+    var result = external_call[
         "seq_redis_rpush",
         Bool,
         c_void_pointer,
@@ -115,11 +118,13 @@ fn seq_redis_rpush(redis: c_void_pointer, key: String, value: String) -> Int64:
         c_size_t,
     ](
         redis,
-        key._buffer.data.value,
+        key._as_ptr()._as_scalar_pointer(),
         len(key),
-        value._buffer.data.value,
+        value._as_ptr()._as_scalar_pointer(),
         len(value),
     )
+    return result
+
 
 fn seq_redis_free(redis: c_void_pointer) -> None:
     external_call["seq_redis_free", NoneType](redis)

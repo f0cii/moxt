@@ -22,7 +22,7 @@ struct OnConnectWrapper(CollectionElement):
     var _callback: on_connect_callback
 
     fn __init__(inout self, owned callback: on_connect_callback):
-        self._callback = callback ^
+        self._callback = callback^
 
     fn __call__(self):
         self._callback()
@@ -33,7 +33,7 @@ struct OnHeartbeatWrapper(CollectionElement):
     var _callback: on_heartbeat_callback
 
     fn __init__(inout self, owned callback: on_heartbeat_callback):
-        self._callback = callback ^
+        self._callback = callback^
 
     fn __call__(self):
         self._callback()
@@ -44,7 +44,7 @@ struct OnMessageWrapper(CollectionElement):
     var _callback: on_message_callback
 
     fn __init__(inout self, owned callback: on_message_callback):
-        self._callback = callback ^
+        self._callback = callback^
 
     fn __call__(self, data: c_char_pointer, data_len: c_size_t):
         self._callback(data, data_len)
@@ -78,7 +78,7 @@ fn emit_on_connect(id: Int) -> None:
     if ptr == 0:
         logd("emit_on_connect nil")
         return
-    var pointer = AnyPointer[OnConnectWrapper].__from_index(ptr)
+    var pointer = UnsafePointer[OnConnectWrapper](address=ptr)
     pointer[]()
 
 
@@ -88,7 +88,7 @@ fn emit_on_heartbeat(id: Int) -> None:
     if ptr == 0:
         logd("emit_on_heartbeat nil")
         return
-    var pointer = AnyPointer[OnHeartbeatWrapper].__from_index(ptr)
+    var pointer = UnsafePointer[OnHeartbeatWrapper](address=ptr)
     pointer[]()
 
 
@@ -99,7 +99,7 @@ fn emit_on_message(id: Int, data: c_char_pointer, data_len: c_size_t) -> None:
     if ptr == 0:
         logd("emit_on_message nil")
         return
-    var pointer = AnyPointer[OnMessageWrapper].__from_index(ptr)
+    var pointer = UnsafePointer[OnMessageWrapper](address=ptr)
     pointer[](data, data_len)
 
 
@@ -138,7 +138,7 @@ struct WebSocket:
         return self._id
 
     fn get_on_connect(self) -> on_connect_callback:
-        var self_ptr = Reference(self).get_unsafe_pointer()
+        var self_ptr = UnsafePointer.address_of(self)
 
         fn wrapper():
             self_ptr[].on_connect()
@@ -146,7 +146,7 @@ struct WebSocket:
         return wrapper
 
     fn get_on_heartbeat(self) -> on_heartbeat_callback:
-        var self_ptr = Reference(self).get_unsafe_pointer()
+        var self_ptr = UnsafePointer.address_of(self)
 
         fn wrapper():
             self_ptr[].on_heartbeat()
@@ -154,7 +154,7 @@ struct WebSocket:
         return wrapper
 
     fn get_on_message(self) -> on_message_callback:
-        var self_ptr = Reference(self).get_unsafe_pointer()
+        var self_ptr = UnsafePointer.address_of(self)
 
         fn wrapper(data: c_char_pointer, data_len: Int):
             self_ptr[].on_message(data, data_len)
@@ -182,7 +182,9 @@ struct WebSocket:
         pass
 
     fn send(self, text: String) -> None:
-        seq_websocket_send(self._ptr, text._buffer.data.value, len(text))
+        seq_websocket_send(
+            self._ptr, text._as_ptr()._as_scalar_pointer(), len(text)
+        )
 
     fn __repr__(self) -> String:
         return "<WebSocket: ws={self._ptr}>"

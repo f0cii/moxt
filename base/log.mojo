@@ -16,18 +16,22 @@ alias LOG_QUEUE = "_LOG_QUEUE"
 
 fn debug(message: String, context: Optional[Dict[String, Args]] = None):
     log_itf["MAIN"]()[].debug(message, context)
+    # logd(message)
 
 
 fn info(message: String, context: Optional[Dict[String, Args]] = None):
     log_itf["MAIN"]()[].info(message, context)
+    # logi(message)
 
 
 fn warn(message: String, context: Optional[Dict[String, Args]] = None):
     log_itf["MAIN"]()[].warn(message, context)
+    # logw(message)
 
 
 fn error(message: String, context: Optional[Dict[String, Args]] = None):
     log_itf["MAIN"]()[].error(message, context)
+    # loge(message)
 
 
 @value
@@ -42,16 +46,24 @@ struct LogInterface:
     fn set_alog_id(inout self, algo_id: Int):
         self.algo_id = algo_id
 
-    fn debug(self, message: String, context: Optional[Dict[String, Args]] = None):
+    fn debug(
+        self, message: String, context: Optional[Dict[String, Args]] = None
+    ):
         self._write_log("DEBUG", message, context)
 
-    fn info(self, message: String, context: Optional[Dict[String, Args]] = None):
+    fn info(
+        self, message: String, context: Optional[Dict[String, Args]] = None
+    ):
         self._write_log("INFO", message, context)
 
-    fn warn(self, message: String, context: Optional[Dict[String, Args]] = None):
+    fn warn(
+        self, message: String, context: Optional[Dict[String, Args]] = None
+    ):
         self._write_log("WARNING", message, context)
 
-    fn error(self, message: String, context: Optional[Dict[String, Args]] = None):
+    fn error(
+        self, message: String, context: Optional[Dict[String, Args]] = None
+    ):
         self._write_log("ERROR", message, context)
 
     fn _write_log(
@@ -82,7 +94,7 @@ struct LogInterface:
             node.set_object()
             # node.add_string("type", "BUY")
             if context:
-                for e in context.value().items():
+                for e in context.value()[].items():
                     var value_ref = Reference(e[].value)
                     if value_ref[].isa[String]():
                         var value = value_ref[].get[String]()[]
@@ -122,24 +134,31 @@ fn _destroy_log(p: Pointer[NoneType]):
 
 
 struct LogService:
-    var redis: AnyPointer[Redis]
+    var redis: UnsafePointer[Redis]
     var q: Pointer[LockfreeQueue]
 
     fn __init__(inout self):
-        self.redis = AnyPointer[Redis].alloc(1)
+        self.redis = UnsafePointer[Redis].alloc(1)
         self.q = lockfree_queue_itf[LOG_QUEUE]()
-    
+
     fn init(inout self, host: String, port: Int, password: String, db: Int):
-        logi("init log service host=" + host + " port=" + str(port) + " db=" + str(db))
+        logi(
+            "init log service host="
+            + host
+            + " port="
+            + str(port)
+            + " db="
+            + str(db)
+        )
         # logi("init log service password=" + password)
-        self.redis.emplace_value(Redis(host, port, password, db, 3000))
+        initialize_pointee_move(self.redis, Redis(host, port, password, db, 3000))
 
     fn perform(self) -> Int:
         var e = self.q[].pop()
         if e:
             var s = e.value()
-            logi("log perform s=" + s)
-            _ = self.redis[].rpush("q_moxtflow_log", s)
+            # logi("log perform s=" + s)
+            _ = self.redis[].rpush("q_moxtflow_log", s[])
             return 1
         else:
             return 0
@@ -152,7 +171,9 @@ struct LogService:
 
 
 fn log_service_itf() -> Pointer[LogService]:
-    var ptr = _get_global["_LOG_SERVICE", _init_log_service, _destroy_log_service]()
+    var ptr = _get_global[
+        "_LOG_SERVICE", _init_log_service, _destroy_log_service
+    ]()
     return ptr.bitcast[LogService]()
 
 

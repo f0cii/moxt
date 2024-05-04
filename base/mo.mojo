@@ -1,6 +1,7 @@
 import sys.ffi
 from memory import memcpy, memset_zero
 from time import time_function
+from builtin._location import __call_location
 from .c import *
 
 # typedef void (*task_entry)(void *arg);
@@ -31,9 +32,9 @@ fn seq_get_global_int(id: Int) -> Int:
 
 # Store global string value
 fn seq_set_global_string(id: Int, s: String) -> None:
-    external_call["seq_set_global_string", NoneType, Int, c_char_pointer, c_size_t](
-        id, s._buffer.data.value, len(s)
-    )
+    external_call[
+        "seq_set_global_string", NoneType, Int, c_char_pointer, c_size_t
+    ](id, s._buffer.data.value, len(s))
 
 
 # Retrieve global string value
@@ -113,7 +114,7 @@ fn init_log(level: String, filename: String) -> None:
 # Initialization log
 fn seq_init_log(level: UInt8, filename: String) -> None:
     external_call["seq_init_log", NoneType, UInt8, Pointer[c_schar], c_int](
-        level, filename._buffer.data.value, len(filename)
+        level, filename._as_ptr()._as_scalar_pointer(), len(filename)
     )
 
 
@@ -135,22 +136,34 @@ fn seq_loge(s: Pointer[c_schar], length: c_int):
 
 @always_inline
 fn logd(s: String):
-    seq_logd(s._buffer.data.value, len(s))
+    var call_loc = __call_location()
+    var s_ = str(call_loc.file_name) + ":" + str(call_loc.line) + ": " + s
+    seq_logd(s_._as_ptr()._as_scalar_pointer(), len(s_))
+    s_._strref_keepalive()
 
 
 @always_inline
 fn logi(s: String):
-    seq_logi(s._buffer.data.value, len(s))
+    var call_loc = __call_location()
+    var s_ = String("") + str(call_loc.file_name) + ":" + str(call_loc.line) + ": " + s
+    seq_logi(s_._as_ptr()._as_scalar_pointer(), len(s_))
+    s_._strref_keepalive()
 
 
 @always_inline
 fn logw(s: String):
-    seq_logw(s._buffer.data.value, len(s))
+    var call_loc = __call_location()
+    var s_ = str(call_loc.file_name) + ":" + str(call_loc.line) + ": " + s
+    seq_logw(s_._as_ptr()._as_scalar_pointer(), len(s_))
+    s_._strref_keepalive()
 
 
 @always_inline
 fn loge(s: String):
-    seq_loge(s._buffer.data.value, len(s))
+    var call_loc = __call_location()
+    var s_ = str(call_loc.file_name) + ":" + str(call_loc.line) + ": " + s
+    seq_loge(s_._as_ptr()._as_scalar_pointer(), len(s_))
+    s_._strref_keepalive()
 
 
 # type: 0-STD_THREAD 1-PHOTON
@@ -161,14 +174,16 @@ fn seq_init_net(type_: Int) -> None:
 # SEQ_FUNC ondemand::parser *
 # seq_simdjson_ondemand_parser_new(size_t max_capacity);
 fn seq_simdjson_ondemand_parser_new(max_capacity: c_size_t) -> c_void_pointer:
-    return external_call["seq_simdjson_ondemand_parser_new", c_void_pointer, c_size_t](
-        max_capacity
-    )
+    return external_call[
+        "seq_simdjson_ondemand_parser_new", c_void_pointer, c_size_t
+    ](max_capacity)
 
 
 # SEQ_FUNC padded_string *
 # seq_simdjson_padded_string_new(const char *s, size_t len);
-fn seq_simdjson_padded_string_new(s: c_char_pointer, len: c_size_t) -> c_void_pointer:
+fn seq_simdjson_padded_string_new(
+    s: c_char_pointer, len: c_size_t
+) -> c_void_pointer:
     return external_call[
         "seq_simdjson_padded_string_new",
         c_void_pointer,
@@ -345,19 +360,27 @@ fn seq_simdjson_ondemand_get_bool_v(
 
 # int64_t seq_simdjson_ondemand_int_v(ondemand ::value *p)
 fn seq_simdjson_ondemand_int_v(p: c_void_pointer) -> c_long:
-    return external_call["seq_simdjson_ondemand_int_v", c_long, c_void_pointer](p)
+    return external_call["seq_simdjson_ondemand_int_v", c_long, c_void_pointer](
+        p
+    )
 
 
 fn seq_simdjson_ondemand_uint_v(p: c_void_pointer) -> c_long:
-    return external_call["seq_simdjson_ondemand_uint_v", c_long, c_void_pointer](p)
+    return external_call[
+        "seq_simdjson_ondemand_uint_v", c_long, c_void_pointer
+    ](p)
 
 
 fn seq_simdjson_ondemand_float_v(p: c_void_pointer) -> c_double:
-    return external_call["seq_simdjson_ondemand_float_v", c_double, c_void_pointer](p)
+    return external_call[
+        "seq_simdjson_ondemand_float_v", c_double, c_void_pointer
+    ](p)
 
 
 fn seq_simdjson_ondemand_bool_v(p: c_void_pointer) -> Bool:
-    return external_call["seq_simdjson_ondemand_bool_v", Bool, c_void_pointer](p)
+    return external_call["seq_simdjson_ondemand_bool_v", Bool, c_void_pointer](
+        p
+    )
 
 
 # const char *
@@ -563,27 +586,39 @@ fn seq_simdjson_ondemand_get_array_o(
 
 # void seq_simdjson_ondemand_parser_free(ondemand::parser *p)
 fn seq_simdjson_ondemand_parser_free(p: c_void_pointer) -> None:
-    external_call["seq_simdjson_ondemand_parser_free", NoneType, c_void_pointer](p)
+    external_call[
+        "seq_simdjson_ondemand_parser_free", NoneType, c_void_pointer
+    ](p)
 
 
 fn seq_simdjson_padded_string_free(p: c_void_pointer) -> None:
-    external_call["seq_simdjson_padded_string_free", NoneType, c_void_pointer](p)
+    external_call["seq_simdjson_padded_string_free", NoneType, c_void_pointer](
+        p
+    )
 
 
 fn seq_simdjson_ondemand_document_free(p: c_void_pointer) -> None:
-    external_call["seq_simdjson_ondemand_document_free", NoneType, c_void_pointer](p)
+    external_call[
+        "seq_simdjson_ondemand_document_free", NoneType, c_void_pointer
+    ](p)
 
 
 fn seq_simdjson_ondemand_value_free(p: c_void_pointer) -> None:
-    external_call["seq_simdjson_ondemand_value_free", NoneType, c_void_pointer](p)
+    external_call["seq_simdjson_ondemand_value_free", NoneType, c_void_pointer](
+        p
+    )
 
 
 fn seq_simdjson_ondemand_object_free(p: c_void_pointer) -> None:
-    external_call["seq_simdjson_ondemand_object_free", NoneType, c_void_pointer](p)
+    external_call[
+        "seq_simdjson_ondemand_object_free", NoneType, c_void_pointer
+    ](p)
 
 
 fn seq_simdjson_ondemand_array_free(p: c_void_pointer) -> None:
-    external_call["seq_simdjson_ondemand_array_free", NoneType, c_void_pointer](p)
+    external_call["seq_simdjson_ondemand_array_free", NoneType, c_void_pointer](
+        p
+    )
 
 
 # ########## ondemand array ##########
@@ -599,7 +634,9 @@ fn seq_simdjson_ondemand_array_count_elements(p: c_void_pointer) -> c_size_t:
 
 # SEQ_FUNC ondemand::value *
 # seq_simdjson_ondemand_array_at(ondemand::array *p, size_t index);
-fn seq_simdjson_ondemand_array_at(p: c_void_pointer, index: c_size_t) -> c_void_pointer:
+fn seq_simdjson_ondemand_array_at(
+    p: c_void_pointer, index: c_size_t
+) -> c_void_pointer:
     return external_call[
         "seq_simdjson_ondemand_array_at",
         c_void_pointer,
@@ -639,7 +676,9 @@ fn seq_simdjson_ondemand_array_at_arr(
 # int64_t seq_simdjson_ondemand_array_at_int(
 #                                                       ondemand ::array *p,
 #                                                       size_t index);
-fn seq_simdjson_ondemand_array_at_int(p: c_void_pointer, index: c_size_t) -> c_long:
+fn seq_simdjson_ondemand_array_at_int(
+    p: c_void_pointer, index: c_size_t
+) -> c_long:
     return external_call[
         "seq_simdjson_ondemand_array_at_int",
         c_long,
@@ -648,7 +687,9 @@ fn seq_simdjson_ondemand_array_at_int(p: c_void_pointer, index: c_size_t) -> c_l
     ](p, index)
 
 
-fn seq_simdjson_ondemand_array_at_uint(p: c_void_pointer, index: c_size_t) -> c_long:
+fn seq_simdjson_ondemand_array_at_uint(
+    p: c_void_pointer, index: c_size_t
+) -> c_long:
     return external_call[
         "seq_simdjson_ondemand_array_at_uint",
         c_long,
@@ -657,7 +698,9 @@ fn seq_simdjson_ondemand_array_at_uint(p: c_void_pointer, index: c_size_t) -> c_
     ](p, index)
 
 
-fn seq_simdjson_ondemand_array_at_float(p: c_void_pointer, index: c_size_t) -> c_double:
+fn seq_simdjson_ondemand_array_at_float(
+    p: c_void_pointer, index: c_size_t
+) -> c_double:
     return external_call[
         "seq_simdjson_ondemand_array_at_float",
         c_double,
@@ -666,7 +709,9 @@ fn seq_simdjson_ondemand_array_at_float(p: c_void_pointer, index: c_size_t) -> c
     ](p, index)
 
 
-fn seq_simdjson_ondemand_array_at_bool(p: c_void_pointer, index: c_size_t) -> Bool:
+fn seq_simdjson_ondemand_array_at_bool(
+    p: c_void_pointer, index: c_size_t
+) -> Bool:
     return external_call[
         "seq_simdjson_ondemand_array_at_bool",
         Bool,
@@ -693,7 +738,9 @@ fn seq_simdjson_ondemand_array_at_str(
 
 # SEQ_FUNC int64_t seq_simdjson_ondemand_value_type(ondemand::value *p);
 fn seq_simdjson_ondemand_value_type(p: c_void_pointer) -> c_long:
-    return external_call["seq_simdjson_ondemand_value_type", c_long, c_void_pointer](p)
+    return external_call[
+        "seq_simdjson_ondemand_value_type", c_long, c_void_pointer
+    ](p)
 
 
 # SEQ_FUNC ondemand::value *
@@ -757,7 +804,9 @@ fn seq_simdjson_ondemand_array_iter_get_str(
 
 # ondemand::object *seq_simdjson_ondemand_array_iter_get_obj(
 #     ondemand::array_iterator *self);
-fn seq_simdjson_ondemand_array_iter_get_obj(p: c_void_pointer) -> c_void_pointer:
+fn seq_simdjson_ondemand_array_iter_get_obj(
+    p: c_void_pointer,
+) -> c_void_pointer:
     return external_call[
         "seq_simdjson_ondemand_array_iter_get_obj",
         c_void_pointer,
@@ -767,7 +816,9 @@ fn seq_simdjson_ondemand_array_iter_get_obj(p: c_void_pointer) -> c_void_pointer
 
 # SEQ_FUNC ondemand::array *seq_simdjson_ondemand_array_iter_get_arr(
 #     ondemand::array_iterator *self);
-fn seq_simdjson_ondemand_array_iter_get_arr(p: c_void_pointer) -> c_void_pointer:
+fn seq_simdjson_ondemand_array_iter_get_arr(
+    p: c_void_pointer,
+) -> c_void_pointer:
     return external_call[
         "seq_simdjson_ondemand_array_iter_get_arr",
         c_void_pointer,
@@ -840,7 +891,9 @@ fn seq_photon_fini() -> None:
 
 # SEQ_FUNC photon::WorkPool *seq_photon_workpool_new(size_t pool_size);
 fn seq_photon_workpool_new(pool_size: c_size_t) -> c_void_pointer:
-    return external_call["seq_photon_workpool_new", c_void_pointer, c_size_t](pool_size)
+    return external_call["seq_photon_workpool_new", c_void_pointer, c_size_t](
+        pool_size
+    )
 
 
 # SEQ_FUNC void seq_photon_workpool_free(photon::WorkPool *pool);
@@ -855,9 +908,11 @@ fn seq_photon_join_current_vcpu_into_workpool(pool: c_void_pointer) -> None:
 
 
 fn seq_photon_workpool_get_vcpu_num(pool: c_void_pointer) -> Int:
-    return external_call["seq_photon_workpool_get_vcpu_num", c_int, c_void_pointer](
-        pool
-    ).to_int()
+    return int(
+        external_call[
+            "seq_photon_workpool_get_vcpu_num", c_int, c_void_pointer
+        ](pool)
+    )
 
 
 # SEQ_FUNC void seq_photon_workpool_async_call(photon::WorkPool *pool,
@@ -879,7 +934,10 @@ fn seq_photon_workpool_async_call(
 #                                                      void *arg,
 #                                                      task_callback cb);
 fn seq_photon_workpool_async_call_with_cb(
-    pool: c_void_pointer, entry: task_entry, arg: c_void_pointer, cb: c_void_pointer
+    pool: c_void_pointer,
+    entry: task_entry,
+    arg: c_void_pointer,
+    cb: c_void_pointer,
 ) -> None:
     external_call[
         "seq_photon_workpool_async_call_with_cb",
@@ -897,7 +955,11 @@ fn seq_photon_workpool_call(
     pool: c_void_pointer, entry: task_entry, arg: c_void_pointer
 ) -> None:
     external_call[
-        "seq_photon_workpool_call", NoneType, c_void_pointer, task_entry, c_void_pointer
+        "seq_photon_workpool_call",
+        NoneType,
+        c_void_pointer,
+        task_entry,
+        c_void_pointer,
     ](pool, entry, arg)
 
 
@@ -905,7 +967,10 @@ fn seq_photon_workpool_call(
 #                                                task_entry entry, void *arg,
 #                                                task_callback cb);
 fn seq_photon_workpool_call_with_cb(
-    pool: c_void_pointer, entry: task_entry, arg: c_void_pointer, cb: c_void_pointer
+    pool: c_void_pointer,
+    entry: task_entry,
+    arg: c_void_pointer,
+    cb: c_void_pointer,
 ) -> None:
     external_call[
         "seq_photon_workpool_call_with_cb",
@@ -965,7 +1030,12 @@ fn seq_far_set_float(
     p: c_void_pointer, key: c_char_pointer, key_len: c_size_t, value: c_double
 ) -> Bool:
     return external_call[
-        "seq_far_set_float", Bool, c_void_pointer, c_char_pointer, c_size_t, c_double
+        "seq_far_set_float",
+        Bool,
+        c_void_pointer,
+        c_char_pointer,
+        c_size_t,
+        c_double,
     ](p, key, key_len, value)
 
 
@@ -1002,7 +1072,9 @@ fn seq_far_set_string(
 
 # SEQ_FUNC int64_t seq_far_get_int(FuncArgResult *p, const char *key,
 #                                    size_t key_len);
-fn seq_far_get_int(p: c_void_pointer, key: c_char_pointer, key_len: c_size_t) -> Int64:
+fn seq_far_get_int(
+    p: c_void_pointer, key: c_char_pointer, key_len: c_size_t
+) -> Int64:
     return external_call[
         "seq_far_get_int", Int64, c_void_pointer, c_char_pointer, c_size_t
     ](p, key, key_len)
@@ -1020,7 +1092,9 @@ fn seq_far_get_float(
 
 # SEQ_FUNC bool seq_far_get_bool(FuncArgResult *p, const char *key,
 #                                size_t key_len);
-fn seq_far_get_bool(p: c_void_pointer, key: c_char_pointer, key_len: c_size_t) -> Bool:
+fn seq_far_get_bool(
+    p: c_void_pointer, key: c_char_pointer, key_len: c_size_t
+) -> Bool:
     return external_call[
         "seq_far_get_bool", Bool, c_void_pointer, c_char_pointer, c_size_t
     ](p, key, key_len)
@@ -1029,7 +1103,10 @@ fn seq_far_get_bool(p: c_void_pointer, key: c_char_pointer, key_len: c_size_t) -
 # SEQ_FUNC const char *seq_far_get_string(FuncArgResult *p, const char *key,
 #                                         size_t key_len, size_t *n);
 fn seq_far_get_string(
-    p: c_void_pointer, key: c_char_pointer, key_len: c_size_t, n: Pointer[c_size_t]
+    p: c_void_pointer,
+    key: c_char_pointer,
+    key_len: c_size_t,
+    n: Pointer[c_size_t],
 ) -> c_char_pointer:
     return external_call[
         "seq_far_get_string",
@@ -1047,7 +1124,9 @@ fn seq_log_test() -> None:
 
 # const char* target, size_t len
 fn test_photon_http(target: c_char_pointer, len: c_size_t) -> None:
-    external_call["test_photon_http", NoneType, c_char_pointer, c_size_t](target, len)
+    external_call["test_photon_http", NoneType, c_char_pointer, c_size_t](
+        target, len
+    )
 
 
 fn test_1() -> None:
@@ -1064,9 +1143,9 @@ alias tlsv13_client = 19
 fn seq_client_new(
     base_url: c_char_pointer, base_url_len: Int, method: Int = tlsv12_client
 ) -> c_void_pointer:
-    return external_call["seq_cclient_new", c_void_pointer, c_char_pointer, Int, Int](
-        base_url, base_url_len, method
-    )
+    return external_call[
+        "seq_cclient_new", c_void_pointer, c_char_pointer, Int, Int
+    ](base_url, base_url_len, method)
 
 
 # SEQ_FUNC void seq_client_free(Client* client);
@@ -1089,7 +1168,19 @@ fn seq_cclient_do_request(
 ) -> Int:
     return __mlir_op.`pop.external_call`[
         func = "seq_cclient_do_request".value, _type=Int
-    ](client, path, path_len, verb, headers, body, body_len, res, res_len, n, verbose)
+    ](
+        client,
+        path,
+        path_len,
+        verb,
+        headers,
+        body,
+        body_len,
+        res,
+        res_len,
+        n,
+        verbose,
+    )
 
 
 # SEQ_FUNC void seq_c_free(char *res);
@@ -1119,13 +1210,17 @@ fn seq_hmac_sha256(
 
 
 # SEQ_FUNC size_t seq_base64_encode(const uint8_t *input, size_t n, void *result);
-fn seq_base64_encode(input: c_void_pointer, n: c_size_t, result: c_void_pointer) -> Int:
+fn seq_base64_encode(
+    input: c_void_pointer, n: c_size_t, result: c_void_pointer
+) -> Int:
     return external_call[
         "seq_base64_encode", Int, c_void_pointer, c_size_t, c_void_pointer
     ](input, n, result)
 
 
-fn seq_hex_encode(input: c_void_pointer, n: c_size_t, result: c_void_pointer) -> Int:
+fn seq_hex_encode(
+    input: c_void_pointer, n: c_size_t, result: c_void_pointer
+) -> Int:
     return external_call[
         "seq_hex_encode", Int, c_void_pointer, c_size_t, c_void_pointer
     ](input, n, result)
@@ -1202,7 +1297,10 @@ fn seq_asio_ioc_poll(ioc: c_void_pointer) -> None:
 
 
 fn seq_websocket_new(
-    host: c_char_pointer, port: c_char_pointer, path: c_char_pointer, tls_version: Int
+    host: c_char_pointer,
+    port: c_char_pointer,
+    path: c_char_pointer,
+    tls_version: Int,
 ) -> c_void_pointer:
     return external_call[
         "seq_websocket_new",
@@ -1226,7 +1324,9 @@ fn seq_websocket_disconnect(p: c_void_pointer) -> None:
     external_call["seq_websocket_disconnect", NoneType, c_void_pointer](p)
 
 
-fn seq_websocket_send(p: c_void_pointer, text: c_char_pointer, len: c_size_t) -> None:
+fn seq_websocket_send(
+    p: c_void_pointer, text: c_char_pointer, len: c_size_t
+) -> None:
     external_call[
         "seq_websocket_send", NoneType, c_void_pointer, c_char_pointer, c_size_t
     ](p, text, len)
@@ -1234,24 +1334,41 @@ fn seq_websocket_send(p: c_void_pointer, text: c_char_pointer, len: c_size_t) ->
 
 alias OnConnectCallback = fn (c_void_pointer) raises -> None
 alias OnHeartbeatCallback = fn (c_void_pointer) raises -> None
-alias OnMessageCallback = fn (c_void_pointer, c_char_pointer, c_size_t) raises -> None
+alias OnMessageCallback = fn (
+    c_void_pointer, c_char_pointer, c_size_t
+) raises -> None
 
 
-fn seq_websocket_set_on_connect(p: c_void_pointer, cb: OnConnectCallback) -> None:
+fn seq_websocket_set_on_connect(
+    p: c_void_pointer, cb: OnConnectCallback
+) -> None:
     external_call[
-        "seq_websocket_set_on_connect", NoneType, c_void_pointer, OnConnectCallback
+        "seq_websocket_set_on_connect",
+        NoneType,
+        c_void_pointer,
+        OnConnectCallback,
     ](p, cb)
 
 
-fn seq_websocket_set_on_heartbeat(p: c_void_pointer, cb: OnHeartbeatCallback) -> None:
+fn seq_websocket_set_on_heartbeat(
+    p: c_void_pointer, cb: OnHeartbeatCallback
+) -> None:
     external_call[
-        "seq_websocket_set_on_heartbeat", NoneType, c_void_pointer, OnHeartbeatCallback
+        "seq_websocket_set_on_heartbeat",
+        NoneType,
+        c_void_pointer,
+        OnHeartbeatCallback,
     ](p, cb)
 
 
-fn seq_websocket_set_on_message(p: c_void_pointer, cb: OnMessageCallback) -> None:
+fn seq_websocket_set_on_message(
+    p: c_void_pointer, cb: OnMessageCallback
+) -> None:
     external_call[
-        "seq_websocket_set_on_message", NoneType, c_void_pointer, OnMessageCallback
+        "seq_websocket_set_on_message",
+        NoneType,
+        c_void_pointer,
+        OnMessageCallback,
     ](p, cb)
 
 
@@ -1260,7 +1377,9 @@ fn seq_strtoi(s: c_char_pointer, s_len: c_size_t) -> Int:
 
 
 fn seq_strtod(s: c_char_pointer, s_len: c_size_t) -> Float64:
-    return external_call["seq_strtod", Float64, c_char_pointer, c_size_t](s, s_len)
+    return external_call["seq_strtod", Float64, c_char_pointer, c_size_t](
+        s, s_len
+    )
 
 
 fn test_identity_pool() -> None:
@@ -1298,7 +1417,9 @@ fn seq_init_signal(callback: signal_handle_t) -> None:
 
 # SEQ_FUNC void seq_init_photon_signal(signal_handle_t handle);
 fn seq_init_photon_signal(callback: signal_handle_t) -> None:
-    return external_call["seq_init_photon_signal", NoneType, signal_handle_t](callback)
+    return external_call["seq_init_photon_signal", NoneType, signal_handle_t](
+        callback
+    )
 
 
 fn seq_skiplist_new(is_forward: Bool) -> c_void_pointer:
@@ -1318,11 +1439,15 @@ fn seq_skiplist_insert(
 
 
 fn seq_skiplist_remove(list: c_void_pointer, key: Int64) -> Int64:
-    return external_call["seq_skiplist_remove", Int64, c_void_pointer, Int64](list, key)
+    return external_call["seq_skiplist_remove", Int64, c_void_pointer, Int64](
+        list, key
+    )
 
 
 fn seq_skiplist_search(list: c_void_pointer, key: Int64) -> Int64:
-    return external_call["seq_skiplist_search", Int64, c_void_pointer, Int64](list, key)
+    return external_call["seq_skiplist_search", Int64, c_void_pointer, Int64](
+        list, key
+    )
 
 
 fn seq_skiplist_dump(list: c_void_pointer) -> None:
@@ -1330,14 +1455,20 @@ fn seq_skiplist_dump(list: c_void_pointer) -> None:
 
 
 fn seq_skiplist_begin(list: c_void_pointer) -> c_void_pointer:
-    return external_call["seq_skiplist_begin", c_void_pointer, c_void_pointer](list)
+    return external_call["seq_skiplist_begin", c_void_pointer, c_void_pointer](
+        list
+    )
 
 
 fn seq_skiplist_end(list: c_void_pointer) -> c_void_pointer:
-    return external_call["seq_skiplist_end", c_void_pointer, c_void_pointer](list)
+    return external_call["seq_skiplist_end", c_void_pointer, c_void_pointer](
+        list
+    )
 
 
-fn seq_skiplist_next(list: c_void_pointer, node: c_void_pointer) -> c_void_pointer:
+fn seq_skiplist_next(
+    list: c_void_pointer, node: c_void_pointer
+) -> c_void_pointer:
     return external_call[
         "seq_skiplist_next", c_void_pointer, c_void_pointer, c_void_pointer
     ](list, node)

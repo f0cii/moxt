@@ -44,9 +44,9 @@ struct QueryParams:
             logi(
                 # str(i)
                 # + ": "
-                str(item.key)
+                str(item[].key)
                 + " = "
-                + str(item.value)
+                + str(item[].value)
             )
 
 
@@ -70,7 +70,7 @@ struct HttpClient:
         logd("HttpClient.__init__")
         self._base_url = base_url
         self._method = method
-        self.ptr = seq_client_new(base_url._buffer.data.value, len(base_url), method)
+        self.ptr = seq_client_new(base_url._as_ptr()._as_scalar_pointer(), len(base_url), method)
         self._verbose = False
         logd("HttpClient.__init__ done")
 
@@ -79,7 +79,7 @@ struct HttpClient:
         self._base_url = existing._base_url
         self._method = existing._method
         self.ptr = seq_client_new(
-            self._base_url._buffer.data.value,
+            self._base_url._as_ptr()._as_scalar_pointer(),
             len(self._base_url),
             self._method,
         )
@@ -159,11 +159,11 @@ struct HttpClient:
         var buff = Pointer[UInt8].alloc(buff_size)
         var status = seq_cclient_do_request(
             self.ptr,
-            path._buffer.data.value,
+            path._as_ptr()._as_scalar_pointer(),
             len(path),
             verb,
             headers.ptr,
-            body._buffer.data.value,
+            body._as_ptr()._as_scalar_pointer(),
             len(body),
             buff,
             buff_size,

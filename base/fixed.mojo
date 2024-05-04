@@ -70,7 +70,7 @@ struct Fixed(Stringable):
         return Self {_value: Int64(FIXED_SCALE_F * v)}
 
     fn __init__(v: String) -> Self:
-        var v_ = seq_fixed12_new_string(v._buffer.data.value, len(v))
+        var v_ = seq_fixed12_new_string(v._as_ptr()._as_scalar_pointer(), len(v))
         return Self {
             _value: v_,
         }

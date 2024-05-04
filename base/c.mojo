@@ -28,14 +28,14 @@ alias intptr_t = Int64
 alias uintptr_t = UInt64
 
 alias c_char_pointer = Pointer[c_schar]
-# alias c_char_any_pointer = AnyPointer[c_schar]
+# alias c_char_any_pointer = UnsafePointer[c_schar]
 
 alias c_void_pointer = Pointer[c_void]
-# alias c_void_any_pointer = AnyPointer[c_void]
+# alias c_void_any_pointer = UnsafePointer[c_void]
 
 
 alias any_pointer_simd_int8_to_pointer_simd_int8 = rebind[
-    Pointer[SIMD[DType.int8, 1]], AnyPointer[SIMD[DType.int8, 1]]
+    Pointer[SIMD[DType.int8, 1]], UnsafePointer[SIMD[DType.int8, 1]]
 ]
 
 

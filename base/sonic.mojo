@@ -292,7 +292,7 @@ struct SonicDocument:
         seq_sonic_json_document_add_string(
             self._doc,
             self._alloc,
-            key._buffer.data.value,
+            key._as_ptr()._as_scalar_pointer(),
             len(key),
             v.data,
             v.len,
@@ -303,7 +303,7 @@ struct SonicDocument:
         seq_sonic_json_document_add_int(
             self._doc,
             self._alloc,
-            key._buffer.data.value,
+            key._as_ptr()._as_scalar_pointer(),
             len(key),
             value,
         )
@@ -313,7 +313,7 @@ struct SonicDocument:
         seq_sonic_json_document_add_double(
             self._doc,
             self._alloc,
-            key._buffer.data.value,
+            key._as_ptr()._as_scalar_pointer(),
             len(key),
             value,
         )
@@ -323,7 +323,7 @@ struct SonicDocument:
         seq_sonic_json_document_add_bool(
             self._doc,
             self._alloc,
-            key._buffer.data.value,
+            key._as_ptr()._as_scalar_pointer(),
             len(key),
             value,
         )
@@ -333,7 +333,7 @@ struct SonicDocument:
         seq_sonic_json_document_add_node(
             self._doc,
             self._alloc,
-            key._buffer.data.value,
+            key._as_ptr()._as_scalar_pointer(),
             len(key),
             node._node,
         )
@@ -371,7 +371,7 @@ struct SonicNode:
         seq_sonic_json_node_add_string(
             self._node,
             self._alloc,
-            key._buffer.data.value,
+            key._as_ptr()._as_scalar_pointer(),
             len(key),
             v.data,
             v.len,
@@ -382,7 +382,7 @@ struct SonicNode:
         seq_sonic_json_node_add_int(
             self._node,
             self._alloc,
-            key._buffer.data.value,
+            key._as_ptr()._as_scalar_pointer(),
             len(key),
             value,
         )
@@ -392,7 +392,7 @@ struct SonicNode:
         seq_sonic_json_node_add_double(
             self._node,
             self._alloc,
-            key._buffer.data.value,
+            key._as_ptr()._as_scalar_pointer(),
             len(key),
             value,
         )
@@ -402,7 +402,7 @@ struct SonicNode:
         seq_sonic_json_node_add_bool(
             self._node,
             self._alloc,
-            key._buffer.data.value,
+            key._as_ptr()._as_scalar_pointer(),
             len(key),
             value,
         )

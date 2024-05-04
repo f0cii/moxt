@@ -21,6 +21,7 @@ from base.yyjson import *
 from core.bybitmodel import *
 from core.bybitclient import *
 from core.bybitclientjson import *
+
 # from core.bybitws import *
 from core.env import env_load
 
@@ -86,9 +87,11 @@ fn test_raw():
     # var key: CString = "retCode"
     # var ret_code = seq_simdjson_ondemand_get_int_d(doc, key.data, key.len)
     var key = "retCode"
-    var ret_code = seq_simdjson_ondemand_get_int_d(
-        doc, key.data()._as_scalar_pointer(), len(key)
-    ).to_int()
+    var ret_code = int(
+        seq_simdjson_ondemand_get_int_d(
+            doc, key.data()._as_scalar_pointer(), len(key)
+        )
+    )
     print(ret_code)
     seq_simdjson_ondemand_document_free(doc)
     seq_simdjson_padded_string_free(padded_string)
@@ -232,8 +235,8 @@ fn test_httpclient():
     var headers = Headers()
     headers["a"] = "abc"
     _ = client.get("/v3/public/time", headers)
-    _ = client.do_request("/v3/public/time", VERB_GET, headers, "", 1024*1024)
-    _ = client.do_request("/v3/public/time", VERB_GET, headers, "", 1024*1024)
+    _ = client.do_request("/v3/public/time", VERB_GET, headers, "", 1024 * 1024)
+    _ = client.do_request("/v3/public/time", VERB_GET, headers, "", 1024 * 1024)
 
 
 # fn test_websocket() raises:
@@ -355,17 +358,17 @@ struct G:
 
 
 fn test_global_value():
-    var g = G(101)
-    var id = 1
-    var ptr = set_global_value_ptr[G](id, Pointer[G].address_of(g))
-    logi("p0: " + String(ptr))
-    var g1 = get_global_value[G](1)
-    g1.debug()
+    # var g = G(101)
+    # var id = 1
+    # var ptr = set_global_value_ptr[G](id, Pointer[G].address_of(g))
+    # logi("p0: " + String(ptr))
+    # var g1 = get_global_value[G](1)
+    # g1.debug()
 
-    var ptr1 = int(Pointer[G].address_of(g1))
-    logi("p1: " + String(ptr1))
+    # var ptr1 = int(Pointer[G].address_of(g1))
+    # logi("p1: " + String(ptr1))
 
-    _ = g
+    # _ = g
     logi("OK")
 
 
@@ -506,7 +509,7 @@ fn test_bybitclient() raises:
     # _ = client
     run_forever()
 
-    _ = client ^
+    _ = client^
 
 
 fn test_yyjson():

@@ -1,10 +1,10 @@
 @value
 struct ObjectContainer[T: CollectionElement]:
-    var data: AnyPointer[T]
+    var data: UnsafePointer[T]
     var offset: Int
 
     fn __init__(inout self, size: Int = 100):
-        self.data = AnyPointer[T].alloc(size)
+        self.data = UnsafePointer[T].alloc(size)
         self.offset = 0
 
     fn __copyinit__(inout self, existing: Self):
@@ -17,17 +17,17 @@ struct ObjectContainer[T: CollectionElement]:
         self.data = existing.data
         self.offset = existing.offset
     
-    fn emplace(inout self, owned i: T) -> AnyPointer[T]:
-        (self.data + self.offset).emplace_value(i)
+    fn emplace(inout self, owned i: T) -> UnsafePointer[T]:
+        initialize_pointee_move(self.data + self.offset, i)
         var ptr = (self.data + self.offset)
         self.offset += 1
         return ptr
 
     fn emplace_as_index(inout self, owned i: T) -> Int:
-        (self.data + self.offset).emplace_value(i)
+        initialize_pointee_move(self.data + self.offset, i)
         var index = int(self.data + self.offset)
         self.offset += 1
         return index
     
     fn take(inout self, index: Int) -> T:
-        return (self.data + index).take_value()
+        return move_from_pointee(self.data + index)

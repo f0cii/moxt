@@ -19,7 +19,6 @@ struct AppConfig(Stringable):
     var strategy: String
     var params: Dict[String, String]
 
-
     fn __init__(inout self):
         self.testnet = False
         self.access_key = ""
@@ -67,15 +66,16 @@ fn load_config(filename: String) raises -> AppConfig:
     var s = tmp_file.read_text()
     var dict = tomli.loads(s)
     var config = AppConfig()
-    config.testnet = str_to_bool(str(dict["testnet"]))
-    config.access_key = str(dict["access_key"])
-    config.secret_key = str(dict["secret_key"])
-    config.category = str(dict["category"])
-    config.symbols = str(dict["symbols"])
-    logi("load_config symbols: " + config.symbols)
-    config.depth = strtoi(str(dict["depth"]))
-    config.is_local_based = str_to_bool(str(dict["is_local_based"]))
-    config.strategy = str(dict["strategy"]["name"])
+    var config_ref = Reference(config)
+    config_ref[].testnet = str_to_bool(str(dict["testnet"]))
+    config_ref[].access_key = str(dict["access_key"])
+    config_ref[].secret_key = str(dict["secret_key"])
+    config_ref[].category = str(dict["category"])
+    config_ref[].symbols = str(dict["symbols"])
+    # logi("load_config symbols: " + config.symbols)
+    config_ref[].depth = strtoi(str(dict["depth"]))
+    config_ref[].is_local_based = str_to_bool(str(dict["is_local_based"]))
+    config_ref[].strategy = str(dict["strategy"]["name"])
     var params = dict["params"]
     var iterator = py.iter(params)
     var index = 0
@@ -84,7 +84,7 @@ fn load_config(filename: String) raises -> AppConfig:
         var name = py.next(iterator)
         var value = params[name]
         # print(name, value)
-        config.params[str(name)] = str(value)
+        config_ref[].params[str(name)] = str(value)
         index += 1
     return config
 

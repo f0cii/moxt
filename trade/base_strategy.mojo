@@ -26,8 +26,8 @@ trait BaseStrategy(StrategyConstructible, Movable):
 
     fn on_exit(inout self) raises:
         ...
-    
-    fn get_platform_pointer(inout self) -> Pointer[Platform]:
+
+    fn get_platform_pointer(inout self) -> UnsafePointer[Platform]:
         ...
 
     fn on_tick(inout self) raises:

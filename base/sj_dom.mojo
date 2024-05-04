@@ -775,7 +775,7 @@ struct DomParser:
 
     @always_inline
     fn parse(self, s: String) raises -> DomElement:
-        var p = seq_simdjson_dom_parser_parse(self.p, s._buffer.data.value, len(s))
+        var p = seq_simdjson_dom_parser_parse(self.p, s._as_ptr()._as_scalar_pointer(), len(s))
         if not seq_simdjson_dom_element_is_valid(p):
             raise Error("JSON parsing error: [" + s + "]")
         return DomElement(p)

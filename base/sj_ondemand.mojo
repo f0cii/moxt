@@ -17,7 +17,7 @@ struct OndemandValue:
 
     @always_inline
     fn int(self) -> Int:
-        return seq_simdjson_ondemand_int_v(self.p).to_int()
+        return int(seq_simdjson_ondemand_int_v(self.p))
 
     @always_inline
     fn __copyinit__(inout self, existing: Self):
@@ -25,7 +25,7 @@ struct OndemandValue:
 
     @always_inline
     fn uint(self) -> Int:
-        return seq_simdjson_ondemand_uint_v(self.p).to_int()
+        return int(seq_simdjson_ondemand_uint_v(self.p))
 
     @always_inline
     fn float(self) -> Float64:
@@ -53,7 +53,7 @@ struct OndemandValue:
 
     @always_inline
     fn type(self) -> Int:
-        return seq_simdjson_ondemand_value_type(self.p).to_int()
+        return int(seq_simdjson_ondemand_value_type(self.p))
 
     @always_inline
     fn type_desc(self) -> String:
@@ -75,15 +75,15 @@ struct OndemandValue:
 
     @always_inline
     fn get_int(self, key: StringLiteral) -> Int:
-        return seq_simdjson_ondemand_get_int_v(
+        return int(seq_simdjson_ondemand_get_int_v(
             self.p, key.data()._as_scalar_pointer(), len(key)
-        ).to_int()
+        ))
 
     @always_inline
     fn get_uint(self, key: StringLiteral) -> Int:
-        return seq_simdjson_ondemand_get_uint_v(
+        return int(seq_simdjson_ondemand_get_uint_v(
             self.p, key.data()._as_scalar_pointer(), len(key)
-        ).to_int()
+        ))
 
     @always_inline
     fn get_float(self, key: StringLiteral) -> Float64:
@@ -151,11 +151,11 @@ struct OndemandArray(Sized):
 
     @always_inline
     fn at_int(self, index: Int) -> Int:
-        return seq_simdjson_ondemand_array_at_int(self.p, index).to_int()
+        return int(seq_simdjson_ondemand_array_at_int(self.p, index))
 
     @always_inline
     fn at_uint(self, index: Int) -> Int:
-        return seq_simdjson_ondemand_array_at_uint(self.p, index).to_int()
+        return int(seq_simdjson_ondemand_array_at_uint(self.p, index))
 
     @always_inline
     fn at_float(self, index: Int) -> Float64:
@@ -207,15 +207,15 @@ struct OndemandObject:
 
     @always_inline
     fn get_int(self, key: StringLiteral) -> Int:
-        return seq_simdjson_ondemand_get_int_o(
+        return int(seq_simdjson_ondemand_get_int_o(
             self.p, key.data()._as_scalar_pointer(), len(key)
-        ).to_int()
+        ))
 
     @always_inline
     fn get_uint(self, key: StringLiteral) -> Int:
-        return seq_simdjson_ondemand_get_uint_o(
+        return int(seq_simdjson_ondemand_get_uint_o(
             self.p, key.data()._as_scalar_pointer(), len(key)
-        ).to_int()
+        ))
 
     @always_inline
     fn get_float(self, key: StringLiteral) -> Float64:
@@ -310,11 +310,11 @@ struct OndemandArrayIter:
 
     @always_inline
     fn get_int(self) -> Int:
-        return seq_simdjson_ondemand_array_iter_get_int(self.it).to_int()
+        return int(seq_simdjson_ondemand_array_iter_get_int(self.it))
 
     @always_inline
     fn get_uint(self) -> Int:
-        return seq_simdjson_ondemand_array_iter_get_uint(self.it).to_int()
+        return int(seq_simdjson_ondemand_array_iter_get_uint(self.it))
 
     @always_inline
     fn get_float(self) -> Float64:
@@ -366,13 +366,13 @@ struct OndemandDocument:
         var v = seq_simdjson_ondemand_get_int_d(
             self.doc, key.data()._as_scalar_pointer(), len(key)
         )
-        return v.to_int()
+        return int(v)
 
     @always_inline
     fn get_uint(self, key: StringLiteral) -> Int:
-        return seq_simdjson_ondemand_get_uint_d(
+        return int(seq_simdjson_ondemand_get_uint_d(
             self.doc, key.data()._as_scalar_pointer(), len(key)
-        ).to_int()
+        ))
 
     @always_inline
     fn get_float(self, key: StringLiteral) -> Float64:
@@ -447,7 +447,7 @@ struct OndemandParser:
 
     @always_inline
     fn parse(self, s: String) -> OndemandDocument:
-        var padded_string = seq_simdjson_padded_string_new(s._buffer.data.value, len(s))
+        var padded_string = seq_simdjson_padded_string_new(s._as_ptr()._as_scalar_pointer(), len(s))
         var doc = seq_simdjson_ondemand_parser_parse(self.parser, padded_string)
         return OndemandDocument(padded_string, doc)
 

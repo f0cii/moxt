@@ -1,5 +1,3 @@
-from base.str_utils import *
-from base.str import Str
 from base.fixed import Fixed
 
 

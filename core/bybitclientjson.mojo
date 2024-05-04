@@ -17,7 +17,6 @@ from .bybitmodel import (
     BalanceInfo,
     OrderInfo,
 )
-from base.str_utils import *
 from .sign import hmac_sha256_b64
 from ylstdlib.time import time_ns
 

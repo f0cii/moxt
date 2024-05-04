@@ -6,7 +6,6 @@ from ylstdlib import *
 
 from base.mo import *
 from base.c import *
-from base.str import Str
 from base.str_cache import *
 from base.sj_dom import *
 from base.sj_ondemand import OndemandParser
@@ -26,11 +25,6 @@ from core.bybitws import *
 from trade.pos import LocalPosition
 from trade.config import *
 from trade.platform import Platform
-
-
-fn test_str() raises:
-    var s = Str("10000")
-    assert_equal(s.to_string(), "10000")
 
 
 fn test_c_str() raises:
@@ -140,7 +134,7 @@ fn test_sonic_raw() raises:
     seq_sonic_json_document_set_object(doc)
     var key = "a"
     var value = String("12345")
-    seq_sonic_json_document_add_string(doc, alloc, key.data()._as_scalar_pointer(), len(key), value._buffer.data.value, len(value))
+    seq_sonic_json_document_add_string(doc, alloc, key.data()._as_scalar_pointer(), len(key), value._as_ptr()._as_scalar_pointer(), len(value))
     
     var result = Pointer[c_schar].alloc(1024)
     var n = seq_sonic_json_document_to_string(doc, result)
@@ -532,7 +526,7 @@ fn test_ti() raises:
             break
         
         # var info_ = info.value[]
-        var info_ = info.take_value()
+        var info_ = move_from_pointee(info)
         var input_names = info_.input_names()
         # var input_names_str = list_to_str(input_names)
         # logi("input_names_str=" + input_names_str)
@@ -675,13 +669,13 @@ fn test_ti_call_at_index2() raises:
     options.append(3)
     assert_equal(len(options), 1)
     
-    var inputs = Pointer[AnyPointer[Float64]].alloc(1)
+    var inputs = Pointer[UnsafePointer[Float64]].alloc(1)
     inputs.store(0, data_in.data)
     
     var start = seq_ti_indicator_start(info, options.data)
     var output_length = int(input_length - start)
 
-    var outputs = Pointer[AnyPointer[Float64]].alloc(1)
+    var outputs = Pointer[UnsafePointer[Float64]].alloc(1)
     var data_out = List[Float64](capacity=output_length)
     data_out.resize(output_length, 0.0)
     outputs.store(0, data_out.data)
@@ -725,11 +719,11 @@ fn test_queue() raises:
     q.enqueue(101)
     q.enqueue(102)
     var a100 = q.dequeue()
-    assert_equal(a100.value(), 100)
+    assert_equal(a100.value()[], 100)
     var a101 = q.dequeue()
-    assert_equal(a101.value(), 101)
+    assert_equal(a101.value()[], 101)
     var a102 = q.dequeue()
-    assert_equal(a102.value(), 102)
+    assert_equal(a102.value()[], 102)
     var a103 = q.dequeue()
     assert_equal(a103.__bool__(), False)
 

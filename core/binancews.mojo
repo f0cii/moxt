@@ -4,7 +4,11 @@ from base.websocket import *
 from base.yyjson import yyjson_doc, yyjson_mut_doc
 from base.sj_ondemand import OndemandParser
 from base.containers import ObjectContainer
-from base.websocket import OnConnectWrapper, OnHeartbeatWrapper, OnMessageWrapper
+from base.websocket import (
+    OnConnectWrapper,
+    OnHeartbeatWrapper,
+    OnMessageWrapper,
+)
 from .sign import hmac_sha256_hex
 from .binanceclient import BinanceClient
 
@@ -16,6 +20,7 @@ struct BinanceWS:
     """
     Reference document: https://binance-docs.github.io/apidocs/futures/en/
     """
+
     var _ptr: c_void_pointer
     var _id: Int
     var _is_private: Bool
@@ -86,7 +91,7 @@ struct BinanceWS:
     fn set_on_connect(self, owned wrapper: OnConnectWrapper):
         var id = self.get_id()
         # var coc_ptr = get_global_pointer(WS_ON_CONNECT_WRAPPER_PTR_KEY)
-        # var coc_any_ptr = AnyPointer[ObjectContainer[OnConnectWrapper]].__from_index(
+        # var coc_any_ptr = UnsafePointer[ObjectContainer[OnConnectWrapper]].__from_index(
         #     coc_ptr
         # )
         # var wrapper_ptr = coc_any_ptr[].emplace_as_index(wrapper)
@@ -96,7 +101,7 @@ struct BinanceWS:
     fn set_on_heartbeat(self, owned wrapper: OnHeartbeatWrapper):
         var id = self.get_id()
         # var coc_ptr = get_global_pointer(WS_ON_HEARTBEAT_WRAPPER_PTR_KEY)
-        # var coc_any_ptr = AnyPointer[ObjectContainer[OnHeartbeatWrapper]].__from_index(
+        # var coc_any_ptr = UnsafePointer[ObjectContainer[OnHeartbeatWrapper]].__from_index(
         #     coc_ptr
         # )
         # var wrapper_ptr = coc_any_ptr[].emplace_as_index(wrapper)
@@ -106,7 +111,7 @@ struct BinanceWS:
     fn set_on_message(self, owned wrapper: OnMessageWrapper):
         var id = self.get_id()
         # var coc_ptr = get_global_pointer(WS_ON_MESSAGE_WRAPPER_PTR_KEY)
-        # var coc_any_ptr = AnyPointer[ObjectContainer[OnMessageWrapper]].__from_index(
+        # var coc_any_ptr = UnsafePointer[ObjectContainer[OnMessageWrapper]].__from_index(
         #     coc_ptr
         # )
         # var wrapper_ptr = coc_any_ptr[].emplace_as_index(wrapper)
@@ -117,19 +122,13 @@ struct BinanceWS:
         logd("BinanceWS.subscribe")
 
     fn get_on_connect(self) -> on_connect_callback:
-        # var self_ptr = Reference(self).get_unsafe_pointer()
-
         fn wrapper():
-            # self_ptr[].on_connect()
             pass
 
         return wrapper
 
     fn get_on_heartbeat(self) -> on_heartbeat_callback:
-        # var self_ptr = Reference(self).get_unsafe_pointer()
-
         fn wrapper():
-            # self_ptr[].on_heartbeat()
             pass
 
         return wrapper

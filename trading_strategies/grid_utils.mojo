@@ -5,6 +5,8 @@ from base.fixed import Fixed
 from base.mo import *
 from trade.types import *
 
+# from ylstdlib import MutLifetime, i1
+
 
 fn append_string_to_list_if_not_empty(inout l: List[String], s: String):
     if s == "":
@@ -246,7 +248,7 @@ struct GridInfo(Stringable):
             var level = self.cells[0].level - 1
             var price = self.get_price_by_level(level)
             var cell = self.new_grid_cell(level, price)
-            list_insert[GridCellInfo](self.cells, 0, cell)
+            self.cells.insert(0, cell)
 
     fn get_price_by_level(self, level: Int) -> Fixed:
         var offset = level
@@ -261,7 +263,7 @@ struct GridInfo(Stringable):
         var offset = math.log(
             price.to_float() / self.base_price.to_float()
         ) / math.log(1 + self.grid_interval.to_float())
-        return math.round(offset).to_int()
+        return int(math.round(offset))
 
     fn new_grid_cell(self, level: Int, price: Fixed) -> GridCellInfo:
         return GridCellInfo(level, price)
@@ -270,6 +272,31 @@ struct GridInfo(Stringable):
         self.cells.clear()
         self.cells.append(self.new_grid_cell(0, self.base_price))
         self.update(self.base_price)
+
+    # fn cell_mut_ref[
+    #     L: MutLifetime
+    # ](inout self, i: Int) -> Reference[GridCellInfo, i1, L]:
+    #     """Gets a reference to the list element at the given index.
+
+    #     Args:
+    #         i: The index of the element.
+
+    #     Returns:
+    #         An mutability reference to the element at the given index.
+    #     """
+    #     var normalized_idx = i
+    #     if i < 0:
+    #         normalized_idx += Reference(self.cells)[].size
+
+    #     # Mutability gets set to the local mutability of this
+    #     # pointer value, ie. because we defined it with `let` it's now an
+    #     # "immutable" reference regardless of the mutability of `self`.
+    #     # This means we can't just use `UnsafePointer.__refitem__` here
+    #     # because the mutability won't match.
+    #     var base_ptr = Reference(self.cells)[].data
+    #     return __mlir_op.`lit.ref.from_pointer`[
+    #         _type = Reference[GridCellInfo, i1, L]._mlir_type
+    #     ]((base_ptr + normalized_idx).value)
 
     fn __str__(self) -> String:
         var result: String = "["

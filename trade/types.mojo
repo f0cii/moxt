@@ -1,23 +1,10 @@
 from collections.optional import Optional
+from collections.dict import Dict
 from base.fixed import Fixed
 
 
 trait StringableCollectionElement(CollectionElement, Stringable):
     ...
-
-
-fn list_to_str[T: StringableCollectionElement](input_list: List[T]) -> String:
-    try:
-        var result: String = "["
-        for i in range(len(input_list)):
-            var repr = "'" + str(input_list[i]) + "'"
-            if i != len(input_list) - 1:
-                result += repr + ", "
-            else:
-                result += repr
-        return result + "]"
-    except e:
-        return ""
 
 
 struct OrderType:
@@ -45,7 +32,12 @@ struct OrderStatus(Stringable):
     # Method to determine if an order is closed
     # Closed orders include statuses of "fully filled", "cancelled", "rejected", and "expired"
     fn is_closed(self: Self) -> Bool:
-        return self.value == 3 or self.value == 4 or self.value == 5 or self.value == 6
+        return (
+            self.value == 3
+            or self.value == 4
+            or self.value == 5
+            or self.value == 6
+        )
 
     fn __eq__(self: Self, rhs: Self) -> Bool:
         return self.value == rhs.value
@@ -77,8 +69,12 @@ struct OrderStatus(Stringable):
 struct PositionIdx(Stringable, Intable):
     var value: UInt8
     alias single_side = PositionIdx(0)  # Unidirectional position
-    alias both_side_buy = PositionIdx(1)  # Bidirectional position on the buy side
-    alias both_side_sell = PositionIdx(2)  # Bidirectional position on the sell side
+    alias both_side_buy = PositionIdx(
+        1
+    )  # Bidirectional position on the buy side
+    alias both_side_sell = PositionIdx(
+        2
+    )  # Bidirectional position on the sell side
 
     fn __eq__(self: Self, rhs: Self) -> Bool:
         return self.value == rhs.value
@@ -98,6 +94,75 @@ struct PositionIdx(Stringable, Intable):
             return "BothSideSell"
         else:
             return "--"
+
+
+@value
+struct Account(Stringable):
+    var coin: String  # 账户币种 "USDT"
+    var equity: Fixed  # 账户权益
+    var wallet_balance: Fixed  # 钱包余额
+    var available_to_withdraw: Fixed  # 可提取余额,即可用保证金
+    var total_order_margin: Fixed  # 订单初始保证金
+    var total_position_margin: Fixed  # 持仓维持保证金
+    var unrealised_pnl: Fixed  # 未实现盈亏
+    var cum_realised_pnl: Fixed  # 累计已实现盈亏
+    var extra: Dict[String, String]
+
+    fn __init__(inout self):
+        self.coin = ""
+        self.equity = Fixed.zero
+        self.wallet_balance = Fixed.zero
+        self.available_to_withdraw = Fixed.zero
+        self.total_order_margin = Fixed.zero
+        self.total_position_margin = Fixed.zero
+        self.unrealised_pnl = Fixed.zero
+        self.cum_realised_pnl = Fixed.zero
+        self.extra = Dict[String, String]()
+
+    fn __init__(
+        inout self,
+        coin: String,
+        equity: Fixed,
+        wallet_balance: Fixed,
+        available_to_withdraw: Fixed,
+        total_order_margin: Fixed,
+        total_position_margin: Fixed,
+        unrealised_pnl: Fixed,
+        cum_realised_pnl: Fixed,
+    ):
+        self.coin = coin
+        self.equity = equity
+        self.wallet_balance = wallet_balance
+        self.available_to_withdraw = available_to_withdraw
+        self.total_order_margin = total_order_margin
+        self.total_position_margin = total_position_margin
+        self.unrealised_pnl = unrealised_pnl
+        self.cum_realised_pnl = cum_realised_pnl
+        self.extra = Dict[String, String]()
+    
+    fn available_margin(self) -> Fixed:
+        """
+        可用保证金
+        """
+        return self.available_to_withdraw
+
+    fn __str__(self) -> String:
+        return (
+            "<Account: coin="
+            + str(self.coin)
+            + ", equity="
+            + str(self.equity)
+            + ", wallet_balance="
+            + str(self.wallet_balance)
+            + ", available_to_withdraw="
+            + str(self.available_to_withdraw)
+            + ", total_order_margin="
+            + str(self.total_order_margin)
+            + ", total_position_margin="
+            + str(self.total_position_margin)
+            + ", unrealised_pnl="
+            + str(self.unrealised_pnl)
+        )
 
 
 @value
@@ -189,9 +254,7 @@ struct PlaceOrderResult(StringableCollectionElement):
 
 @value
 struct PlaceOrdersResult(Stringable):
-    # var success: Bool
     var orders: List[PlaceOrderResult]
-    # var error_message: String
 
     fn __init__(inout self, owned orders: List[PlaceOrderResult]):
         self.orders = orders
@@ -201,9 +264,7 @@ struct PlaceOrdersResult(Stringable):
             "<BatchCancelResult: success="
             + str(True)
             + ", orders="
-            + list_to_str[PlaceOrderResult](self.orders)
-            # + ", error_message="
-            # + str(self.error_message)
+            + get_list_string(self.orders)
             + ">"
         )
 
@@ -231,9 +292,7 @@ struct CancelOrderResult(StringableCollectionElement):
 
 @value
 struct BatchCancelResult(Stringable):
-    # var success: Bool
     var cancelled_orders: List[CancelOrderResult]
-    # var error_message: String
 
     fn __init__(inout self, owned cancelled_orders: List[CancelOrderResult]):
         self.cancelled_orders = cancelled_orders
@@ -243,8 +302,18 @@ struct BatchCancelResult(Stringable):
             "<BatchCancelResult: success="
             + str(True)
             + ", cancelled_orders="
-            + list_to_str[CancelOrderResult](self.cancelled_orders)
-            # + ", error_message="
-            # + str(self.error_message)
+            + get_list_string(self.cancelled_orders)
             + ">"
         )
+
+
+fn get_list_string[T: StringableCollectionElement](l: List[T]) -> String:
+    var s: String = "["
+    for i in range(len(l)):
+        var repr = "'" + str(l[i]) + "'"
+        if i != len(l) - 1:
+            s += repr + ", "
+        else:
+            s += repr
+    s += "]"
+    return s

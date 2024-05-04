@@ -48,12 +48,13 @@ fn _GLOBAL() -> Pointer[__G]:
 
 
 fn _init_global(payload: Pointer[NoneType]) -> Pointer[NoneType]:
-    # var p = Pointer[__G].alloc(1)
-    # p[] = __G()
-    # return p.bitcast[NoneType]()
-    var p = AnyPointer[__G].alloc(1)
-    p.emplace_value(__G())
-    var data = Pointer[__G].__from_index(int(p))
+    # var data = Pointer[__G].alloc(1)
+    # data[] = __G()
+    # # data.store(__G())
+    # return data.bitcast[NoneType]()
+    var p = UnsafePointer[__G].alloc(1)
+    initialize_pointee_move(p, __G())
+    var data = Pointer[__G](address=int(p))
     return data.bitcast[NoneType]()
 
 
@@ -112,10 +113,13 @@ fn _GLOBAL_STRING[name: StringLiteral]() -> Pointer[String]:
 
 
 fn _initialize_string(payload: Pointer[NoneType]) -> Pointer[NoneType]:
-    var p = AnyPointer[String].alloc(1)
-    p.emplace_value(String(""))
-    var data = Pointer[String].__from_index(int(p))
+    var p = UnsafePointer[String].alloc(1)
+    initialize_pointee_move(p, String(""))
+    var data = Pointer[String](address=int(p))
     return data.bitcast[NoneType]()
+    # var p = Pointer[String].alloc(1)
+    # p[] = String("")
+    # return p.bitcast[NoneType]()
 
 
 fn _destroy_string(p: Pointer[NoneType]):

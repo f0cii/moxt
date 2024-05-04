@@ -24,13 +24,13 @@ struct SSMap:
     
     fn __setitem__(inout self, key: String, value: String):
         seq_ssmap_set(
-            self.ptr, key._buffer.data.value, value._buffer.data.value
+            self.ptr, key._as_ptr()._as_scalar_pointer(), value._as_ptr()._as_scalar_pointer()
         )
 
     fn __getitem__(self, key: String) -> String:
         var n: c_size_t = 0
         var s = seq_ssmap_get(
-            self.ptr, key._buffer.data.value, Pointer[c_size_t].address_of(n)
+            self.ptr, key._as_ptr()._as_scalar_pointer(), Pointer[c_size_t].address_of(n)
         )
         return c_str_to_string(s, n)
 

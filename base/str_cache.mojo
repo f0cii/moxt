@@ -48,7 +48,7 @@ struct StringCache:
     fn set_string(s: String) -> Tuple[Int64, CString]:
         var key = seq_get_next_cache_key()
         var length = len(s)
-        var result = seq_set_string_in_cache(key, s._buffer.data.value, length)
+        var result = seq_set_string_in_cache(key, s._as_ptr()._as_scalar_pointer(), length)
         return Tuple[Int64, CString](key, CString(result, length))
 
     @staticmethod

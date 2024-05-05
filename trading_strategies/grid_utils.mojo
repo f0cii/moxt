@@ -263,7 +263,7 @@ struct GridInfo(Stringable):
         var offset = math.log(
             price.to_float() / self.base_price.to_float()
         ) / math.log(1 + self.grid_interval.to_float())
-        return int(math.round(offset))
+        return int(round(offset))
 
     fn new_grid_cell(self, level: Int, price: Fixed) -> GridCellInfo:
         return GridCellInfo(level, price)

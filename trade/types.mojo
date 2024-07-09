@@ -139,7 +139,7 @@ struct Account(Stringable):
         self.unrealised_pnl = unrealised_pnl
         self.cum_realised_pnl = cum_realised_pnl
         self.extra = Dict[String, String]()
-    
+
     fn available_margin(self) -> Fixed:
         """
         可用保证金

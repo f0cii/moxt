@@ -3,13 +3,15 @@ from .mo import *
 
 
 fn seq_simdjson_dom_parser_new(max_capacity: Int) -> c_void_pointer:
-    return external_call["seq_simdjson_dom_parser_new", c_void_pointer, c_size_t](
-        max_capacity
-    )
+    return external_call[
+        "seq_simdjson_dom_parser_new", c_void_pointer, c_size_t
+    ](max_capacity)
 
 
 fn seq_simdjson_dom_parser_free(parser: c_void_pointer) -> None:
-    external_call["seq_simdjson_dom_parser_free", NoneType, c_void_pointer](parser)
+    external_call["seq_simdjson_dom_parser_free", NoneType, c_void_pointer](
+        parser
+    )
 
 
 fn seq_simdjson_dom_parser_parse(
@@ -25,7 +27,9 @@ fn seq_simdjson_dom_parser_parse(
 
 
 fn seq_simdjson_dom_element_is_valid(p: c_void_pointer) -> Bool:
-    return external_call["seq_simdjson_dom_element_is_valid", Bool, c_void_pointer](p)
+    return external_call[
+        "seq_simdjson_dom_element_is_valid", Bool, c_void_pointer
+    ](p)
 
 
 fn seq_simdjson_dom_element_free(p: c_void_pointer) -> None:
@@ -96,7 +100,11 @@ fn seq_simdjson_dom_object_get_int(
     dom: c_void_pointer, key: c_char_pointer, len: c_size_t
 ) -> Int:
     return external_call[
-        "seq_simdjson_dom_object_get_int", Int, c_void_pointer, c_char_pointer, c_size_t
+        "seq_simdjson_dom_object_get_int",
+        Int,
+        c_void_pointer,
+        c_char_pointer,
+        c_size_t,
     ](dom, key, len)
 
 
@@ -189,15 +197,21 @@ fn seq_simdjson_dom_element_int(p: c_void_pointer) -> Int:
 
 
 fn seq_simdjson_dom_element_uint(p: c_void_pointer) -> Int:
-    return external_call["seq_simdjson_dom_element_uint", Int, c_void_pointer](p)
+    return external_call["seq_simdjson_dom_element_uint", Int, c_void_pointer](
+        p
+    )
 
 
 fn seq_simdjson_dom_element_float(p: c_void_pointer) -> Float64:
-    return external_call["seq_simdjson_dom_element_float", Float64, c_void_pointer](p)
+    return external_call[
+        "seq_simdjson_dom_element_float", Float64, c_void_pointer
+    ](p)
 
 
 fn seq_simdjson_dom_element_bool(p: c_void_pointer) -> Bool:
-    return external_call["seq_simdjson_dom_element_bool", Bool, c_void_pointer](p)
+    return external_call["seq_simdjson_dom_element_bool", Bool, c_void_pointer](
+        p
+    )
 
 
 fn seq_simdjson_dom_object_free(p: c_void_pointer) -> None:
@@ -209,7 +223,9 @@ fn seq_simdjson_dom_array_free(p: c_void_pointer) -> None:
 
 
 fn seq_simdjson_dom_array_iter_free(p: c_void_pointer) -> None:
-    external_call["seq_simdjson_dom_array_iter_free", NoneType, c_void_pointer](p)
+    external_call["seq_simdjson_dom_array_iter_free", NoneType, c_void_pointer](
+        p
+    )
 
 
 fn seq_simdjson_dom_element_str(
@@ -224,7 +240,9 @@ fn seq_simdjson_dom_element_str(
 
 
 fn seq_simdjson_dom_element_type(p: c_void_pointer) -> Int:
-    return external_call["seq_simdjson_dom_element_type", Int, c_void_pointer](p)
+    return external_call["seq_simdjson_dom_element_type", Int, c_void_pointer](
+        p
+    )
 
 
 fn seq_simdjson_dom_element_object(p: c_void_pointer) -> c_void_pointer:
@@ -272,9 +290,9 @@ fn seq_simdjson_dom_array_begin(p: c_void_pointer) -> c_void_pointer:
 
 
 fn seq_simdjson_dom_array_end(p: c_void_pointer) -> c_void_pointer:
-    return external_call["seq_simdjson_dom_array_end", c_void_pointer, c_void_pointer](
-        p
-    )
+    return external_call[
+        "seq_simdjson_dom_array_end", c_void_pointer, c_void_pointer
+    ](p)
 
 
 fn seq_simdjson_dom_array_size(p: c_void_pointer) -> Int:
@@ -282,12 +300,14 @@ fn seq_simdjson_dom_array_size(p: c_void_pointer) -> Int:
 
 
 fn seq_simdjson_dom_array_number_of_slots(p: c_void_pointer) -> Int:
-    return external_call["seq_simdjson_dom_array_number_of_slots", Int, c_void_pointer](
-        p
-    )
+    return external_call[
+        "seq_simdjson_dom_array_number_of_slots", Int, c_void_pointer
+    ](p)
 
 
-fn seq_simdjson_dom_array_at(p: c_void_pointer, index: c_size_t) -> c_void_pointer:
+fn seq_simdjson_dom_array_at(
+    p: c_void_pointer, index: c_size_t
+) -> c_void_pointer:
     return external_call[
         "seq_simdjson_dom_array_at", c_void_pointer, c_void_pointer, c_size_t
     ](p, index)
@@ -305,7 +325,9 @@ fn seq_simdjson_dom_array_at_uint(p: c_void_pointer, index: c_size_t) -> Int:
     ](p, index)
 
 
-fn seq_simdjson_dom_array_at_float(p: c_void_pointer, index: c_size_t) -> Float64:
+fn seq_simdjson_dom_array_at_float(
+    p: c_void_pointer, index: c_size_t
+) -> Float64:
     return external_call[
         "seq_simdjson_dom_array_at_float", Float64, c_void_pointer, c_size_t
     ](p, index)
@@ -329,15 +351,25 @@ fn seq_simdjson_dom_array_at_str(
     ](p, index, n)
 
 
-fn seq_simdjson_dom_array_at_obj(p: c_void_pointer, index: c_size_t) -> c_void_pointer:
+fn seq_simdjson_dom_array_at_obj(
+    p: c_void_pointer, index: c_size_t
+) -> c_void_pointer:
     return external_call[
-        "seq_simdjson_dom_array_at_obj", c_void_pointer, c_void_pointer, c_size_t
+        "seq_simdjson_dom_array_at_obj",
+        c_void_pointer,
+        c_void_pointer,
+        c_size_t,
     ](p, index)
 
 
-fn seq_simdjson_dom_array_at_arr(p: c_void_pointer, index: c_size_t) -> c_void_pointer:
+fn seq_simdjson_dom_array_at_arr(
+    p: c_void_pointer, index: c_size_t
+) -> c_void_pointer:
     return external_call[
-        "seq_simdjson_dom_array_at_arr", c_void_pointer, c_void_pointer, c_size_t
+        "seq_simdjson_dom_array_at_arr",
+        c_void_pointer,
+        c_void_pointer,
+        c_size_t,
     ](p, index)
 
 
@@ -360,13 +392,15 @@ fn seq_simdjson_dom_array_iter_get(it: c_void_pointer) -> c_void_pointer:
 
 
 fn seq_simdjson_dom_array_iter_get_int(it: c_void_pointer) -> Int:
-    return external_call["seq_simdjson_dom_array_iter_get_int", Int, c_void_pointer](it)
+    return external_call[
+        "seq_simdjson_dom_array_iter_get_int", Int, c_void_pointer
+    ](it)
 
 
 fn seq_simdjson_dom_array_iter_get_uint(it: c_void_pointer) -> Int:
-    return external_call["seq_simdjson_dom_array_iter_get_uint", Int, c_void_pointer](
-        it
-    )
+    return external_call[
+        "seq_simdjson_dom_array_iter_get_uint", Int, c_void_pointer
+    ](it)
 
 
 fn seq_simdjson_dom_array_iter_get_float(it: c_void_pointer) -> Float64:
@@ -376,9 +410,9 @@ fn seq_simdjson_dom_array_iter_get_float(it: c_void_pointer) -> Float64:
 
 
 fn seq_simdjson_dom_array_iter_get_bool(it: c_void_pointer) -> Bool:
-    return external_call["seq_simdjson_dom_array_iter_get_bool", Bool, c_void_pointer](
-        it
-    )
+    return external_call[
+        "seq_simdjson_dom_array_iter_get_bool", Bool, c_void_pointer
+    ](it)
 
 
 fn seq_simdjson_dom_array_iter_get_str(
@@ -408,12 +442,17 @@ fn seq_simdjson_dom_array_iter_not_equal(
     lhs: c_void_pointer, rhs: c_void_pointer
 ) -> Bool:
     return external_call[
-        "seq_simdjson_dom_array_iter_not_equal", Bool, c_void_pointer, c_void_pointer
+        "seq_simdjson_dom_array_iter_not_equal",
+        Bool,
+        c_void_pointer,
+        c_void_pointer,
     ](lhs, rhs)
 
 
 fn seq_simdjson_dom_array_iter_step(it: c_void_pointer) -> None:
-    external_call["seq_simdjson_dom_array_iter_step", NoneType, c_void_pointer](it)
+    external_call["seq_simdjson_dom_array_iter_step", NoneType, c_void_pointer](
+        it
+    )
 
 
 @value
@@ -433,32 +472,32 @@ struct DomElement:
     @always_inline
     fn __getitem__(self, key: StringLiteral) -> DomElement:
         var elem = seq_simdjson_dom_document_get_element(
-            self.p, key.data()._as_scalar_pointer(), len(key)
+            self.p, unsafe_ptr_as_scalar_pointer(key.unsafe_ptr()), len(key)
         )
         return DomElement(elem)
 
     @always_inline
     fn get_int(self, key: StringLiteral) -> Int:
         return seq_simdjson_dom_element_get_int(
-            self.p, key.data()._as_scalar_pointer(), len(key)
+            self.p, unsafe_ptr_as_scalar_pointer(key.unsafe_ptr()), len(key)
         )
 
     @always_inline
     fn get_uint(self, key: StringLiteral) -> Int:
         return seq_simdjson_dom_element_get_uint(
-            self.p, key.data()._as_scalar_pointer(), len(key)
+            self.p, unsafe_ptr_as_scalar_pointer(key.unsafe_ptr()), len(key)
         )
 
     @always_inline
     fn get_float(self, key: StringLiteral) -> Float64:
         return seq_simdjson_dom_element_get_float(
-            self.p, key.data()._as_scalar_pointer(), len(key)
+            self.p, unsafe_ptr_as_scalar_pointer(key.unsafe_ptr()), len(key)
         )
 
     @always_inline
     fn get_bool(self, key: StringLiteral) -> Bool:
         return seq_simdjson_dom_element_get_bool(
-            self.p, key.data()._as_scalar_pointer(), len(key)
+            self.p, unsafe_ptr_as_scalar_pointer(key.unsafe_ptr()), len(key)
         )
 
     @always_inline
@@ -466,7 +505,7 @@ struct DomElement:
         var n: c_size_t = 0
         var s = seq_simdjson_dom_element_get_str(
             self.p,
-            key.data()._as_scalar_pointer(),
+            unsafe_ptr_as_scalar_pointer(key.unsafe_ptr()),
             len(key),
             Pointer[c_size_t].address_of(n),
         )
@@ -475,14 +514,14 @@ struct DomElement:
     @always_inline
     fn get_object(self, key: StringLiteral) -> DomObject:
         var p = seq_simdjson_dom_element_get_object(
-            self.p, key.data()._as_scalar_pointer(), len(key)
+            self.p, unsafe_ptr_as_scalar_pointer(key.unsafe_ptr()), len(key)
         )
         return DomObject(p)
 
     @always_inline
     fn get_array(self, key: StringLiteral) -> DomArray:
         var p = seq_simdjson_dom_element_get_array(
-            self.p, key.data()._as_scalar_pointer(), len(key)
+            self.p, unsafe_ptr_as_scalar_pointer(key.unsafe_ptr()), len(key)
         )
         return DomArray(p)
 
@@ -543,7 +582,9 @@ struct DomElement:
     @always_inline
     fn str(self) -> String:
         var n: c_size_t = 0
-        var s = seq_simdjson_dom_element_str(self.p, Pointer[c_size_t].address_of(n))
+        var s = seq_simdjson_dom_element_str(
+            self.p, Pointer[c_size_t].address_of(n)
+        )
         return c_str_to_string(s, n)
 
     fn __repr__(self) -> String:
@@ -567,25 +608,25 @@ struct DomObject(CollectionElement):
     @always_inline
     fn get_int(self, key: StringLiteral) -> Int:
         return seq_simdjson_dom_object_get_int(
-            self.p, key.data()._as_scalar_pointer(), len(key)
+            self.p, unsafe_ptr_as_scalar_pointer(key.unsafe_ptr()), len(key)
         )
 
     @always_inline
     fn get_uint(self, key: StringLiteral) -> Int:
         return seq_simdjson_dom_object_get_uint(
-            self.p, key.data()._as_scalar_pointer(), len(key)
+            self.p, unsafe_ptr_as_scalar_pointer(key.unsafe_ptr()), len(key)
         )
 
     @always_inline
     fn get_float(self, key: StringLiteral) -> Float64:
         return seq_simdjson_dom_object_get_float(
-            self.p, key.data()._as_scalar_pointer(), len(key)
+            self.p, unsafe_ptr_as_scalar_pointer(key.unsafe_ptr()), len(key)
         )
 
     @always_inline
     fn get_bool(self, key: StringLiteral) -> Bool:
         return seq_simdjson_dom_object_get_bool(
-            self.p, key.data()._as_scalar_pointer(), len(key)
+            self.p, unsafe_ptr_as_scalar_pointer(key.unsafe_ptr()), len(key)
         )
 
     @always_inline
@@ -593,7 +634,7 @@ struct DomObject(CollectionElement):
         var n: c_size_t = 0
         var s = seq_simdjson_dom_object_get_str(
             self.p,
-            key.data()._as_scalar_pointer(),
+            unsafe_ptr_as_scalar_pointer(key.unsafe_ptr()),
             len(key),
             Pointer[c_size_t].address_of(n),
         )
@@ -602,14 +643,14 @@ struct DomObject(CollectionElement):
     @always_inline
     fn get_object(self, key: StringLiteral) -> DomObject:
         var p = seq_simdjson_dom_object_get_object(
-            self.p, key.data()._as_scalar_pointer(), len(key)
+            self.p, unsafe_ptr_as_scalar_pointer(key.unsafe_ptr()), len(key)
         )
         return DomObject(p)
 
     @always_inline
     fn get_array(self, key: StringLiteral) -> DomArray:
         var p = seq_simdjson_dom_object_get_array(
-            self.p, key.data()._as_scalar_pointer(), len(key)
+            self.p, unsafe_ptr_as_scalar_pointer(key.unsafe_ptr()), len(key)
         )
         return DomArray(p)
 
@@ -762,29 +803,31 @@ struct DomParser:
         # logd("DomParser.__del__ done")
 
     @always_inline
-    fn parse(self, s: StringLiteral) -> DomElement:
-        return DomElement(
-            seq_simdjson_dom_parser_parse(self.p, s.data()._as_scalar_pointer(), len(s))
-        )
-
-    @always_inline
     fn parse(self, s: StringRef) -> DomElement:
         return DomElement(
-            seq_simdjson_dom_parser_parse(self.p, s.data._as_scalar_pointer(), len(s))
+            seq_simdjson_dom_parser_parse(
+                self.p, unsafe_ptr_as_scalar_pointer(s.unsafe_ptr()), len(s)
+            )
         )
 
     @always_inline
     fn parse(self, s: String) raises -> DomElement:
-        var p = seq_simdjson_dom_parser_parse(self.p, s._as_ptr()._as_scalar_pointer(), len(s))
+        var p = seq_simdjson_dom_parser_parse(
+            self.p, unsafe_ptr_as_scalar_pointer(s.unsafe_ptr()), len(s)
+        )
         if not seq_simdjson_dom_element_is_valid(p):
             raise Error("JSON parsing error: [" + s + "]")
         return DomElement(p)
 
     @always_inline
-    fn parse(self, data: Pointer[c_schar], data_len: Int) raises -> DomElement:
+    fn parse(
+        self, data: UnsafePointer[c_schar], data_len: Int
+    ) raises -> DomElement:
         var p = seq_simdjson_dom_parser_parse(self.p, data, data_len)
         if not seq_simdjson_dom_element_is_valid(p):
-            raise Error("JSON parsing error: [" + c_str_to_string(data, data_len) + "]")
+            raise Error(
+                "JSON parsing error: [" + c_str_to_string(data, data_len) + "]"
+            )
         return DomElement(p)
 
     fn __repr__(self) -> String:

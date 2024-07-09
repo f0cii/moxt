@@ -22,7 +22,9 @@ from ylstdlib.time import time_ns
 
 
 fn test_json_parse() raises:
-    var body = '{"retCode":0,"retMsg":"OK","result":{"category":"linear","list":[{"symbol":"BTCUSDT","contractType":"LinearPerpetual","status":"Trading","baseCoin":"BTC","quoteCoin":"USDT","launchTime":"1585526400000","deliveryTime":"0","deliveryFeeRate":"","priceScale":"2","leverageFilter":{"minLeverage":"1","maxLeverage":"100.00","leverageStep":"0.01"},"priceFilter":{"minPrice":"0.10","maxPrice":"199999.80","tickSize":"0.10"},"lotSizeFilter":{"maxOrderQty":"100.000","minOrderQty":"0.001","qtyStep":"0.001","postOnlyMaxOrderQty":"1000.000"},"unifiedMarginTrade":true,"fundingInterval":480,"settleCoin":"USDT","copyTrading":"normalOnly"}],"nextPageCursor":""},"retExtInfo":{},"time":1696236288675}'
+    var body = String(
+        '{"retCode":0,"retMsg":"OK","result":{"category":"linear","list":[{"symbol":"BTCUSDT","contractType":"LinearPerpetual","status":"Trading","baseCoin":"BTC","quoteCoin":"USDT","launchTime":"1585526400000","deliveryTime":"0","deliveryFeeRate":"","priceScale":"2","leverageFilter":{"minLeverage":"1","maxLeverage":"100.00","leverageStep":"0.01"},"priceFilter":{"minPrice":"0.10","maxPrice":"199999.80","tickSize":"0.10"},"lotSizeFilter":{"maxOrderQty":"100.000","minOrderQty":"0.001","qtyStep":"0.001","postOnlyMaxOrderQty":"1000.000"},"unifiedMarginTrade":true,"fundingInterval":480,"settleCoin":"USDT","copyTrading":"normalOnly"}],"nextPageCursor":""},"retExtInfo":{},"time":1696236288675}'
+    )
 
     var tick_size: Float64 = 0
     var stepSize: Float64 = 0
@@ -32,7 +34,9 @@ fn test_json_parse() raises:
     var ret_code = doc.get_int("retCode")
     var ret_msg = doc.get_str("retMsg")
     if ret_code != 0:
-        raise "error retCode=" + String(ret_code) + ", retMsg=" + String(ret_msg)
+        raise "error retCode=" + String(ret_code) + ", retMsg=" + String(
+            ret_msg
+        )
 
     var result = doc.get_object("result")
     var result_list = result.get_array("list")
@@ -63,7 +67,9 @@ fn test_json_parse() raises:
 
 
 fn test_parse_fetch_kline_body() raises:
-    var body = '{"retCode":0,"retMsg":"OK","result":{"symbol":"BTCUSDT","category":"linear","list":[["1687589640000","30709.9","30710.4","30709.9","30710.3","3.655","112245.7381"],["1687589580000","30707.9","30710","30704.7","30709.9","21.984","675041.8648"],["1687589520000","30708","30714.7","30705","30707.9","33.378","1025097.6459"],["1687589460000","30689.9","30710.3","30689.9","30708","51.984","1595858.2778"],["1687589400000","30678.6","30690.9","30678.5","30689.9","38.747","1188886.4093"]]},"retExtInfo":{},"time":1687589659062}'
+    var body = String(
+        '{"retCode":0,"retMsg":"OK","result":{"symbol":"BTCUSDT","category":"linear","list":[["1687589640000","30709.9","30710.4","30709.9","30710.3","3.655","112245.7381"],["1687589580000","30707.9","30710","30704.7","30709.9","21.984","675041.8648"],["1687589520000","30708","30714.7","30705","30707.9","33.378","1025097.6459"],["1687589460000","30689.9","30710.3","30689.9","30708","51.984","1595858.2778"],["1687589400000","30678.6","30690.9","30678.5","30689.9","38.747","1188886.4093"]]},"retExtInfo":{},"time":1687589659062}'
+    )
 
     var res = List[KlineItem]()
     var dom_parser = DomParser(1000 * 100)
@@ -114,7 +120,9 @@ fn test_parse_fetch_kline_body() raises:
 
 
 fn test_orderbook_parse_body() raises:
-    var body = '{"result":{"a":[["30604.8","174.267"],["30648.6","0.002"],["30649.1","0.001"],["30650","1.119"],["30650.3","0.01"],["30650.8","0.001"],["30651.6","0.001"],["30652","0.001"],["30652.4","0.062"],["30652.5","0.001"]],"b":[["30598.7","142.31"],["30578.2","0.004"],["30575.3","0.001"],["30571.8","0.001"],["30571.1","0.002"],["30568.5","0.002"],["30566.6","0.005"],["30565.6","0.01"],["30565.5","0.061"],["30563","0.001"]],"s":"BTCUSDT","ts":1689132447413,"u":5223166},"retCode":0,"retExtInfo":{},"retMsg":"OK","time":1689132448224}'
+    var body = String(
+        '{"result":{"a":[["30604.8","174.267"],["30648.6","0.002"],["30649.1","0.001"],["30650","1.119"],["30650.3","0.01"],["30650.8","0.001"],["30651.6","0.001"],["30652","0.001"],["30652.4","0.062"],["30652.5","0.001"]],"b":[["30598.7","142.31"],["30578.2","0.004"],["30575.3","0.001"],["30571.8","0.001"],["30571.1","0.002"],["30568.5","0.002"],["30566.6","0.005"],["30565.6","0.01"],["30565.5","0.061"],["30563","0.001"]],"s":"BTCUSDT","ts":1689132447413,"u":5223166},"retCode":0,"retExtInfo":{},"retMsg":"OK","time":1689132448224}'
+    )
 
     var asks = List[OrderBookItem]()
     var bids = List[OrderBookItem]()
@@ -174,7 +182,9 @@ fn test_orderbook_parse_body() raises:
 
 
 fn test_fetch_balance_parse_body() raises:
-    var body = '{"retCode":0,"retMsg":"OK","result":{"list":[{"accountType":"CONTRACT","accountIMRate":"","accountMMRate":"","totalEquity":"","totalWalletBalance":"","totalMarginBalance":"","totalAvailableBalance":"","totalPerpUPL":"","totalInitialMargin":"","totalMaintenanceMargin":"","accountLTV":"","coin":[{"coin":"USDT","equity":"100.0954887","usdValue":"","walletBalance":"100.0954887","borrowAmount":"","availableToBorrow":"","availableToWithdraw":"100.0954887","accruedInterest":"","totalOrderIM":"0","totalPositionIM":"0","totalPositionMM":"","unrealisedPnl":"0","cumRealisedPnl":"1.0954887"}]}]},"retExtInfo":{},"time":1701876547097}'
+    var body = String(
+        '{"retCode":0,"retMsg":"OK","result":{"list":[{"accountType":"CONTRACT","accountIMRate":"","accountMMRate":"","totalEquity":"","totalWalletBalance":"","totalMarginBalance":"","totalAvailableBalance":"","totalPerpUPL":"","totalInitialMargin":"","totalMaintenanceMargin":"","accountLTV":"","coin":[{"coin":"USDT","equity":"100.0954887","usdValue":"","walletBalance":"100.0954887","borrowAmount":"","availableToBorrow":"","availableToWithdraw":"100.0954887","accruedInterest":"","totalOrderIM":"0","totalPositionIM":"0","totalPositionMM":"","unrealisedPnl":"0","cumRealisedPnl":"1.0954887"}]}]},"retExtInfo":{},"time":1701876547097}'
+    )
 
     var coin = "USDT"
 
@@ -208,7 +218,9 @@ fn test_fetch_balance_parse_body() raises:
                 )
                 var wallet_balance = strtod(coin_obj.get_str("walletBalance"))
                 var total_order_im = strtod(coin_obj.get_str("totalOrderIM"))
-                var total_position_im = strtod(coin_obj.get_str("totalPositionIM"))
+                var total_position_im = strtod(
+                    coin_obj.get_str("totalPositionIM")
+                )
                 coin_iter.step()
         elif account_type == "SPOT":
             pass

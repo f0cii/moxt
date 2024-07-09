@@ -22,7 +22,9 @@ fn seq_set_string_in_cache(
     ](key, value, value_len)
 
 
-fn seq_get_string_in_cache(key: Int64, result_len: Pointer[c_size_t]) -> c_char_pointer:
+fn seq_get_string_in_cache(
+    key: Int64, result_len: Pointer[c_size_t]
+) -> c_char_pointer:
     return external_call[
         "seq_get_string_in_cache",
         c_char_pointer,
@@ -48,13 +50,17 @@ struct StringCache:
     fn set_string(s: String) -> Tuple[Int64, CString]:
         var key = seq_get_next_cache_key()
         var length = len(s)
-        var result = seq_set_string_in_cache(key, s._as_ptr()._as_scalar_pointer(), length)
+        var result = seq_set_string_in_cache(
+            key, unsafe_ptr_as_scalar_pointer(s.unsafe_ptr()), length
+        )
         return Tuple[Int64, CString](key, CString(result, length))
 
     @staticmethod
     fn get_string(key: Int64) -> Tuple[Int64, CString]:
         var length: c_size_t = 0
-        var result = seq_get_string_in_cache(key, Pointer[c_size_t].address_of(length))
+        var result = seq_get_string_in_cache(
+            key, Pointer[c_size_t].address_of(length)
+        )
         return Tuple[Int64, CString](key, CString(result, length))
 
     @staticmethod

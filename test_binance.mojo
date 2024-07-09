@@ -12,7 +12,6 @@ from ylstdlib.time import time_ns
 from testing import assert_equal, assert_true, assert_false
 from base.moutil import *
 from base.globals import *
-from base.containers import *
 from core.binancemodel import *
 from core.sign import hmac_sha256_b64, hmac_sha256_hex
 from base.yyjson import *
@@ -65,27 +64,20 @@ fn test_websocket() raises:
     var ws = WebSocket(host=host, port=port, path=path)
     var id = ws.get_id()
     var on_connect = ws.get_on_connect()
-    var on_connect_ptr = int(Pointer[on_connect_callback].address_of(on_connect))
-    # print("on_connect_ptr: " + str(aon_connect_ptr))
     var on_heartbeat = ws.get_on_heartbeat()
-    var on_heartbeat_ptr = int(Pointer[on_heartbeat_callback].address_of(on_heartbeat))
-    # print("on_heartbeat_ptr: " + str(on_heartbeat_ptr))
     var on_message = ws.get_on_message()
-    var on_message_ptr = int(Pointer[on_message_callback].address_of(on_message))
-    # print("on_message_ptr: " + str(on_message_ptr))
-    set_on_connect(id, on_connect_ptr)
-    set_on_heartbeat(id, on_heartbeat_ptr)
-    set_on_message(id, on_message_ptr)
+    set_on_connect(id, on_connect^)
+    set_on_heartbeat(id, on_heartbeat^)
+    set_on_message(id, on_message^)
     ws.connect()
     logi("connect done")
     run_forever()
-    _ = ws ^
+    _ = ws^
 
 
 fn get_on_message() -> on_message_callback:
-    fn wrapper(data: c_char_pointer, data_len: Int):
-        var s = c_str_to_string(data, data_len)
-        logi("get_on_message=" + s)
+    fn wrapper(msg: String):
+        logi("get_on_message=" + msg)
 
     return wrapper
 
@@ -123,7 +115,7 @@ fn test_binancews() raises:
 
     run_forever()
 
-    _ = ws ^
+    _ = ws^
 
 
 fn sum_int_list(v: List[Int]) raises -> Int:
@@ -143,11 +135,15 @@ fn test_binance_sign() raises:
     # logi("r=" + r)
     # var ms = time_ms()
     # logi("ms=" + str(ms))
-    assert_equal(r, "3c661234138461fcc7a7d8746c6558c9842d4e10870d2ecbedf7777cad694af9")
+    assert_equal(
+        r, "3c661234138461fcc7a7d8746c6558c9842d4e10870d2ecbedf7777cad694af9"
+    )
 
 
 fn test_parse_order_info() raises:
-    var s = '{"orderId":237740210409,"symbol":"BTCUSDT","status":"NEW","clientOrderId":"62ayQ4MjyVIaCkvDX00dhh","price":"20000.00","avgPrice":"0.00","origQty":"0.010","executedQty":"0.000","cumQty":"0.000","cumQuote":"0.00000","timeInForce":"GTC","type":"LIMIT","reduceOnly":false,"closePosition":false,"side":"BUY","positionSide":"LONG","stopPrice":"0.00","workingType":"CONTRACT_PRICE","priceProtect":false,"origType":"LIMIT","priceMatch":"NONE","selfTradePreventionMode":"NONE","goodTillDate":0,"updateTime":1704291033033}'
+    var s = String(
+        '{"orderId":237740210409,"symbol":"BTCUSDT","status":"NEW","clientOrderId":"62ayQ4MjyVIaCkvDX00dhh","price":"20000.00","avgPrice":"0.00","origQty":"0.010","executedQty":"0.000","cumQty":"0.000","cumQuote":"0.00000","timeInForce":"GTC","type":"LIMIT","reduceOnly":false,"closePosition":false,"side":"BUY","positionSide":"LONG","stopPrice":"0.00","workingType":"CONTRACT_PRICE","priceProtect":false,"origType":"LIMIT","priceMatch":"NONE","selfTradePreventionMode":"NONE","goodTillDate":0,"updateTime":1704291033033}'
+    )
     var parser = DomParser(1024 * 100)
     var doc = parser.parse(s)
     var code = doc.get_int("code")
@@ -166,8 +162,9 @@ fn test_parse_order_info() raises:
     assert_equal(_order_id, 237740210409)
     assert_equal(_order_id2, 237740210409)
 
-    _ = doc ^
-    _ = parser ^
+    _ = doc^
+    _ = parser^
+    _ = s^
 
     var order_info = OrderInfo()
     order_info.order_id = _order_id
@@ -218,7 +215,9 @@ fn test_binanceclient_public_time() raises:
 
     # Test order placement speed
     var times = 3
-    var order_times = List[Int]()  # Record the time taken for each order placement
+    var order_times = List[
+        Int
+    ]()  # Record the time taken for each order placement
 
     var start_time = time_us()
 
@@ -262,7 +261,7 @@ fn test_binanceclient_public_time() raises:
 
     run_forever()
 
-    _ = client ^
+    _ = client^
 
 
 fn test_binanceclient() raises:
@@ -303,8 +302,12 @@ fn test_binanceclient() raises:
 
     # Test order placement speed
     var times = 30
-    var order_times = List[Int]()  # Record the time taken for each order placement
-    var cancel_times = List[Int]()  # Record the time taken for each order cancellation
+    var order_times = List[
+        Int
+    ]()  # Record the time taken for each order placement
+    var cancel_times = List[
+        Int
+    ]()  # Record the time taken for each order cancellation
 
     var start_time = time_us()
 
@@ -334,7 +337,7 @@ fn test_binanceclient() raises:
 
         var cancel_start = time_us()
 
-        var res1 = client.cancel_order(symbol, order_id=order_id)
+        var res1 = client.cancel_order(symbol, order_id=str(order_id))
 
         var cancel_end = time_us()
 
@@ -373,7 +376,7 @@ fn test_binanceclient() raises:
 
     run_forever()
 
-    _ = client ^
+    _ = client^
 
 
 fn test_listen_key() raises:

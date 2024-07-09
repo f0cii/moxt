@@ -34,7 +34,7 @@ fn seq_get_global_int(id: Int) -> Int:
 fn seq_set_global_string(id: Int, s: String) -> None:
     external_call[
         "seq_set_global_string", NoneType, Int, c_char_pointer, c_size_t
-    ](id, s._buffer.data.value, len(s))
+    ](id, unsafe_ptr_as_scalar_pointer(s.unsafe_ptr()), len(s))
 
 
 # Retrieve global string value
@@ -75,7 +75,7 @@ fn seq_photon_init_default() -> Int:
 
 
 fn seq_nanoid() -> String:
-    var result = Pointer[Int8].alloc(32)
+    var result = UnsafePointer[Int8].alloc(32)
     var n = external_call["seq_nanoid", c_size_t, c_char_pointer](result)
     return c_str_to_string(result, n)
 
@@ -113,40 +113,54 @@ fn init_log(level: String, filename: String) -> None:
 
 # Initialization log
 fn seq_init_log(level: UInt8, filename: String) -> None:
-    external_call["seq_init_log", NoneType, UInt8, Pointer[c_schar], c_int](
-        level, filename._as_ptr()._as_scalar_pointer(), len(filename)
+    external_call[
+        "seq_init_log", NoneType, UInt8, UnsafePointer[c_schar], c_int
+    ](
+        level,
+        unsafe_ptr_as_scalar_pointer(filename.unsafe_ptr()),
+        len(filename),
     )
 
 
-fn seq_logd(s: Pointer[c_schar], length: c_int):
-    external_call["seq_logvd", NoneType, Pointer[c_schar], c_int](s, length)
+fn seq_logd(s: UnsafePointer[c_schar], length: c_int):
+    external_call["seq_logvd", NoneType, UnsafePointer[c_schar], c_int](
+        s, length
+    )
 
 
-fn seq_logi(s: Pointer[c_schar], length: c_int):
-    external_call["seq_logvi", NoneType, Pointer[c_schar], c_int](s, length)
+fn seq_logi(s: UnsafePointer[c_schar], length: c_int):
+    external_call["seq_logvi", NoneType, UnsafePointer[c_schar], c_int](
+        s, length
+    )
 
 
-fn seq_logw(s: Pointer[c_schar], length: c_int):
-    external_call["seq_logvw", NoneType, Pointer[c_schar], c_int](s, length)
+fn seq_logw(s: UnsafePointer[c_schar], length: c_int):
+    external_call["seq_logvw", NoneType, UnsafePointer[c_schar], c_int](
+        s, length
+    )
 
 
-fn seq_loge(s: Pointer[c_schar], length: c_int):
-    external_call["seq_logve", NoneType, Pointer[c_schar], c_int](s, length)
+fn seq_loge(s: UnsafePointer[c_schar], length: c_int):
+    external_call["seq_logve", NoneType, UnsafePointer[c_schar], c_int](
+        s, length
+    )
 
 
 @always_inline
 fn logd(s: String):
     var call_loc = __call_location()
     var s_ = str(call_loc.file_name) + ":" + str(call_loc.line) + ": " + s
-    seq_logd(s_._as_ptr()._as_scalar_pointer(), len(s_))
+    seq_logd(unsafe_ptr_as_scalar_pointer(s_.unsafe_ptr()), len(s_))
     s_._strref_keepalive()
 
 
 @always_inline
 fn logi(s: String):
     var call_loc = __call_location()
-    var s_ = String("") + str(call_loc.file_name) + ":" + str(call_loc.line) + ": " + s
-    seq_logi(s_._as_ptr()._as_scalar_pointer(), len(s_))
+    var s_ = String("") + str(call_loc.file_name) + ":" + str(
+        call_loc.line
+    ) + ": " + s
+    seq_logi(unsafe_ptr_as_scalar_pointer(s_.unsafe_ptr()), len(s_))
     s_._strref_keepalive()
 
 
@@ -154,7 +168,7 @@ fn logi(s: String):
 fn logw(s: String):
     var call_loc = __call_location()
     var s_ = str(call_loc.file_name) + ":" + str(call_loc.line) + ": " + s
-    seq_logw(s_._as_ptr()._as_scalar_pointer(), len(s_))
+    seq_logw(unsafe_ptr_as_scalar_pointer(s_.unsafe_ptr()), len(s_))
     s_._strref_keepalive()
 
 
@@ -162,7 +176,7 @@ fn logw(s: String):
 fn loge(s: String):
     var call_loc = __call_location()
     var s_ = str(call_loc.file_name) + ":" + str(call_loc.line) + ": " + s
-    seq_loge(s_._as_ptr()._as_scalar_pointer(), len(s_))
+    seq_loge(unsafe_ptr_as_scalar_pointer(s_.unsafe_ptr()), len(s_))
     s_._strref_keepalive()
 
 
@@ -1163,7 +1177,7 @@ fn seq_cclient_do_request(
     body_len: c_size_t,
     res: c_void_pointer,
     res_len: c_size_t,
-    n: Pointer[c_size_t],
+    n: UnsafePointer[c_size_t],
     verbose: Bool = False,
 ) -> Int:
     return __mlir_op.`pop.external_call`[
@@ -1192,18 +1206,18 @@ fn seq_c_free(res: c_void_pointer) -> None:
 #                               const char *message, size_t message_len,
 #                               uint8_t *result);
 fn seq_hmac_sha256(
-    key: Pointer[c_schar],
+    key: UnsafePointer[c_schar],
     key_len: c_size_t,
-    message: Pointer[c_schar],
+    message: UnsafePointer[c_schar],
     message_len: c_size_t,
     result: c_void_pointer,
 ) -> c_size_t:
     return external_call[
         "seq_hmac_sha256",
         c_size_t,
-        Pointer[c_schar],
+        UnsafePointer[c_schar],
         c_size_t,
-        Pointer[c_schar],
+        UnsafePointer[c_schar],
         c_size_t,
         c_void_pointer,
     ](key, key_len, message, message_len, result)

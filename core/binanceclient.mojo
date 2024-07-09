@@ -11,7 +11,7 @@ from base.yyjson import yyjson_mut_doc
 from .binancemodel import (
     OrderInfo,
 )
-from core.sign import hmac_sha256_hex
+from .sign import hmac_sha256_hex
 from ylstdlib.time import time_ns
 
 
@@ -24,7 +24,9 @@ struct BinanceClient:
     var secret_key: String
     var client: HttpClient
 
-    fn __init__(inout self, testnet: Bool, access_key: String, secret_key: String):
+    fn __init__(
+        inout self, testnet: Bool, access_key: String, secret_key: String
+    ):
         # print(base_url)
         self.testnet = testnet
         self.access_key = access_key
@@ -38,7 +40,7 @@ struct BinanceClient:
         self.access_key = existing.access_key
         self.secret_key = existing.secret_key
         var base_url = "https://api-testnet.bybit.com" if self.testnet else "https://api.bybit.com"
-        self.client = existing.client ^
+        self.client = existing.client^
         logd("BybitClient.__moveinit__ done")
 
     fn set_verbose(inout self, verbose: Bool):
@@ -47,7 +49,12 @@ struct BinanceClient:
     fn public_time(self) raises -> Int:
         var ret = self.do_get("/fapi/v1/time", "", False)
         if ret.status_code != 200:
-            raise Error("error status_code=" + str(ret.status_code) + " text=" + ret.text)
+            raise Error(
+                "error status_code="
+                + str(ret.status_code)
+                + " text="
+                + ret.text
+            )
 
         logd("text: " + str(ret.text))
 
@@ -58,8 +65,8 @@ struct BinanceClient:
         if server_time == 0:
             raise Error("error server_time=0")
 
-        _ = doc ^
-        _ = parser ^
+        _ = doc^
+        _ = parser^
 
         return server_time
 
@@ -107,7 +114,12 @@ struct BinanceClient:
         var ret = self.do_post("/fapi/v1/order", query_str, True)
         # print(ret)
         if ret.status_code != 200:
-            raise Error("error status_code=" + str(ret.status_code) + " text=" + ret.text)
+            raise Error(
+                "error status_code="
+                + str(ret.status_code)
+                + " text="
+                + ret.text
+            )
 
         # {"code":-1102,"msg":"Mandatory parameter 'timeinforce' was not sent, was empty/null, or malformed."}
         # {"code":-1102,"msg":"Mandatory parameter 'price' was not sent, was empty/null, or malformed."}
@@ -125,8 +137,8 @@ struct BinanceClient:
         var _order_id = doc.get_int("orderId")
         var _order_client_id = doc.get_str("clientOrderId")
 
-        _ = doc ^
-        _ = parser ^
+        _ = doc^
+        _ = parser^
 
         var order_info = OrderInfo()
         order_info.order_id = _order_id
@@ -151,7 +163,12 @@ struct BinanceClient:
         var ret = self.do_delete("/fapi/v1/order", query_str, True)
         # print(ret)
         if ret.status_code != 200:
-            raise Error("error status_code=" + str(ret.status_code) + " text=" + ret.status_code)
+            raise Error(
+                "error status_code="
+                + str(ret.status_code)
+                + " text="
+                + str(ret.status_code)
+            )
 
         # {"code":-2015,"msg":"Invalid API-key, IP, or permissions for action, request ip: 100.100.100.100"}
         # {"orderId":237740210409,"symbol":"BTCUSDT","status":"CANCELED","clientOrderId":"62ayQ4MjyVIaCkvDX00dhh","price":"20000.00","avgPrice":"0.00","origQty":"0.010","executedQty":"0.000","cumQty":"0.000","cumQuote":"0.00000","timeInForce":"GTC","type":"LIMIT","reduceOnly":false,"closePosition":false,"side":"BUY","positionSide":"LONG","stopPrice":"0.00","workingType":"CONTRACT_PRICE","priceProtect":false,"origType":"LIMIT","priceMatch":"NONE","selfTradePreventionMode":"NONE","goodTillDate":0,"updateTime":1704339843127}
@@ -167,14 +184,14 @@ struct BinanceClient:
         var _order_id = doc.get_int("orderId")
         var _order_client_id = doc.get_str("clientOrderId")
 
-        _ = doc ^
-        _ = parser ^
+        _ = doc^
+        _ = parser^
 
         var order_info = OrderInfo()
         order_info.order_id = _order_id
         order_info.order_client_id = _order_client_id
         return order_info
-    
+
     fn generate_listen_key(
         self,
     ) raises -> String:
@@ -184,7 +201,12 @@ struct BinanceClient:
         var ret = self.do_post("/fapi/v1/listenKey", "", True)
         # print(ret)
         if ret.status_code != 200:
-            raise Error("error status_code=" + str(ret.status_code) + " text=" + ret.text)
+            raise Error(
+                "error status_code="
+                + str(ret.status_code)
+                + " text="
+                + ret.text
+            )
 
         logd("text=" + ret.text)
 
@@ -197,11 +219,11 @@ struct BinanceClient:
 
         var listen_key = doc.get_str("listenKey")
 
-        _ = doc ^
-        _ = parser ^
+        _ = doc^
+        _ = parser^
 
         return listen_key
-    
+
     fn extend_listen_key(
         self,
     ) raises -> Bool:
@@ -211,7 +233,12 @@ struct BinanceClient:
         var ret = self.do_put("/fapi/v1/listenKey", "", True)
         # print(ret)
         if ret.status_code != 200:
-            raise Error("error status_code=" + str(ret.status_code) + " text=" + ret.text)
+            raise Error(
+                "error status_code="
+                + str(ret.status_code)
+                + " text="
+                + ret.text
+            )
 
         logd("text=" + ret.text)
         # {}
@@ -223,8 +250,8 @@ struct BinanceClient:
             var msg = doc.get_str("msg")
             raise Error("error code=" + str(code) + ", msg=" + msg)
 
-        _ = doc ^
-        _ = parser ^
+        _ = doc^
+        _ = parser^
 
         return True
 
@@ -279,7 +306,7 @@ struct BinanceClient:
             return self.client.post(path, data=body_, headers=headers)
         else:
             return self.client.post(path, data=body, headers=headers)
-    
+
     fn do_put(
         self, path: StringLiteral, body: String, sign: Bool
     ) raises -> HttpResponse:

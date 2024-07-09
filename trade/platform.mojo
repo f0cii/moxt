@@ -38,7 +38,7 @@ struct Platform:
     var _order_cache: Dict[String, Order]  # key: order_client_id
     var _order_cache_lock: RWLock
     var _accounts_lock: RWLock
-    var _order_update_callbacks: List[OrderUpdateCallbackWrapper]
+    # var _order_update_callbacks: List[OrderUpdateCallbackWrapper]
     var _accounts: Dict[String, Account]
 
     fn __init__(inout self, config: AppConfig) raises:
@@ -55,9 +55,9 @@ struct Platform:
         self._order_cache = Dict[String, Order]()
         self._order_cache_lock = RWLock()
         self._accounts_lock = RWLock()
-        self._order_update_callbacks = List[OrderUpdateCallbackWrapper](
-            capacity=16
-        )
+        # self._order_update_callbacks = List[OrderUpdateCallbackWrapper](
+        #     capacity=16
+        # )
         self._accounts = Dict[String, Account]()
         logd("Platform.__init__ done")
 
@@ -71,17 +71,18 @@ struct Platform:
         self._asks = Pointer[c_void_pointer].alloc(symbol_count)
         self._bids = Pointer[c_void_pointer].alloc(symbol_count)
 
-        self._symbol_index_dict = existing._symbol_index_dict
+        self._symbol_index_dict = existing._symbol_index_dict^
+        # self._symbol_index_dict = Dict[String, Int]()
         self._order_cache = existing._order_cache^
         self._order_cache_lock = existing._order_cache_lock
         self._accounts_lock = existing._accounts_lock
-        self._order_update_callbacks = existing._order_update_callbacks
+        # self._order_update_callbacks = existing._order_update_callbacks
         self._accounts = existing._accounts
         logd("Platform.__moveinit__ done")
 
     fn __del__(owned self):
         logd("Platform.__del__")
-        # var NULL = c_void_pointer.get_null()
+        # var NULL = c_void_pointer()
         # var asks_ptr = self._asks.load(0)
         # if asks_ptr != NULL:
         #     seq_skiplist_free(asks_ptr)
@@ -93,25 +94,26 @@ struct Platform:
         logd("Platform.__del__ done")
 
     fn setup(inout self) raises:
-        # logi("Platform.setup")
+        logi("Platform.setup")
         for i in range(len(self._symbols)):
             var sym = self._symbols[i]
-            # logi("sym=" + sym + " i=" + str(i))
+            logi("sym=" + sym + " i=" + str(i))
             self._symbol_index_dict[sym] = i
-            self._asks.store(i, seq_skiplist_new(True))
-            self._bids.store(i, seq_skiplist_new(False))
-        # logi("Platform.setup done")
+            self._asks[i] = seq_skiplist_new(True)
+            self._bids[i] = seq_skiplist_new(False)
+        logi("Platform.setup done")
 
     fn register_order_update_callback(
-        inout self, owned callback: OrderUpdateCallbackWrapper
+        inout self, owned callback: OrderUpdateCallback
     ) raises:
-        self._order_update_callbacks.append(callback^)
+        # self._order_update_callbacks.append(callback^)
+        pass
 
     fn free(inout self) raises:
         for i in range(len(self._symbols)):
-            var asks_ptr = self._asks.load(i)
+            var asks_ptr = self._asks[i]
             seq_skiplist_free(asks_ptr)
-            var bids_ptr = self._bids.load(i)
+            var bids_ptr = self._bids[i]
             seq_skiplist_free(bids_ptr)
 
     fn delete_orders_from_cache(inout self, cids: List[String]) raises:
@@ -131,15 +133,20 @@ struct Platform:
         inout asks: List[OrderBookLevel],
         inout bids: List[OrderBookLevel],
     ) raises:
-        var index = self._symbol_index_dict[symbol]
+        var index = 0
+        try:
+            index = self._symbol_index_dict[symbol]
+        except e:
+            logw("on_update_orderbook error: " + str(e) + " symbol: " + symbol)
+            return
         # logd("Platform.update_orderbook")
         if type_ == "snapshot":
-            seq_skiplist_free(self._asks.load(index))
-            seq_skiplist_free(self._bids.load(index))
-            self._asks.store(seq_skiplist_new(True))
-            self._bids.store(seq_skiplist_new(False))
+            seq_skiplist_free(self._asks[index])
+            seq_skiplist_free(self._bids[index])
+            self._asks[index] = seq_skiplist_new(True)
+            self._bids[index] = seq_skiplist_new(False)
 
-        var _asks = self._asks.load(index)
+        var _asks = self._asks[index]
         for i in asks:
             # logd("ask price: " + str(i.price) + " qty: " + str(i.qty))
             if i[].qty.is_zero():
@@ -149,7 +156,7 @@ struct Platform:
                     _asks, i[].price.value(), i[].qty.value(), True
                 )
 
-        var _bids = self._bids.load(index)
+        var _bids = self._bids[index]
         for i in bids:
             # logd("bid price: " + str(i.price) + " qty: " + str(i.qty))
             if i[].qty.is_zero():
@@ -171,10 +178,15 @@ struct Platform:
 
         return True
 
-    fn on_update_accounts(inout self, accounts: List[Account]):
+    fn _on_update_accounts(inout self, accounts: List[Account]):
         self._accounts_lock.lock()
         for i in accounts:
             self._accounts[i[].coin] = i[]
+        self._accounts_lock.unlock()
+
+    fn _on_update_account(inout self, account: Account):
+        self._accounts_lock.lock()
+        self._accounts[account.coin] = account
         self._accounts_lock.unlock()
 
     fn get_account(self, coin: String) -> Optional[Account]:
@@ -192,9 +204,10 @@ struct Platform:
 
     @always_inline
     fn notify_order_update(inout self, order: Order):
-        for i in range(len(self._order_update_callbacks)):
-            var ref = self._order_update_callbacks.__get_ref(i)
-            ref[](order)
+        # for i in range(len(self._order_update_callbacks)):
+        #     var ref = self._order_update_callbacks.__get_ref(i)
+        #     ref[](order)
+        pass
 
     fn get_order(self, cid: String) raises -> Order:
         self._order_cache_lock.lock()
@@ -210,8 +223,8 @@ struct Platform:
         var index: Int = self._symbol_index_dict[symbol]
         var ob = OrderBookLite(symbol=symbol)
 
-        var _asks = self._asks.load(index)
-        var _bids = self._bids.load(index)
+        var _asks = self._asks[index]
+        var _bids = self._bids[index]
 
         var a_node = seq_skiplist_begin(_asks)
         var a_end = seq_skiplist_end(_asks)
@@ -273,6 +286,25 @@ struct Platform:
         self, category: String, symbol: String, limit: Int
     ) raises -> OrderBook:
         return self._client.fetch_orderbook(category, symbol, limit)
+
+    @always_inline
+    fn fetch_account(inout self, coin: String) raises -> Optional[Account]:
+        var result = self._client.fetch_balance("CONTRACT", coin)
+        for i in result:
+            if i[].coin_name == coin:
+                var a = Account()
+                a.coin = i[].coin_name
+                a.equity = Fixed(i[].equity)
+                a.wallet_balance = Fixed(i[].wallet_balance)
+                a.available_to_withdraw = Fixed(i[].available_to_withdraw)
+                a.total_order_margin = Fixed(i[].total_order_im)
+                a.total_position_margin = Fixed(i[].total_position_im)
+                a.unrealised_pnl = i[].unrealised_pnl
+                a.cum_realised_pnl = i[].cum_realised_pnl
+                logi("Fetch account: " + str(a))
+                self._on_update_account(a)
+                return a
+        return None
 
     @always_inline
     fn fetch_order(

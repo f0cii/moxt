@@ -3,11 +3,10 @@ from base.globals import *
 from base.websocket import *
 from base.yyjson import yyjson_doc, yyjson_mut_doc
 from base.sj_ondemand import OndemandParser
-from base.containers import ObjectContainer
 from base.websocket import (
-    OnConnectWrapper,
-    OnHeartbeatWrapper,
-    OnMessageWrapper,
+    on_connect_callback,
+    on_heartbeat_callback,
+    on_message_callback,
 )
 from .sign import hmac_sha256_hex
 from .binanceclient import BinanceClient
@@ -80,7 +79,7 @@ struct BinanceWS:
         self._ptr = ptr
         self._id = seq_voidptr_to_int(ptr)
         self._heartbeat_time = Pointer[Int64].alloc(1)
-        self._heartbeat_time.store(0)
+        self._heartbeat_time[0] = 0
 
     fn __del__(owned self):
         print("BinanceWS.__del__")
@@ -88,35 +87,17 @@ struct BinanceWS:
     fn get_id(self) -> Int:
         return self._id
 
-    fn set_on_connect(self, owned wrapper: OnConnectWrapper):
+    fn set_on_connect(self, owned callback: on_connect_callback):
         var id = self.get_id()
-        # var coc_ptr = get_global_pointer(WS_ON_CONNECT_WRAPPER_PTR_KEY)
-        # var coc_any_ptr = UnsafePointer[ObjectContainer[OnConnectWrapper]].__from_index(
-        #     coc_ptr
-        # )
-        # var wrapper_ptr = coc_any_ptr[].emplace_as_index(wrapper)
-        var wrapper_ptr = coc_ptr()[].emplace_as_index(wrapper)
-        seq_set_global_int(id, wrapper_ptr)
+        set_on_connect(id, callback^)
 
-    fn set_on_heartbeat(self, owned wrapper: OnHeartbeatWrapper):
+    fn set_on_heartbeat(self, owned callback: on_heartbeat_callback):
         var id = self.get_id()
-        # var coc_ptr = get_global_pointer(WS_ON_HEARTBEAT_WRAPPER_PTR_KEY)
-        # var coc_any_ptr = UnsafePointer[ObjectContainer[OnHeartbeatWrapper]].__from_index(
-        #     coc_ptr
-        # )
-        # var wrapper_ptr = coc_any_ptr[].emplace_as_index(wrapper)
-        var wrapper_ptr = hoc_ptr()[].emplace_as_index(wrapper)
-        seq_set_global_int(id, wrapper_ptr)
+        set_on_heartbeat(id, callback^)
 
-    fn set_on_message(self, owned wrapper: OnMessageWrapper):
+    fn set_on_message(self, owned callback: on_message_callback):
         var id = self.get_id()
-        # var coc_ptr = get_global_pointer(WS_ON_MESSAGE_WRAPPER_PTR_KEY)
-        # var coc_any_ptr = UnsafePointer[ObjectContainer[OnMessageWrapper]].__from_index(
-        #     coc_ptr
-        # )
-        # var wrapper_ptr = coc_any_ptr[].emplace_as_index(wrapper)
-        var wrapper_ptr = moc_ptr()[].emplace_as_index(wrapper)
-        seq_set_global_int(id, wrapper_ptr)
+        set_on_message(id, callback^)
 
     fn subscribe(self):
         logd("BinanceWS.subscribe")
@@ -173,7 +154,7 @@ struct BinanceWS:
         seq_websocket_delete(self._ptr)
 
     fn send(self, text: String) -> None:
-        seq_websocket_send(self._ptr, text._buffer.data.value, len(text))
+        seq_websocket_send(self._ptr, unsafe_ptr_as_scalar_pointer(text.unsafe_ptr()), len(text))
 
     fn connect(self):
         seq_websocket_connect(self._ptr)

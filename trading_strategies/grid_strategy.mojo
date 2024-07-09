@@ -73,10 +73,11 @@ struct GridStrategy(BaseStrategy):
         self.platform = Platform(config)
         self.grid = GridInfo()
         self.category = config.category
-        self.symbols = config.symbols.split(",")
-        if len(self.symbols) == 0:
+        var symbols = config.symbols.split(",")
+        if len(symbols) == 0:
             raise "symbols is empty"
-        self.symbol = self.symbols[0]
+        self.symbols = symbols
+        self.symbol = symbols[0]
         self.tick_size = Fixed.zero
         self.step_size = Fixed.zero
         self.config = config
@@ -124,7 +125,7 @@ struct GridStrategy(BaseStrategy):
         self.rwlock = existing.rwlock
         self.stop_flag = False
 
-    fn setup(inout self) raises:
+    fn setup(inout self, platform: UnsafePointer[Platform]) raises:
         # var algo_id = _GLOBAL()[].algo_id
         # log.log_itf["MAIN"]()[].set_alog_id(algo_id)
         self.platform.setup()
@@ -161,8 +162,8 @@ struct GridStrategy(BaseStrategy):
         )
         logi(str(exchange_info))
 
-        var tick_size: Fixed = exchange_info.tick_size
-        var step_size = Fixed(exchange_info.step_size)
+        var tick_size = exchange_info.tick_size
+        var step_size = exchange_info.step_size
         # logi("tick_size: " + str(tick_size))
         # logi("step_size: " + str(step_size))
         # self.tick_size.copy_from(tick_size)
@@ -176,8 +177,8 @@ struct GridStrategy(BaseStrategy):
         if len(ob.asks) == 0 or len(ob.bids) == 0:
             raise Error("获取盘口数据失败")
 
-        var ask = Fixed(ob.asks[0].price)
-        var bid = Fixed(ob.bids[0].price)
+        var ask = ob.asks[0].price
+        var bid = ob.bids[0].price
         logi("ask=" + str(ask) + " bid=" + str(bid))
         var mid = (ask / Fixed(2)) + (bid / Fixed(2))
         logi("mid=" + str(mid))
@@ -234,16 +235,14 @@ struct GridStrategy(BaseStrategy):
 
         for i in range(len(self.grid.cells)):
             ctx.cell_index = i
-            var ref = self.grid.cells.__get_ref(i)
-            self.on_tick_one(ctx, ref)
+            var cell_ref = self.grid.cells.__get_ref(i)
+            self.on_tick_one(ctx, cell_ref)
 
         self.grid.update(ctx.mid)
 
     fn on_tick_one[
-        L: MutLifetime
-    ](
-        inout self, inout ctx: IContext, cell: Reference[GridCellInfo, i1, L]
-    ) raises:
+        L: MutableLifetime
+    ](inout self, inout ctx: IContext, cell: Reference[GridCellInfo, L]) raises:
         if not self.allow_trade:
             return
 
@@ -267,24 +266,24 @@ struct GridStrategy(BaseStrategy):
             total_profit += i[].calculate_profit_amount(ask, bid, position_idx)
         return total_profit
 
-    fn calculate_cell_profits(
-        self, ask: Fixed, bid: Fixed, position_idx: PositionIdx
-    ) raises -> List[Tuple[Int, Fixed]]:
-        """
-        计算各格子浮盈
-        """
-        var cell_profits = List[Tuple[Int, Fixed]]()
+    # fn calculate_cell_profits(
+    #     self, ask: Fixed, bid: Fixed, position_idx: PositionIdx
+    # ) raises -> List[Tuple[Int, Fixed]]:
+    #     """
+    #     计算各格子浮盈
+    #     """
+    #     var cell_profits = List[Tuple[Int, Fixed]]()
 
-        for index in range(len(self.grid.cells)):
-            var cell = self.grid.cells[index]
-            # 计算每个格子的浮亏并添加到列表中
-            cell_profits.append(
-                (
-                    index,
-                    cell.calculate_profit_percentage(ask, bid, position_idx),
-                )
-            )
-        return cell_profits
+    #     for index in range(len(self.grid.cells)):
+    #         var cell = self.grid.cells[index]
+    #         # 计算每个格子的浮亏并添加到列表中
+    #         cell_profits.append(
+    #             (
+    #                 index,
+    #                 cell.calculate_profit_percentage(ask, bid, position_idx),
+    #             )
+    #         )
+    #     return cell_profits
 
     fn stop_strategy(inout self) raises:
         # 添加总体止损的停止策略逻辑
@@ -292,11 +291,11 @@ struct GridStrategy(BaseStrategy):
         self.stop_flag = True
 
     fn process_cell_sl_one[
-        L: MutLifetime
+        L: MutableLifetime
     ](
         inout self,
         ctx: IContext,
-        cell: Reference[GridCellInfo, i1, L],
+        cell: Reference[GridCellInfo, L],
         position_idx: PositionIdx,
     ) raises:
         var profit = cell[].calculate_profit_percentage(
@@ -307,14 +306,14 @@ struct GridStrategy(BaseStrategy):
                 "触发单个格子止损，停止格子 {index} 的交易 ["
                 + str(profit)
                 + "] <= ["
-                + ctx.cell_sl_percent
+                + str(ctx.cell_sl_percent)
                 + "]"
             )
             self.stop_cell_trading(cell)
 
     fn stop_cell_trading[
-        L: MutLifetime
-    ](inout self, cell: Reference[GridCellInfo, i1, L]) raises:
+        L: MutableLifetime
+    ](inout self, cell: Reference[GridCellInfo, L]) raises:
         # 添加单个格子止损的停止策略逻辑
         logi("执行单个格子止损的停止策略，停止格子 " + str(cell[].level) + " 的交易")
         # 撤销止盈单
@@ -352,8 +351,8 @@ struct GridStrategy(BaseStrategy):
         )
 
     fn place_buy_order[
-        L: MutLifetime
-    ](inout self, ctx: IContext, cell: Reference[GridCellInfo, i1, L]) raises:
+        L: MutableLifetime
+    ](inout self, ctx: IContext, cell: Reference[GridCellInfo, L]) raises:
         """
         下开仓单
         """
@@ -399,8 +398,8 @@ struct GridStrategy(BaseStrategy):
         logi("更新订单号")
 
     fn place_tp_order[
-        L: MutLifetime
-    ](inout self, ctx: IContext, cell: Reference[GridCellInfo, i1, L]) raises:
+        L: MutableLifetime
+    ](inout self, ctx: IContext, cell: Reference[GridCellInfo, L]) raises:
         """
         下止盈单
         """
@@ -413,8 +412,8 @@ struct GridStrategy(BaseStrategy):
                 self.reset_cell(cell, PositionIdx.both_side_buy)
 
     fn place_tp_order_real[
-        L: MutLifetime
-    ](inout self, cell: Reference[GridCellInfo, i1, L]) raises:
+        L: MutableLifetime
+    ](inout self, cell: Reference[GridCellInfo, L]) raises:
         var side = String("Sell")
         var order_type = String("Limit")
         var qty = str(cell[].long_open_quantity)
@@ -453,10 +452,10 @@ struct GridStrategy(BaseStrategy):
         assert_equal(str(cell[].long_tp_status), str(OrderStatus.new))
 
     fn reset_cell[
-        L: MutLifetime
+        L: MutableLifetime
     ](
         inout self,
-        cell: Reference[GridCellInfo, i1, L],
+        cell: Reference[GridCellInfo, L],
         position_idx: PositionIdx,
     ) raises:
         if position_idx == PositionIdx.both_side_buy:
@@ -501,15 +500,15 @@ struct GridStrategy(BaseStrategy):
             if not order_opt:
                 break
             for i in range(len(self.grid.cells)):
-                var ref = self.grid.cells.__get_ref(i)
-                if self.on_order_cell(ref, order_opt.value()[]):
+                var cell_ref = self.grid.cells.__get_ref(i)
+                if self.on_order_cell(cell_ref, order_opt.value()):
                     break
         self.rwlock.unlock()
 
     @staticmethod
     fn on_order_cell[
-        L: MutLifetime
-    ](cell: Reference[GridCellInfo, i1, L], order: Order) -> Bool:
+        L: MutableLifetime
+    ](cell: Reference[GridCellInfo, L], order: Order) -> Bool:
         var order_client_id = order.order_client_id
         if cell[].long_open_cid == order_client_id:
             cell[].long_open_status = order.status

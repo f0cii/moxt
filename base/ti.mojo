@@ -19,7 +19,9 @@ struct ti_stream:
     pass
 
 
-alias ti_indicator_start_function = fn (options: Pointer[Float64]) raises -> c_int
+alias ti_indicator_start_function = fn (
+    options: Pointer[Float64]
+) raises -> c_int
 alias ti_indicator_function = fn (
     size: c_int,
     inputs: Pointer[Pointer[Float64]],
@@ -27,15 +29,15 @@ alias ti_indicator_function = fn (
     outputs: Pointer[Pointer[Float64]],
 ) raises -> c_int
 alias ti_indicator_stream_new = fn (
-    options: Pointer[Float64], stream: Pointer[Pointer[ti_stream]]
+    options: Pointer[Float64], stream: Pointer[UnsafePointer[ti_stream]]
 ) raises -> c_int
 alias ti_indicator_stream_run = fn (
-    stream: Pointer[ti_stream],
+    stream: UnsafePointer[ti_stream],
     size: c_int,
     inputs: Pointer[Pointer[Float64]],
     outputs: Pointer[Pointer[Float64]],
 ) raises -> c_int
-alias ti_indicator_stream_free = fn (stream: Pointer[ti_stream]) -> None
+alias ti_indicator_stream_free = fn (stream: UnsafePointer[ti_stream]) -> None
 
 
 struct ti_indicator_info(Movable):
@@ -104,7 +106,9 @@ struct ti_indicator_info(Movable):
 
 
 fn seq_ti_get_first_indicator() -> UnsafePointer[ti_indicator_info]:
-    return external_call["seq_ti_get_first_indicator", UnsafePointer[ti_indicator_info]]()
+    return external_call[
+        "seq_ti_get_first_indicator", UnsafePointer[ti_indicator_info]
+    ]()
 
 
 fn seq_ti_is_valid_indicator(info: UnsafePointer[ti_indicator_info]) -> Bool:
@@ -123,9 +127,13 @@ fn seq_ti_get_next_indicator(
     ](info)
 
 
-fn seq_ti_find_indicator(name: c_char_pointer) -> UnsafePointer[ti_indicator_info]:
+fn seq_ti_find_indicator(
+    name: c_char_pointer,
+) -> UnsafePointer[ti_indicator_info]:
     return external_call[
-        "seq_ti_find_indicator", UnsafePointer[ti_indicator_info], c_char_pointer
+        "seq_ti_find_indicator",
+        UnsafePointer[ti_indicator_info],
+        c_char_pointer,
     ](name)
 
 
@@ -207,7 +215,7 @@ struct Inputs:
         self.data.free()
 
     fn add(inout self, data_in: Series):
-        self.data.store(self.data_index, data_in.data)
+        self.data[self.data_index] = data_in.data
         self.data_index += 1
 
 
@@ -231,10 +239,8 @@ struct Outputs:
         for i in range(self.outputs):
             var v = Series()
             v.resize(size, 0.0)
-            self.data_list.append(v ^)
-            self.data.store(
-                i, (self.data_list.data + i)[].data
-            )
+            self.data_list.append(v^)
+            self.data[i] = (self.data_list.data + i)[].data
 
 
 @always_inline
@@ -261,7 +267,7 @@ fn ti_indicator(
     if not ok:
         raise Error("error")
 
-    _ = options_ ^
+    _ = options_^
 
 
 fn ti_indicator(
@@ -397,7 +403,11 @@ alias TI_INDICATOR_ADX_INDEX = 5
 
 
 fn ti_adx(
-    size: Int, high: Series, low: Series, inout outputs: Outputs, period: Float64
+    size: Int,
+    high: Series,
+    low: Series,
+    inout outputs: Outputs,
+    period: Float64,
 ) raises:
     var inputs = Inputs(2)
     inputs.add(high)
@@ -421,7 +431,11 @@ alias TI_INDICATOR_ADXR_INDEX = 6
 
 
 fn ti_adxr(
-    size: Int, high: Series, low: Series, inout outputs: Outputs, period: Float64
+    size: Int,
+    high: Series,
+    low: Series,
+    inout outputs: Outputs,
+    period: Float64,
 ) raises:
     var inputs = Inputs(2)
     inputs.add(high)
@@ -667,7 +681,11 @@ alias TI_INDICATOR_BBANDS_INDEX = 15
 
 
 fn ti_bbands(
-    size: Int, real: Series, inout outputs: Outputs, period: Float64, stddev: Float64
+    size: Int,
+    real: Series,
+    inout outputs: Outputs,
+    period: Float64,
+    stddev: Float64,
 ) raises:
     var inputs = Inputs(1)
     inputs.add(real)
@@ -776,7 +794,9 @@ fn ti_ceil(
 alias TI_INDICATOR_CMO_INDEX = 19
 
 
-fn ti_cmo(size: Int, real: Series, inout outputs: Outputs, period: Float64) raises:
+fn ti_cmo(
+    size: Int, real: Series, inout outputs: Outputs, period: Float64
+) raises:
     var inputs = Inputs(1)
     inputs.add(real)
     ti_indicator(
@@ -904,7 +924,11 @@ alias TI_INDICATOR_CVI_INDEX = 24
 
 
 fn ti_cvi(
-    size: Int, high: Series, low: Series, inout outputs: Outputs, period: Float64
+    size: Int,
+    high: Series,
+    low: Series,
+    inout outputs: Outputs,
+    period: Float64,
 ) raises:
     var inputs = Inputs(2)
     inputs.add(high)
@@ -927,7 +951,9 @@ fn ti_cvi(
 alias TI_INDICATOR_DECAY_INDEX = 25
 
 
-fn ti_decay(size: Int, real: Series, inout outputs: Outputs, period: Float64) raises:
+fn ti_decay(
+    size: Int, real: Series, inout outputs: Outputs, period: Float64
+) raises:
     var inputs = Inputs(1)
     inputs.add(real)
     ti_indicator(
@@ -948,7 +974,9 @@ fn ti_decay(size: Int, real: Series, inout outputs: Outputs, period: Float64) ra
 alias TI_INDICATOR_DEMA_INDEX = 26
 
 
-fn ti_dema(size: Int, real: Series, inout outputs: Outputs, period: Float64) raises:
+fn ti_dema(
+    size: Int, real: Series, inout outputs: Outputs, period: Float64
+) raises:
     var inputs = Inputs(1)
     inputs.add(real)
     ti_indicator(
@@ -1027,7 +1055,11 @@ alias TI_INDICATOR_DM_INDEX = 29
 
 
 fn ti_dm(
-    size: Int, high: Series, low: Series, inout outputs: Outputs, period: Float64
+    size: Int,
+    high: Series,
+    low: Series,
+    inout outputs: Outputs,
+    period: Float64,
 ) raises:
     var inputs = Inputs(2)
     inputs.add(high)
@@ -1050,7 +1082,9 @@ fn ti_dm(
 alias TI_INDICATOR_DPO_INDEX = 30
 
 
-fn ti_dpo(size: Int, real: Series, inout outputs: Outputs, period: Float64) raises:
+fn ti_dpo(
+    size: Int, real: Series, inout outputs: Outputs, period: Float64
+) raises:
     var inputs = Inputs(1)
     inputs.add(real)
     ti_indicator(
@@ -1072,7 +1106,11 @@ alias TI_INDICATOR_DX_INDEX = 31
 
 
 fn ti_dx(
-    size: Int, high: Series, low: Series, inout outputs: Outputs, period: Float64
+    size: Int,
+    high: Series,
+    low: Series,
+    inout outputs: Outputs,
+    period: Float64,
 ) raises:
     var inputs = Inputs(2)
     inputs.add(high)
@@ -1095,7 +1133,9 @@ fn ti_dx(
 alias TI_INDICATOR_EDECAY_INDEX = 32
 
 
-fn ti_edecay(size: Int, real: Series, inout outputs: Outputs, period: Float64) raises:
+fn ti_edecay(
+    size: Int, real: Series, inout outputs: Outputs, period: Float64
+) raises:
     var inputs = Inputs(1)
     inputs.add(real)
     ti_indicator(
@@ -1116,7 +1156,9 @@ fn ti_edecay(size: Int, real: Series, inout outputs: Outputs, period: Float64) r
 alias TI_INDICATOR_EMA_INDEX = 33
 
 
-fn ti_ema(size: Int, real: Series, inout outputs: Outputs, period: Float64) raises:
+fn ti_ema(
+    size: Int, real: Series, inout outputs: Outputs, period: Float64
+) raises:
     var inputs = Inputs(1)
     inputs.add(real)
     ti_indicator(
@@ -1192,7 +1234,11 @@ alias TI_INDICATOR_FISHER_INDEX = 36
 
 
 fn ti_fisher(
-    size: Int, high: Series, low: Series, inout outputs: Outputs, period: Float64
+    size: Int,
+    high: Series,
+    low: Series,
+    inout outputs: Outputs,
+    period: Float64,
 ) raises:
     var inputs = Inputs(2)
     inputs.add(high)
@@ -1240,7 +1286,9 @@ fn ti_floor(
 alias TI_INDICATOR_FOSC_INDEX = 38
 
 
-fn ti_fosc(size: Int, real: Series, inout outputs: Outputs, period: Float64) raises:
+fn ti_fosc(
+    size: Int, real: Series, inout outputs: Outputs, period: Float64
+) raises:
     var inputs = Inputs(1)
     inputs.add(real)
     ti_indicator(
@@ -1261,7 +1309,9 @@ fn ti_fosc(size: Int, real: Series, inout outputs: Outputs, period: Float64) rai
 alias TI_INDICATOR_HMA_INDEX = 39
 
 
-fn ti_hma(size: Int, real: Series, inout outputs: Outputs, period: Float64) raises:
+fn ti_hma(
+    size: Int, real: Series, inout outputs: Outputs, period: Float64
+) raises:
     var inputs = Inputs(1)
     inputs.add(real)
     ti_indicator(
@@ -1282,7 +1332,9 @@ fn ti_hma(size: Int, real: Series, inout outputs: Outputs, period: Float64) rais
 alias TI_INDICATOR_KAMA_INDEX = 40
 
 
-fn ti_kama(size: Int, real: Series, inout outputs: Outputs, period: Float64) raises:
+fn ti_kama(
+    size: Int, real: Series, inout outputs: Outputs, period: Float64
+) raises:
     var inputs = Inputs(1)
     inputs.add(real)
     ti_indicator(
@@ -1548,7 +1600,11 @@ alias TI_INDICATOR_MASS_INDEX = 50
 
 
 fn ti_mass(
-    size: Int, high: Series, low: Series, inout outputs: Outputs, period: Float64
+    size: Int,
+    high: Series,
+    low: Series,
+    inout outputs: Outputs,
+    period: Float64,
 ) raises:
     var inputs = Inputs(2)
     inputs.add(high)
@@ -1574,7 +1630,9 @@ alias TI_INDICATOR_MAX_INDEX = 51
 # int ti_max_start(TI_REAL const *options);
 # int ti_max(int size, TI_REAL const *const *inputs, TI_REAL const *options, TI_REAL *const *outputs);
 # int ti_max_ref(int size, TI_REAL const *const *inputs, TI_REAL const *options, TI_REAL *const *outputs);
-fn ti_max(size: Int, real: Series, inout outputs: Outputs, period: Float64) raises:
+fn ti_max(
+    size: Int, real: Series, inout outputs: Outputs, period: Float64
+) raises:
     var inputs = Inputs(1)
     inputs.add(real)
     ti_indicator(
@@ -1595,7 +1653,9 @@ fn ti_max(size: Int, real: Series, inout outputs: Outputs, period: Float64) rais
 alias TI_INDICATOR_MD_INDEX = 52
 
 
-fn ti_md(size: Int, real: Series, inout outputs: Outputs, period: Float64) raises:
+fn ti_md(
+    size: Int, real: Series, inout outputs: Outputs, period: Float64
+) raises:
     var inputs = Inputs(1)
     inputs.add(real)
     ti_indicator(
@@ -1676,7 +1736,9 @@ alias TI_INDICATOR_MIN_INDEX = 55
 
 
 # int ti_min_ref(int size, TI_REAL const *const *inputs, TI_REAL const *options, TI_REAL *const *outputs);
-fn ti_min(size: Int, real: Series, inout outputs: Outputs, period: Float64) raises:
+fn ti_min(
+    size: Int, real: Series, inout outputs: Outputs, period: Float64
+) raises:
     var inputs = Inputs(1)
     inputs.add(real)
     ti_indicator(
@@ -1697,7 +1759,9 @@ fn ti_min(size: Int, real: Series, inout outputs: Outputs, period: Float64) rais
 alias TI_INDICATOR_MOM_INDEX = 56
 
 
-fn ti_mom(size: Int, real: Series, inout outputs: Outputs, period: Float64) raises:
+fn ti_mom(
+    size: Int, real: Series, inout outputs: Outputs, period: Float64
+) raises:
     var inputs = Inputs(1)
     inputs.add(real)
     ti_indicator(
@@ -1718,7 +1782,9 @@ fn ti_mom(size: Int, real: Series, inout outputs: Outputs, period: Float64) rais
 alias TI_INDICATOR_MSW_INDEX = 57
 
 
-fn ti_msw(size: Int, real: Series, inout outputs: Outputs, period: Float64) raises:
+fn ti_msw(
+    size: Int, real: Series, inout outputs: Outputs, period: Float64
+) raises:
     var inputs = Inputs(1)
     inputs.add(real)
     ti_indicator(
@@ -1934,7 +2000,11 @@ alias TI_INDICATOR_QSTICK_INDEX = 65
 
 
 fn ti_qstick(
-    size: Int, open: Series, close: Series, inout outputs: Outputs, period: Float64
+    size: Int,
+    open: Series,
+    close: Series,
+    inout outputs: Outputs,
+    period: Float64,
 ) raises:
     var inputs = Inputs(2)
     inputs.add(open)
@@ -1957,7 +2027,9 @@ fn ti_qstick(
 alias TI_INDICATOR_ROC_INDEX = 66
 
 
-fn ti_roc(size: Int, real: Series, inout outputs: Outputs, period: Float64) raises:
+fn ti_roc(
+    size: Int, real: Series, inout outputs: Outputs, period: Float64
+) raises:
     var inputs = Inputs(1)
     inputs.add(real)
     ti_indicator(
@@ -1978,7 +2050,9 @@ fn ti_roc(size: Int, real: Series, inout outputs: Outputs, period: Float64) rais
 alias TI_INDICATOR_ROCR_INDEX = 67
 
 
-fn ti_rocr(size: Int, real: Series, inout outputs: Outputs, period: Float64) raises:
+fn ti_rocr(
+    size: Int, real: Series, inout outputs: Outputs, period: Float64
+) raises:
     var inputs = Inputs(1)
     inputs.add(real)
     ti_indicator(
@@ -2024,7 +2098,9 @@ fn ti_round(
 alias TI_INDICATOR_RSI_INDEX = 69
 
 
-fn ti_rsi(size: Int, real: Series, inout outputs: Outputs, period: Float64) raises:
+fn ti_rsi(
+    size: Int, real: Series, inout outputs: Outputs, period: Float64
+) raises:
     var inputs = Inputs(1)
     inputs.add(real)
     ti_indicator(
@@ -2098,7 +2174,9 @@ alias TI_INDICATOR_SMA_INDEX = 72
 # int ti_sma_stream_new(TI_REAL const *options, ti_stream **stream);
 # int ti_sma_stream_run(ti_stream *stream, int size, TI_REAL const *const *inputs, TI_REAL *const *outputs);
 # void ti_sma_stream_free(ti_stream *stream);
-fn ti_sma(size: Int, real: Series, inout outputs: Outputs, period: Float64) raises:
+fn ti_sma(
+    size: Int, real: Series, inout outputs: Outputs, period: Float64
+) raises:
     var inputs = Inputs(1)
     inputs.add(real)
     ti_indicator(TI_INDICATOR_SMA_INDEX, size, inputs, outputs, Options(period))
@@ -2128,10 +2206,14 @@ fn ti_sqrt(size: Int, real: Series, inout outputs: Outputs) raises:
 alias TI_INDICATOR_STDDEV_INDEX = 74
 
 
-fn ti_stddev(size: Int, real: Series, inout outputs: Outputs, period: Float64) raises:
+fn ti_stddev(
+    size: Int, real: Series, inout outputs: Outputs, period: Float64
+) raises:
     var inputs = Inputs(1)
     inputs.add(real)
-    ti_indicator(TI_INDICATOR_STDDEV_INDEX, size, inputs, outputs, Options(period))
+    ti_indicator(
+        TI_INDICATOR_STDDEV_INDEX, size, inputs, outputs, Options(period)
+    )
 
 
 # /* Standard Error Over Period */
@@ -2143,10 +2225,14 @@ fn ti_stddev(size: Int, real: Series, inout outputs: Outputs, period: Float64) r
 alias TI_INDICATOR_STDERR_INDEX = 75
 
 
-fn ti_stderr(size: Int, real: Series, inout outputs: Outputs, period: Float64) raises:
+fn ti_stderr(
+    size: Int, real: Series, inout outputs: Outputs, period: Float64
+) raises:
     var inputs = Inputs(1)
     inputs.add(real)
-    ti_indicator(TI_INDICATOR_STDERR_INDEX, size, inputs, outputs, Options(period))
+    ti_indicator(
+        TI_INDICATOR_STDERR_INDEX, size, inputs, outputs, Options(period)
+    )
 
 
 # /* Stochastic Oscillator */
@@ -2243,7 +2329,9 @@ fn ti_sub(
 alias TI_INDICATOR_SUM_INDEX = 79
 
 
-fn ti_sum(size: Int, real: Series, inout outputs: Outputs, period: Float64) raises:
+fn ti_sum(
+    size: Int, real: Series, inout outputs: Outputs, period: Float64
+) raises:
     var inputs = Inputs(1)
     inputs.add(real)
     ti_indicator(
@@ -2314,7 +2402,9 @@ fn ti_tanh(
 alias TI_INDICATOR_TEMA_INDEX = 82
 
 
-fn ti_tanh(size: Int, real: Series, inout outputs: Outputs, period: Float64) raises:
+fn ti_tanh(
+    size: Int, real: Series, inout outputs: Outputs, period: Float64
+) raises:
     var inputs = Inputs(1)
     inputs.add(real)
     ti_indicator(
@@ -2414,7 +2504,9 @@ fn ti_tr(
 alias TI_INDICATOR_TRIMA_INDEX = 86
 
 
-fn ti_trima(size: Int, real: Series, inout outputs: Outputs, period: Float64) raises:
+fn ti_trima(
+    size: Int, real: Series, inout outputs: Outputs, period: Float64
+) raises:
     var inputs = Inputs(1)
     inputs.add(real)
     ti_indicator(
@@ -2435,7 +2527,9 @@ fn ti_trima(size: Int, real: Series, inout outputs: Outputs, period: Float64) ra
 alias TI_INDICATOR_TRIX_INDEX = 87
 
 
-fn ti_trix(size: Int, real: Series, inout outputs: Outputs, period: Float64) raises:
+fn ti_trix(
+    size: Int, real: Series, inout outputs: Outputs, period: Float64
+) raises:
     var inputs = Inputs(1)
     inputs.add(real)
     ti_indicator(
@@ -2481,7 +2575,9 @@ fn ti_trunc(
 alias TI_INDICATOR_TSF_INDEX = 89
 
 
-fn ti_tsf(size: Int, real: Series, inout outputs: Outputs, period: Float64) raises:
+fn ti_tsf(
+    size: Int, real: Series, inout outputs: Outputs, period: Float64
+) raises:
     var inputs = Inputs(1)
     inputs.add(real)
     ti_indicator(
@@ -2782,7 +2878,9 @@ fn ti_wcprice(
 alias TI_INDICATOR_WILDERS_INDEX = 100
 
 
-fn ti_wilders(size: Int, real: Series, inout outputs: Outputs, period: Float64) raises:
+fn ti_wilders(
+    size: Int, real: Series, inout outputs: Outputs, period: Float64
+) raises:
     var inputs = Inputs(1)
     inputs.add(real)
     ti_indicator(
@@ -2833,7 +2931,9 @@ fn ti_willr(
 alias TI_INDICATOR_WMA_INDEX = 102
 
 
-fn ti_wma(size: Int, real: Series, inout outputs: Outputs, period: Float64) raises:
+fn ti_wma(
+    size: Int, real: Series, inout outputs: Outputs, period: Float64
+) raises:
     var inputs = Inputs(1)
     inputs.add(real)
     ti_indicator(
@@ -2854,7 +2954,9 @@ fn ti_wma(size: Int, real: Series, inout outputs: Outputs, period: Float64) rais
 alias TI_INDICATOR_ZLEMA_INDEX = 103
 
 
-fn ti_zlema(size: Int, real: Series, inout outputs: Outputs, period: Float64) raises:
+fn ti_zlema(
+    size: Int, real: Series, inout outputs: Outputs, period: Float64
+) raises:
     var inputs = Inputs(1)
     inputs.add(real)
     ti_indicator(

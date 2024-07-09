@@ -3,7 +3,7 @@ from memory import unsafe
 from collections.optional import Optional
 from .c import *
 from .mo import *
-from base.moutil import *
+from .moutil import *
 
 
 alias timer_entry_t = fn () raises -> UInt64
@@ -283,9 +283,9 @@ fn seq_photon_semaphore_free(sem: c_void_pointer) -> None:
 fn seq_photon_semaphore_wait(
     sem: c_void_pointer, count: UInt64, timeout: UInt64
 ) -> c_int:
-    return external_call["seq_photon_semaphore_wait", c_int, c_void_pointer](
-        sem, count, timeout
-    )
+    return external_call[
+        "seq_photon_semaphore_wait", c_int, c_void_pointer, UInt64, UInt64
+    ](sem, count, timeout)
 
 
 # SEQ_FUNC int seq_photon_semaphore_signal(photon::semaphore *sem,
@@ -293,9 +293,9 @@ fn seq_photon_semaphore_wait(
 #     return sem->signal(count);
 # }
 fn seq_photon_semaphore_signal(sem: c_void_pointer, count: UInt64) -> c_int:
-    return external_call["seq_photon_semaphore_signal", c_int, c_void_pointer](
-        sem, count
-    )
+    return external_call[
+        "seq_photon_semaphore_signal", c_int, c_void_pointer, UInt64
+    ](sem, count)
 
 
 # SEQ_FUNC uint64_t seq_photon_semaphore_count(photon::semaphore *sem) {
@@ -354,7 +354,7 @@ struct iovec:
     var iov_len: c_size_t  # Length of data.
 
     fn __init__() -> Self:
-        return Self {iov_base: c_void_pointer.get_null(), iov_len: 0}
+        return Self {iov_base: c_void_pointer(), iov_len: 0}
 
     fn __init__(base: c_void_pointer, len: c_size_t) -> Self:
         return Self {iov_base: base, iov_len: len}
@@ -372,8 +372,10 @@ struct iovec:
         return Self {iov_base: c_ptr, iov_len: data_len}
 
     fn __init__(s: String) -> Self:
-        var buff = Pointer[UInt8].alloc(len(s))
-        memcpy(rebind[DTypePointer[DType.int8]](buff), s._as_ptr(), len(s))
+        var buff = UnsafePointer[UInt8].alloc(len(s))
+        memcpy(
+            rebind[DTypePointer[DType.int8]](buff), s.unsafe_cstr_ptr(), len(s)
+        )
         return Self {iov_base: buff, iov_len: len(s)}
 
     fn to_data(self) -> (DTypePointer[DType.uint8], Int):
@@ -381,8 +383,8 @@ struct iovec:
         return (ptr, self.iov_len)
 
     fn to_str(self) -> String:
-        var ptr = rebind[DTypePointer[DType.int8]](self.iov_base)
-        return String(StringRef(ptr, self.iov_len))
+        var ptr = rebind[DTypePointer[DType.uint8]](self.iov_base)
+        return String(ptr, self.iov_len)
 
     fn free(self):
         var buff = rebind[Pointer[UInt8]](self.iov_base)
@@ -400,23 +402,32 @@ fn seq_lockfree_queue_free(q: c_void_pointer) -> None:
 
 
 # Enqueue operation
-fn seq_lockfree_queue_push(q: c_void_pointer, data: Pointer[iovec]) -> Bool:
+fn seq_lockfree_queue_push(
+    q: c_void_pointer, data: UnsafePointer[iovec]
+) -> Bool:
     return external_call[
-        "seq_lockfree_queue_push", Bool, c_void_pointer, Pointer[iovec]
+        "seq_lockfree_queue_push", Bool, c_void_pointer, UnsafePointer[iovec]
     ](q, data)
 
 
 # Dequeue operation
-fn seq_lockfree_queue_pop(q: c_void_pointer, data: Pointer[iovec]) -> Bool:
+fn seq_lockfree_queue_pop(
+    q: c_void_pointer, data: UnsafePointer[iovec]
+) -> Bool:
     return external_call[
-        "seq_lockfree_queue_pop", Bool, c_void_pointer, Pointer[iovec]
+        "seq_lockfree_queue_pop", Bool, c_void_pointer, UnsafePointer[iovec]
     ](q, data)
+
+
+# Get current thread id
+fn seq_thread_id() -> Int64:
+    return external_call["seq_thread_id", Int64]()
 
 
 struct AtomicBool:
     var p: c_void_pointer
 
-    fn __init__(inout self, b: Bool):
+    fn __init__(inout self, b: Bool = False):
         self.p = seq_atomic_bool_new(b)
 
     fn __del__(owned self):
@@ -432,7 +443,7 @@ struct AtomicBool:
 struct AtomicInt64:
     var p: c_void_pointer
 
-    fn __init__(inout self, i: Int64):
+    fn __init__(inout self, i: Int64 = 0):
         self.p = seq_atomic_int64_new(i)
 
     fn __del__(owned self):
@@ -498,14 +509,14 @@ struct TimedClosureExecutor:
     fn start(
         self,
         default_timeout: UInt64,
-        callback: Pointer[on_timer_callback],
+        callback: UnsafePointer[on_timer_callback],
         repeating: Bool = True,
     ):
         var callback_ptr = int(callback)
         var ptr = seq_photon_timed_closure_executor_new(
             default_timeout, on_tc_timer, callback_ptr, repeating
         )
-        self._ptr.store(0, ptr)
+        self._ptr[0] = ptr
 
     fn __del__(owned self):
         logi("TimedClosureExecutor.__del__")
@@ -513,9 +524,9 @@ struct TimedClosureExecutor:
 
     fn free(owned self):
         # logi("TimedClosureExecutor.free")
-        var ptr = self._ptr.load(0)
+        var ptr = self._ptr[0]
         seq_photon_timed_closure_executor_free(ptr)
-        self._ptr.store(c_void_pointer.get_null())
+        self._ptr[0] = c_void_pointer()
 
 
 @value
@@ -590,171 +601,171 @@ struct ConditionVariable:
         seq_photon_condition_variable_free(self.ptr)
 
 
-alias CoRunFunction = fn (Dict[String, String]) raises escaping -> String
+# alias CoRunFunction = fn (Dict[String, String]) raises escaping -> String
 
 
-struct ArgData:
-    var _data: Dict[String, String]
-    var _run: CoRunFunction
+# struct ArgData:
+#     var _data: Dict[String, String]
+#     var _run: CoRunFunction
 
-    fn __init__(inout self):
-        # print("__init__")
-        self._data = Dict[String, String]()
+#     fn __init__(inout self):
+#         # print("__init__")
+#         self._data = Dict[String, String]()
 
-        fn default_run(arg: Dict[String, String]) raises -> String:
-            return ""
+#         fn default_run(arg: Dict[String, String]) raises -> String:
+#             return ""
 
-        self._run = default_run
+#         self._run = default_run
 
-    fn __copyinit__(inout self, existing: Self):
-        # print("__copyinit__")
-        self._data = existing._data
-        self._run = existing._run
+#     fn __copyinit__(inout self, existing: Self):
+#         # print("__copyinit__")
+#         self._data = existing._data
+#         self._run = existing._run
 
-    fn __moveinit__(inout self, owned existing: Self):
-        # print("__moveinit__")
-        self._data = existing._data^
-        self._run = existing._run^
+#     fn __moveinit__(inout self, owned existing: Self):
+#         # print("__moveinit__")
+#         self._data = existing._data^
+#         self._run = existing._run^
 
-    fn __del__(owned self):
-        # print("__del__")
-        pass
+#     fn __del__(owned self):
+#         # print("__del__")
+#         pass
 
-    fn __getitem__(self, key: String) raises -> String:
-        return self._data[key]
+#     fn __getitem__(self, key: String) raises -> String:
+#         return self._data[key]
 
-    fn __setitem__(inout self, key: String, value: String):
-        self._data[key] = value
+#     fn __setitem__(inout self, key: String, value: String):
+#         self._data[key] = value
 
-    fn __len__(self) -> Int:
-        return len(self._data)
+#     fn __len__(self) -> Int:
+#         return len(self._data)
 
-    fn items(self) -> KeyValueIterator[String, String]:
-        return self._data.items()
+#     fn items(self) -> KeyValueIterator[String, String]:
+#         return self._data.items()
 
-    fn set_run(inout self, run: CoRunFunction):
-        self._run = run
+#     fn set_run(inout self, run: CoRunFunction):
+#         self._run = run
 
-    fn run(self) raises -> String:
-        return self._run(self._data)
-
-
-fn to_mem_ref_ptr[T: AnyType](owned t: T) -> Int:
-    return int(Pointer[T].address_of(t))
+#     fn run(self) raises -> String:
+#         return self._run(self._data)
 
 
-fn mem_ref_ptr_to_value[T: AnyRegType](p: Int) -> UnsafePointer[T]:
-    return UnsafePointer[T](address=p)
+# fn to_mem_ref_ptr[T: AnyType](owned t: T) -> Int:
+#     return int(Pointer[T].address_of(t))
 
 
-@value
-@register_passable
-struct ArgDataRef:
-    var data: Pointer[ArgData]
-
-    fn __init__(data: Pointer[ArgData]) -> Self:
-        # print("Arg.__init__")
-        return Self {data: data}
-
-    fn __init__(owned value: ArgData) -> Self:
-        var data = Pointer[ArgData].alloc(1)
-        data.offset(0)[] = value
-        return Self {data: data}
-
-    fn __copyinit__(existing: Self) -> Self:
-        # print("Arg.__copyinit__")
-        return Self {data: existing.data}
-
-    fn __del__(owned self):
-        # print("Arg.__del__")
-        pass
-
-    fn to_ptr(self) -> c_void_pointer:
-        return seq_int_to_voidptr(to_mem_ref_ptr[Self](self))
-
-    @staticmethod
-    fn to_ptr(owned value: ArgData) -> c_void_pointer:
-        var data = Pointer[ArgData].alloc(1)
-        __get_address_as_uninit_lvalue(data.offset(0).address) = value
-        var s = Self {data: data}
-        return seq_int_to_voidptr(to_mem_ref_ptr[Self](s))
-
-    @staticmethod
-    fn from_ptr(ptr: Int) -> UnsafePointer[Self]:
-        return mem_ref_ptr_to_value[Self](ptr)
-
-    fn get(self) -> ArgData:
-        return self.data.offset(0)[]
-
-    fn get_as_owned(self) -> ArgData:
-        return __get_address_as_owned_value(self.data.offset(0).address)
-
-    @staticmethod
-    fn from_ptr_as_value(ptr: Int) -> ArgData:
-        var value = mem_ref_ptr_to_value[Self](ptr)
-        return value.data.offset(0)[]
-
-    @staticmethod
-    fn from_ptr_as_owned_value(ptr: Int) -> ArgData:
-        var value = mem_ref_ptr_to_value[Self](ptr)
-        var data = __get_address_as_owned_value(value[].data.offset(0).address)
-        value[].data.free()
-        return data
-
-    fn free(self):
-        # print("Arg.free")
-        _ = __get_address_as_owned_value(self.data.offset(0).address)
-        self.data.free()
+# fn mem_ref_ptr_to_value[T: AnyRegType](p: Int) -> UnsafePointer[T]:
+#     return UnsafePointer[T](address=p)
 
 
-fn __co_run(arg: c_void_pointer) raises -> c_void_pointer:
-    var ptr = seq_voidptr_to_int(arg)
-    var value = ArgDataRef.from_ptr_as_owned_value(ptr)
-    _ = value.run()
-    return c_void_pointer.get_null()
+# @value
+# @register_passable
+# struct ArgDataRef:
+#     var data: Pointer[ArgData]
+
+#     fn __init__(data: Pointer[ArgData]) -> Self:
+#         # print("Arg.__init__")
+#         return Self {data: data}
+
+#     fn __init__(owned value: ArgData) -> Self:
+#         var data = Pointer[ArgData].alloc(1)
+#         data.offset(0)[] = value
+#         return Self {data: data}
+
+#     fn __copyinit__(existing: Self) -> Self:
+#         # print("Arg.__copyinit__")
+#         return Self {data: existing.data}
+
+#     fn __del__(owned self):
+#         # print("Arg.__del__")
+#         pass
+
+#     fn to_ptr(self) -> c_void_pointer:
+#         return seq_int_to_voidptr(to_mem_ref_ptr[Self](self))
+
+#     @staticmethod
+#     fn to_ptr(owned value: ArgData) -> c_void_pointer:
+#         var data = Pointer[ArgData].alloc(1)
+#         __get_address_as_uninit_lvalue(data.offset(0).address) = value
+#         var s = Self {data: data}
+#         return seq_int_to_voidptr(to_mem_ref_ptr[Self](s))
+
+#     @staticmethod
+#     fn from_ptr(ptr: Int) -> UnsafePointer[Self]:
+#         return mem_ref_ptr_to_value[Self](ptr)
+
+#     fn get(self) -> ArgData:
+#         return self.data.offset(0)[]
+
+#     fn get_as_owned(self) -> ArgData:
+#         return __get_address_as_owned_value(self.data.offset(0).address)
+
+#     @staticmethod
+#     fn from_ptr_as_value(ptr: Int) -> ArgData:
+#         var value = mem_ref_ptr_to_value[Self](ptr)
+#         return value.data.offset(0)[]
+
+#     @staticmethod
+#     fn from_ptr_as_owned_value(ptr: Int) -> ArgData:
+#         var value = mem_ref_ptr_to_value[Self](ptr)
+#         var data = __get_address_as_owned_value(value[].data.offset(0).address)
+#         value[].data.free()
+#         return data
+
+#     fn free(self):
+#         # print("Arg.free")
+#         _ = __get_address_as_owned_value(self.data.offset(0).address)
+#         self.data.free()
 
 
-alias CoroFunction = fn () raises capturing -> None
+# fn __co_run(arg: c_void_pointer) raises -> c_void_pointer:
+#     var ptr = seq_voidptr_to_int(arg)
+#     var value = ArgDataRef.from_ptr_as_owned_value(ptr)
+#     _ = value.run()
+#     return c_void_pointer()
 
 
-fn __co_entry(arg: c_void_pointer) raises -> c_void_pointer:
-    var ptr = seq_voidptr_to_int(arg)
-    unsafe.bitcast[CoroFunction](ptr).load()()
-    return c_void_pointer.get_null()
+# alias CoroFunction = fn () raises capturing -> None
 
 
-fn start_coro(fn_ptr: Pointer[CoroFunction]):
-    var index = fn_ptr.__as_index()
-    var ptr = seq_int_to_voidptr(index)
-    seq_photon_thread_create_and_migrate_to_work_pool(__co_entry, ptr)
+# fn __co_entry(arg: c_void_pointer) raises -> c_void_pointer:
+#     var ptr = seq_voidptr_to_int(arg)
+#     unsafe.bitcast[CoroFunction](ptr).load()()
+#     return c_void_pointer()
 
 
-fn start_coro(fn_index: Int):
-    var ptr = seq_int_to_voidptr(fn_index)
-    seq_photon_thread_create_and_migrate_to_work_pool(__co_entry, ptr)
+# fn start_coro(fn_ptr: Pointer[CoroFunction]):
+#     var index = fn_ptr.__as_index()
+#     var ptr = seq_int_to_voidptr(index)
+#     seq_photon_thread_create_and_migrate_to_work_pool(__co_entry, ptr)
 
 
-fn run_coro(f: CoroFunction):
-    var sem = Semaphore()
-    var value = ArgData()
-    value["sem_ptr"] = sem.ptr_to_int()
+# fn start_coro(fn_index: Int):
+#     var ptr = seq_int_to_voidptr(fn_index)
+#     seq_photon_thread_create_and_migrate_to_work_pool(__co_entry, ptr)
 
-    # @parameter
-    fn co_run(arg: Dict[String, String]) raises -> String:
-        var p = arg["sem_ptr"]
-        var ptr = strtoi(p)
-        f()
-        var sem1 = Semaphore(ptr)
-        _ = sem1.signal(1)
-        return ""
 
-    value.set_run(co_run)
-    var ptr = ArgDataRef.to_ptr(value)
+# fn run_coro(f: CoroFunction):
+#     var sem = Semaphore()
+#     var value = ArgData()
+#     value["sem_ptr"] = sem.ptr_to_int()
 
-    seq_photon_thread_create_and_migrate_to_work_pool(__co_run, ptr)
+#     # @parameter
+#     fn co_run(arg: Dict[String, String]) raises -> String:
+#         var p = arg["sem_ptr"]
+#         var ptr = strtoi(p)
+#         f()
+#         var sem1 = Semaphore(ptr)
+#         _ = sem1.signal(1)
+#         return ""
 
-    _ = sem.wait(1)
-    sem.free()
+#     value.set_run(co_run)
+#     var ptr = ArgDataRef.to_ptr(value)
+
+#     seq_photon_thread_create_and_migrate_to_work_pool(__co_run, ptr)
+
+#     _ = sem.wait(1)
+#     sem.free()
 
 
 @value
@@ -766,25 +777,25 @@ struct LockfreeQueue:
 
     fn __moveinit__(inout self, owned existing: Self):
         self.ptr = existing.ptr
-        existing.ptr = c_void_pointer.get_null()
+        existing.ptr = c_void_pointer()
 
     fn free(owned self):
-        if self.ptr != c_void_pointer.get_null():
+        if self.ptr != c_void_pointer():
             seq_lockfree_queue_free(self.ptr)
 
-    fn push(self, data: Pointer[iovec]) -> Bool:
+    fn push(self, data: UnsafePointer[iovec]) -> Bool:
         return seq_lockfree_queue_push(self.ptr, data)
 
-    fn pop(self, data: Pointer[iovec]) -> Bool:
+    fn pop(self, data: UnsafePointer[iovec]) -> Bool:
         return seq_lockfree_queue_pop(self.ptr, data)
 
     fn push(self, s: String) -> Bool:
         var iv = iovec(s)
-        return self.push(Pointer[iovec].address_of(iv))
+        return self.push(UnsafePointer[iovec].address_of(iv))
 
     fn pop(self) -> Optional[String]:
         var iv = iovec()
-        var ok = self.pop(Pointer[iovec].address_of(iv))
+        var ok = self.pop(UnsafePointer[iovec].address_of(iv))
         if not ok:
             return None
         else:
@@ -793,18 +804,21 @@ struct LockfreeQueue:
             return s
 
 
-fn lockfree_queue_itf[name: StringLiteral]() -> Pointer[LockfreeQueue]:
+fn lockfree_queue_itf[name: StringLiteral]() -> UnsafePointer[LockfreeQueue]:
     var ptr = _get_global[
         "LockfreeQueue:" + name, _init_lockfree_queue, _destroy_lockfree_queue
     ]()
+    # return UnsafePointer[LockfreeQueue](address=int(ptr))
     return ptr.bitcast[LockfreeQueue]()
 
 
-fn _init_lockfree_queue(payload: Pointer[NoneType]) -> Pointer[NoneType]:
-    var ptr = Pointer[LockfreeQueue].alloc(1)
-    ptr[] = LockfreeQueue()
+fn _init_lockfree_queue(
+    payload: UnsafePointer[NoneType],
+) -> UnsafePointer[NoneType]:
+    var ptr = UnsafePointer[LockfreeQueue].alloc(1)
+    ptr.init_pointee_move(LockfreeQueue())
     return ptr.bitcast[NoneType]()
 
 
-fn _destroy_lockfree_queue(p: Pointer[NoneType]):
+fn _destroy_lockfree_queue(p: UnsafePointer[NoneType]):
     p.free()

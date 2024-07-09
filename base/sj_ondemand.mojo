@@ -38,7 +38,9 @@ struct OndemandValue:
     @always_inline
     fn str(self) -> String:
         var n: c_size_t = 0
-        var s = seq_simdjson_ondemand_string_v(self.p, Pointer[c_size_t].address_of(n))
+        var s = seq_simdjson_ondemand_string_v(
+            self.p, Pointer[c_size_t].address_of(n)
+        )
         return c_str_to_string(s, n)
 
     @always_inline
@@ -75,26 +77,30 @@ struct OndemandValue:
 
     @always_inline
     fn get_int(self, key: StringLiteral) -> Int:
-        return int(seq_simdjson_ondemand_get_int_v(
-            self.p, key.data()._as_scalar_pointer(), len(key)
-        ))
+        return int(
+            seq_simdjson_ondemand_get_int_v(
+                self.p, unsafe_ptr_as_scalar_pointer(key.unsafe_ptr()), len(key)
+            )
+        )
 
     @always_inline
     fn get_uint(self, key: StringLiteral) -> Int:
-        return int(seq_simdjson_ondemand_get_uint_v(
-            self.p, key.data()._as_scalar_pointer(), len(key)
-        ))
+        return int(
+            seq_simdjson_ondemand_get_uint_v(
+                self.p, unsafe_ptr_as_scalar_pointer(key.unsafe_ptr()), len(key)
+            )
+        )
 
     @always_inline
     fn get_float(self, key: StringLiteral) -> Float64:
         return seq_simdjson_ondemand_get_float_v(
-            self.p, key.data()._as_scalar_pointer(), len(key)
+            self.p, unsafe_ptr_as_scalar_pointer(key.unsafe_ptr()), len(key)
         )
 
     @always_inline
     fn get_bool(self, key: StringLiteral) -> Bool:
         return seq_simdjson_ondemand_get_bool_v(
-            self.p, key.data()._as_scalar_pointer(), len(key)
+            self.p, unsafe_ptr_as_scalar_pointer(key.unsafe_ptr()), len(key)
         )
 
     @always_inline
@@ -102,7 +108,7 @@ struct OndemandValue:
         var n: c_size_t = 0
         var s = seq_simdjson_ondemand_get_string_v(
             self.p,
-            key.data()._as_scalar_pointer(),
+            unsafe_ptr_as_scalar_pointer(key.unsafe_ptr()),
             len(key),
             Pointer[c_size_t].address_of(n),
         )
@@ -111,14 +117,14 @@ struct OndemandValue:
     @always_inline
     fn get_object(self, key: StringLiteral) -> OndemandObject:
         var p = seq_simdjson_ondemand_get_object_v(
-            self.p, key.data()._as_scalar_pointer(), len(key)
+            self.p, unsafe_ptr_as_scalar_pointer(key.unsafe_ptr()), len(key)
         )
         return OndemandObject(p)
 
     @always_inline
     fn get_array(self, key: StringLiteral) -> OndemandArray:
         var p = seq_simdjson_ondemand_get_array_v(
-            self.p, key.data()._as_scalar_pointer(), len(key)
+            self.p, unsafe_ptr_as_scalar_pointer(key.unsafe_ptr()), len(key)
         )
         return OndemandArray(p)
 
@@ -207,26 +213,30 @@ struct OndemandObject:
 
     @always_inline
     fn get_int(self, key: StringLiteral) -> Int:
-        return int(seq_simdjson_ondemand_get_int_o(
-            self.p, key.data()._as_scalar_pointer(), len(key)
-        ))
+        return int(
+            seq_simdjson_ondemand_get_int_o(
+                self.p, unsafe_ptr_as_scalar_pointer(key.unsafe_ptr()), len(key)
+            )
+        )
 
     @always_inline
     fn get_uint(self, key: StringLiteral) -> Int:
-        return int(seq_simdjson_ondemand_get_uint_o(
-            self.p, key.data()._as_scalar_pointer(), len(key)
-        ))
+        return int(
+            seq_simdjson_ondemand_get_uint_o(
+                self.p, unsafe_ptr_as_scalar_pointer(key.unsafe_ptr()), len(key)
+            )
+        )
 
     @always_inline
     fn get_float(self, key: StringLiteral) -> Float64:
         return seq_simdjson_ondemand_get_float_o(
-            self.p, key.data()._as_scalar_pointer(), len(key)
+            self.p, unsafe_ptr_as_scalar_pointer(key.unsafe_ptr()), len(key)
         )
 
     @always_inline
     fn get_bool(self, key: StringLiteral) -> Bool:
         return seq_simdjson_ondemand_get_bool_o(
-            self.p, key.data()._as_scalar_pointer(), len(key)
+            self.p, unsafe_ptr_as_scalar_pointer(key.unsafe_ptr()), len(key)
         )
 
     @always_inline
@@ -234,23 +244,26 @@ struct OndemandObject:
         var n: c_size_t = 0
         var s = seq_simdjson_ondemand_get_string_o(
             self.p,
-            key.data()._as_scalar_pointer(),
+            unsafe_ptr_as_scalar_pointer(key.unsafe_ptr()),
             len(key),
             Pointer[c_size_t].address_of(n),
         )
+        if n == 0:
+            return String("")
         return c_str_to_string(s, n)
+        # return String(s.bitcast[UInt8](), n)
 
     @always_inline
     fn get_object(self, key: StringLiteral) -> OndemandObject:
         var p = seq_simdjson_ondemand_get_object_o(
-            self.p, key.data()._as_scalar_pointer(), len(key)
+            self.p, unsafe_ptr_as_scalar_pointer(key.unsafe_ptr()), len(key)
         )
         return OndemandObject(p)
 
     @always_inline
     fn get_array(self, key: StringLiteral) -> OndemandArray:
         var p = seq_simdjson_ondemand_get_array_o(
-            self.p, key.data()._as_scalar_pointer(), len(key)
+            self.p, unsafe_ptr_as_scalar_pointer(key.unsafe_ptr()), len(key)
         )
         return OndemandArray(p)
 
@@ -364,26 +377,30 @@ struct OndemandDocument:
     @always_inline
     fn get_int(self, key: StringLiteral) -> Int:
         var v = seq_simdjson_ondemand_get_int_d(
-            self.doc, key.data()._as_scalar_pointer(), len(key)
+            self.doc, unsafe_ptr_as_scalar_pointer(key.unsafe_ptr()), len(key)
         )
         return int(v)
 
     @always_inline
     fn get_uint(self, key: StringLiteral) -> Int:
-        return int(seq_simdjson_ondemand_get_uint_d(
-            self.doc, key.data()._as_scalar_pointer(), len(key)
-        ))
+        return int(
+            seq_simdjson_ondemand_get_uint_d(
+                self.doc,
+                unsafe_ptr_as_scalar_pointer(key.unsafe_ptr()),
+                len(key),
+            )
+        )
 
     @always_inline
     fn get_float(self, key: StringLiteral) -> Float64:
         return seq_simdjson_ondemand_get_float_d(
-            self.doc, key.data()._as_scalar_pointer(), len(key)
+            self.doc, unsafe_ptr_as_scalar_pointer(key.unsafe_ptr()), len(key)
         )
 
     @always_inline
     fn get_bool(self, key: StringLiteral) -> Bool:
         return seq_simdjson_ondemand_get_bool_d(
-            self.doc, key.data()._as_scalar_pointer(), len(key)
+            self.doc, unsafe_ptr_as_scalar_pointer(key.unsafe_ptr()), len(key)
         )
 
     @always_inline
@@ -391,7 +408,7 @@ struct OndemandDocument:
         var n: c_size_t = 0
         var s = seq_simdjson_ondemand_get_string_d(
             self.doc,
-            key.data()._as_scalar_pointer(),
+            unsafe_ptr_as_scalar_pointer(key.unsafe_ptr()),
             len(key),
             Pointer[c_size_t].address_of(n),
         )
@@ -400,19 +417,22 @@ struct OndemandDocument:
     @always_inline
     fn get_object(self, key: StringLiteral) -> OndemandObject:
         var p = seq_simdjson_ondemand_get_object_d(
-            self.doc, key.data()._as_scalar_pointer(), len(key)
+            self.doc, unsafe_ptr_as_scalar_pointer(key.unsafe_ptr()), len(key)
         )
         return OndemandObject(p)
 
     @always_inline
     fn get_array(self, key: StringLiteral) -> OndemandArray:
         var p = seq_simdjson_ondemand_get_array_d(
-            self.doc, key.data()._as_scalar_pointer(), len(key)
+            self.doc, unsafe_ptr_as_scalar_pointer(key.unsafe_ptr()), len(key)
         )
         return OndemandArray(p)
 
     fn __repr__(self) -> String:
-        return "<OndemandDocument: padded_string={self._padded_string} doc={self._doc}>"
+        return (
+            "<OndemandDocument: padded_string={self._padded_string}"
+            " doc={self._doc}>"
+        )
 
 
 @value
@@ -429,25 +449,29 @@ struct OndemandParser:
         seq_simdjson_ondemand_parser_free(self.parser)
         # logd("OndemandParser.__del__ done")
 
-    @always_inline
-    fn parse(self, s: StringLiteral) -> OndemandDocument:
-        var padded_string = seq_simdjson_padded_string_new(
-            s.data()._as_scalar_pointer(), len(s)
-        )
-        var doc = seq_simdjson_ondemand_parser_parse(self.parser, padded_string)
-        return OndemandDocument(padded_string, doc)
+    # @always_inline
+    # fn parse(self, s: StringLiteral) -> OndemandDocument:
+    #     var s_ = String(s)
+    #     var padded_string = seq_simdjson_padded_string_new(
+    #         unsafe_ptr_as_scalar_pointer(s_.unsafe_ptr()), len(s_)
+    #     )
+    #     var doc = seq_simdjson_ondemand_parser_parse(self.parser, padded_string)
+    #     s_._strref_keepalive()
+    #     return OndemandDocument(padded_string, doc)
 
     @always_inline
     fn parse(self, s: StringRef) -> OndemandDocument:
         var padded_string = seq_simdjson_padded_string_new(
-            s.data._as_scalar_pointer(), len(s)
+            unsafe_ptr_as_scalar_pointer(s.unsafe_ptr()), len(s)
         )
         var doc = seq_simdjson_ondemand_parser_parse(self.parser, padded_string)
         return OndemandDocument(padded_string, doc)
 
     @always_inline
     fn parse(self, s: String) -> OndemandDocument:
-        var padded_string = seq_simdjson_padded_string_new(s._as_ptr()._as_scalar_pointer(), len(s))
+        var padded_string = seq_simdjson_padded_string_new(
+            unsafe_ptr_as_scalar_pointer(s.unsafe_ptr()), len(s)
+        )
         var doc = seq_simdjson_ondemand_parser_parse(self.parser, padded_string)
         return OndemandDocument(padded_string, doc)
 

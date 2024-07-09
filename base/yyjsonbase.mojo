@@ -8,7 +8,9 @@ from .c import *
 # SEQ_FUNC yyjson_doc *seq_yyjson_read(const char *dat,
 #                                           size_t len,
 #                                           yyjson_read_flag flg);
-fn seq_yyjson_read(dat: c_void_pointer, len: c_size_t, flg: Int) -> c_void_pointer:
+fn seq_yyjson_read(
+    dat: c_void_pointer, len: c_size_t, flg: Int
+) -> c_void_pointer:
     return external_call[
         "seq_yyjson_read", c_void_pointer, c_void_pointer, c_size_t, Int
     ](dat, len, flg)
@@ -16,17 +18,23 @@ fn seq_yyjson_read(dat: c_void_pointer, len: c_size_t, flg: Int) -> c_void_point
 
 # SEQ_FUNC yyjson_val *seq_yyjson_doc_get_root(yyjson_doc *doc);
 fn seq_yyjson_doc_get_root(doc: c_void_pointer) -> c_void_pointer:
-    return external_call["seq_yyjson_doc_get_root", c_void_pointer, c_void_pointer](doc)
+    return external_call[
+        "seq_yyjson_doc_get_root", c_void_pointer, c_void_pointer
+    ](doc)
 
 
 # EQ_FUNC size_t seq_yyjson_doc_get_read_size(yyjson_doc *doc);
 fn seq_yyjson_doc_get_read_size(doc: c_void_pointer) -> Int:
-    return external_call["seq_yyjson_doc_get_read_size", Int, c_void_pointer](doc)
+    return external_call["seq_yyjson_doc_get_read_size", Int, c_void_pointer](
+        doc
+    )
 
 
 # SEQ_FUNC size_t seq_yyjson_doc_get_val_count(yyjson_doc *doc);
 fn seq_yyjson_doc_get_val_count(doc: c_void_pointer) -> Int:
-    return external_call["seq_yyjson_doc_get_val_count", Int, c_void_pointer](doc)
+    return external_call["seq_yyjson_doc_get_val_count", Int, c_void_pointer](
+        doc
+    )
 
 
 # SEQ_FUNC void seq_yyjson_doc_free(yyjson_doc *doc);
@@ -55,7 +63,9 @@ fn seq_yyjson_obj_size(obj: c_void_pointer) -> Int:
 
 #     @warning This function takes a linear search time. */
 # SEQ_FUNC yyjson_val *seq_yyjson_obj_get(yyjson_val *obj, const char *key);
-fn seq_yyjson_obj_get(obj: c_void_pointer, key: c_char_pointer) -> c_void_pointer:
+fn seq_yyjson_obj_get(
+    obj: c_void_pointer, key: c_char_pointer
+) -> c_void_pointer:
     return external_call[
         "seq_yyjson_obj_get", c_void_pointer, c_void_pointer, c_char_pointer
     ](obj, key)
@@ -76,7 +86,11 @@ fn seq_yyjson_obj_getn(
     obj: c_void_pointer, key: c_char_pointer, key_len: c_size_t
 ) -> c_void_pointer:
     return external_call[
-        "seq_yyjson_obj_getn", c_void_pointer, c_void_pointer, c_char_pointer, c_size_t
+        "seq_yyjson_obj_getn",
+        c_void_pointer,
+        c_void_pointer,
+        c_char_pointer,
+        c_size_t,
     ](obj, key, key_len)
 
 
@@ -106,16 +120,18 @@ fn seq_yyjson_get_subtype(val: c_void_pointer) -> UInt8:
 #     "array", "object", "true", "false", "uint", "sint", "real", "unknown". */
 # SEQ_FUNC const char *seq_yyjson_get_type_desc(yyjson_val *val);
 fn seq_yyjson_get_type_desc(val: c_void_pointer) -> c_void_pointer:
-    return external_call["seq_yyjson_get_type_desc", c_void_pointer, c_void_pointer](
-        val
-    )
+    return external_call[
+        "seq_yyjson_get_type_desc", c_void_pointer, c_void_pointer
+    ](val)
 
 
 # /** Returns the content if the value is raw.
 #     Returns NULL if `val` is NULL or type is not raw. */
 # SEQ_FUNC const char *seq_yyjson_get_raw(yyjson_val *val);
 fn seq_yyjson_get_raw(val: c_void_pointer) -> c_void_pointer:
-    return external_call["seq_yyjson_get_raw", c_void_pointer, c_void_pointer](val)
+    return external_call["seq_yyjson_get_raw", c_void_pointer, c_void_pointer](
+        val
+    )
 
 
 # /** Returns the content if the value is bool.
@@ -160,7 +176,9 @@ fn seq_yyjson_get_real(val: c_void_pointer) -> Float64:
 #     Returns NULL if `val` is NULL or type is not string. */
 # SEQ_FUNC const char *seq_yyjson_get_str(yyjson_val *val);
 fn seq_yyjson_get_str(val: c_void_pointer) -> c_void_pointer:
-    return external_call["seq_yyjson_get_str", c_void_pointer, c_void_pointer](val)
+    return external_call["seq_yyjson_get_str", c_void_pointer, c_void_pointer](
+        val
+    )
 
 
 # /** Returns the content length (string length, array size, object size.
@@ -174,9 +192,9 @@ fn seq_yyjson_get_len(val: c_void_pointer) -> Int:
 #     Returns false if input is NULL or type is not string. */
 # SEQ_FUNC bool seq_yyjson_equals_str(yyjson_val *val, const char *str);
 fn seq_yyjson_equals_str(val: c_void_pointer, s: c_char_pointer) -> Bool:
-    return external_call["seq_yyjson_equals_str", Bool, c_void_pointer, c_char_pointer](
-        val, s
-    )
+    return external_call[
+        "seq_yyjson_equals_str", Bool, c_void_pointer, c_char_pointer
+    ](val, s)
 
 
 # /** Returns whether the JSON value is equals to a string.
@@ -199,9 +217,9 @@ fn seq_yyjson_equals_strn(
 #         if the object level is too deep. */
 # SEQ_FUNC bool seq_yyjson_equals(yyjson_val *lhs, yyjson_val *rhs);
 fn seq_yyjson_equals(lhs: c_void_pointer, rhs: c_void_pointer) -> Bool:
-    return external_call["seq_yyjson_equals", Bool, c_void_pointer, c_void_pointer](
-        lhs, rhs
-    )
+    return external_call[
+        "seq_yyjson_equals", Bool, c_void_pointer, c_void_pointer
+    ](lhs, rhs)
 
 
 # /** Set the value to raw.
@@ -279,9 +297,9 @@ fn seq_yyjson_arr_get(arr: c_void_pointer, idx: c_size_t) -> c_void_pointer:
 #     Returns NULL if `arr` is NULL/empty or type is not array. */
 # SEQ_FUNC yyjson_val *seq_yyjson_arr_get_first(yyjson_val *arr);
 fn seq_yyjson_arr_get_first(arr: c_void_pointer) -> c_void_pointer:
-    return external_call["seq_yyjson_arr_get_first", c_void_pointer, c_void_pointer](
-        arr
-    )
+    return external_call[
+        "seq_yyjson_arr_get_first", c_void_pointer, c_void_pointer
+    ](arr)
 
 
 # /** Returns the last element of this array.
@@ -290,7 +308,9 @@ fn seq_yyjson_arr_get_first(arr: c_void_pointer) -> c_void_pointer:
 #         For example: `[1,{},3]` is flat, `[1,[2],3]` is not flat.*/
 # SEQ_FUNC yyjson_val *seq_yyjson_arr_get_last(yyjson_val *arr);
 fn seq_yyjson_arr_get_last(arr: c_void_pointer) -> c_void_pointer:
-    return external_call["seq_yyjson_arr_get_last", c_void_pointer, c_void_pointer](arr)
+    return external_call[
+        "seq_yyjson_arr_get_last", c_void_pointer, c_void_pointer
+    ](arr)
 
 
 # /**
@@ -325,9 +345,9 @@ fn seq_yyjson_obj_iter_init(obj: c_void_pointer, iter: c_void_pointer) -> Bool:
 #  */
 # SEQ_FUNC yyjson_obj_iter seq_yyjson_obj_iter_with(yyjson_val *obj);
 fn seq_yyjson_obj_iter_with(obj: c_void_pointer) -> c_void_pointer:
-    return external_call["seq_yyjson_obj_iter_with", c_void_pointer, c_void_pointer](
-        obj
-    )
+    return external_call[
+        "seq_yyjson_obj_iter_with", c_void_pointer, c_void_pointer
+    ](obj)
 
 
 # /**
@@ -336,7 +356,9 @@ fn seq_yyjson_obj_iter_with(obj: c_void_pointer) -> c_void_pointer:
 #  */
 # SEQ_FUNC bool seq_yyjson_obj_iter_has_next(yyjson_obj_iter *iter);
 fn seq_yyjson_obj_iter_has_next(iter: c_void_pointer) -> Bool:
-    return external_call["seq_yyjson_obj_iter_has_next", Bool, c_void_pointer](iter)
+    return external_call["seq_yyjson_obj_iter_has_next", Bool, c_void_pointer](
+        iter
+    )
 
 
 # /**
@@ -345,9 +367,9 @@ fn seq_yyjson_obj_iter_has_next(iter: c_void_pointer) -> Bool:
 #  */
 # SEQ_FUNC yyjson_val *seq_yyjson_obj_iter_next(yyjson_obj_iter *iter);
 fn seq_yyjson_obj_iter_next(iter: c_void_pointer) -> c_void_pointer:
-    return external_call["seq_yyjson_obj_iter_next", c_void_pointer, c_void_pointer](
-        iter
-    )
+    return external_call[
+        "seq_yyjson_obj_iter_next", c_void_pointer, c_void_pointer
+    ](iter)
 
 
 # /**
@@ -356,9 +378,9 @@ fn seq_yyjson_obj_iter_next(iter: c_void_pointer) -> c_void_pointer:
 #  */
 # SEQ_FUNC yyjson_val *seq_yyjson_obj_iter_get_val(yyjson_val *key);
 fn seq_yyjson_obj_iter_get_val(key: c_void_pointer) -> c_void_pointer:
-    return external_call["seq_yyjson_obj_iter_get_val", c_void_pointer, c_void_pointer](
-        key
-    )
+    return external_call[
+        "seq_yyjson_obj_iter_get_val", c_void_pointer, c_void_pointer
+    ](key)
 
 
 # /**
@@ -380,9 +402,14 @@ fn seq_yyjson_obj_iter_get_val(key: c_void_pointer) -> c_void_pointer:
 #  */
 # SEQ_FUNC yyjson_val *seq_yyjson_obj_iter_get(yyjson_obj_iter *iter,
 #                                                   const char *key);
-fn seq_yyjson_obj_iter_get(iter: c_void_pointer, key: c_char_pointer) -> c_void_pointer:
+fn seq_yyjson_obj_iter_get(
+    iter: c_void_pointer, key: c_char_pointer
+) -> c_void_pointer:
     return external_call[
-        "seq_yyjson_obj_iter_get", c_void_pointer, c_void_pointer, c_char_pointer
+        "seq_yyjson_obj_iter_get",
+        c_void_pointer,
+        c_void_pointer,
+        c_char_pointer,
     ](iter, key)
 
 
@@ -421,16 +448,16 @@ fn seq_yyjson_obj_iter_getn(
 
 # SEQ_FUNC yyjson_val *seq_unsafe_yyjson_get_first(yyjson_val *ctn);
 fn seq_unsafe_yyjson_get_first(ctn: c_void_pointer) -> c_void_pointer:
-    return external_call["seq_unsafe_yyjson_get_first", c_void_pointer, c_void_pointer](
-        ctn
-    )
+    return external_call[
+        "seq_unsafe_yyjson_get_first", c_void_pointer, c_void_pointer
+    ](ctn)
 
 
 # SEQ_FUNC yyjson_val *seq_unsafe_yyjson_get_next(yyjson_val *val);
 fn seq_unsafe_yyjson_get_next(val: c_void_pointer) -> c_void_pointer:
-    return external_call["seq_unsafe_yyjson_get_next", c_void_pointer, c_void_pointer](
-        val
-    )
+    return external_call[
+        "seq_unsafe_yyjson_get_next", c_void_pointer, c_void_pointer
+    ](val)
 
 
 # SEQ_FUNC yyjson_obj_iter* yyjson_obj_iter_ptr_new();
@@ -440,7 +467,9 @@ fn seq_unsafe_yyjson_get_next(val: c_void_pointer) -> c_void_pointer:
 
 # SEQ_FUNC void yyjson_obj_iter_ptr_free(yyjson_obj_iter* iter_ptr);
 fn seq_yyjson_obj_iter_ptr_free(iter_ptr: c_void_pointer) -> None:
-    external_call["seq_yyjson_obj_iter_ptr_free", NoneType, c_void_pointer](iter_ptr)
+    external_call["seq_yyjson_obj_iter_ptr_free", NoneType, c_void_pointer](
+        iter_ptr
+    )
 
 
 # SEQ_FUNC void seq_yyjson_obj_foreach_test(yyjson_val *val);
@@ -449,7 +478,9 @@ fn seq_yyjson_obj_foreach_test(val: c_void_pointer) -> None:
 
 
 fn seq_yyjson_mut_doc_new(alc: c_void_pointer) -> c_void_pointer:
-    return external_call["seq_yyjson_mut_doc_new", c_void_pointer, c_void_pointer](alc)
+    return external_call[
+        "seq_yyjson_mut_doc_new", c_void_pointer, c_void_pointer
+    ](alc)
 
 
 # /*==============================================================================
@@ -491,16 +522,18 @@ fn seq_yyjson_mut_doc_new(alc: c_void_pointer) -> c_void_pointer:
 #     Returns NULL if `doc` is NULL. */
 # SEQ_FUNC yyjson_mut_val *seq_yyjson_mut_doc_get_root(yyjson_mut_doc *doc);
 fn seq_yyjson_mut_doc_get_root(doc: c_void_pointer) -> c_void_pointer:
-    return external_call["seq_yyjson_mut_doc_get_root", c_void_pointer, c_void_pointer](
-        doc
-    )
+    return external_call[
+        "seq_yyjson_mut_doc_get_root", c_void_pointer, c_void_pointer
+    ](doc)
 
 
 # /** Sets the root value of this JSON document.
 #     Pass NULL to clear root value of the document. */
 # SEQ_FUNC void seq_yyjson_mut_doc_set_root(yyjson_mut_doc *doc,
 #                                                yyjson_mut_val *root);
-fn seq_yyjson_mut_doc_set_root(doc: c_void_pointer, root: c_void_pointer) -> None:
+fn seq_yyjson_mut_doc_set_root(
+    doc: c_void_pointer, root: c_void_pointer
+) -> None:
     external_call[
         "seq_yyjson_mut_doc_set_root", NoneType, c_void_pointer, c_void_pointer
     ](doc, root)
@@ -630,7 +663,11 @@ fn seq_yyjson_mut_obj_add_null(
     doc: c_void_pointer, obj: c_void_pointer, key: c_char_pointer
 ) -> Bool:
     return external_call[
-        "seq_yyjson_mut_doc_free", Bool, c_void_pointer, c_void_pointer, c_char_pointer
+        "seq_yyjson_mut_doc_free",
+        Bool,
+        c_void_pointer,
+        c_void_pointer,
+        c_char_pointer,
     ](doc, obj, key)
 
 
@@ -754,7 +791,10 @@ fn seq_yyjson_mut_obj_add_real(
 #                                               const char *_key,
 #                                               const char *_val);
 fn seq_yyjson_mut_obj_add_str(
-    doc: c_void_pointer, obj: c_void_pointer, key: c_char_pointer, val: c_char_pointer
+    doc: c_void_pointer,
+    obj: c_void_pointer,
+    key: c_char_pointer,
+    val: c_char_pointer,
 ) -> Bool:
     return external_call[
         "seq_yyjson_mut_obj_add_str",
@@ -794,7 +834,10 @@ fn seq_yyjson_mut_obj_add_strn(
 #                                                  const char *_key,
 #                                                  const char *_val);
 fn seq_yyjson_mut_obj_add_strcpy(
-    doc: c_void_pointer, obj: c_void_pointer, key: c_char_pointer, val: c_char_pointer
+    doc: c_void_pointer,
+    obj: c_void_pointer,
+    key: c_char_pointer,
+    val: c_char_pointer,
 ) -> Bool:
     return external_call[
         "seq_yyjson_mut_obj_add_strcpy",
@@ -864,7 +907,10 @@ fn seq_yyjson_mut_obj_add_obj(
 #                                               const char *_key,
 #                                               yyjson_mut_val *_val);
 fn seq_yyjson_mut_obj_add_val(
-    doc: c_void_pointer, obj: c_void_pointer, key: c_char_pointer, val: c_void_pointer
+    doc: c_void_pointer,
+    obj: c_void_pointer,
+    key: c_char_pointer,
+    val: c_void_pointer,
 ) -> Bool:
     return external_call[
         "seq_yyjson_mut_obj_add_val",
@@ -906,7 +952,9 @@ fn seq_yyjson_mut_obj_add_val(
 #  */
 # SEQ_FUNC yyjson_mut_val *seq_yyjson_mut_arr(yyjson_mut_doc *doc);
 fn seq_yyjson_mut_arr(doc: c_void_pointer) -> c_void_pointer:
-    return external_call["seq_yyjson_mut_arr", c_void_pointer, c_void_pointer](doc)
+    return external_call["seq_yyjson_mut_arr", c_void_pointer, c_void_pointer](
+        doc
+    )
 
 
 # /**
@@ -1583,7 +1631,9 @@ fn seq_yyjson_mut_write(
 # /** Creates and returns a mutable object, returns NULL on error. */
 # SEQ_FUNC yyjson_mut_val *seq_yyjson_mut_obj(yyjson_mut_doc *doc);
 fn seq_yyjson_mut_obj(doc: c_void_pointer) -> c_void_pointer:
-    return external_call["seq_yyjson_mut_obj", c_void_pointer, c_void_pointer](doc)
+    return external_call["seq_yyjson_mut_obj", c_void_pointer, c_void_pointer](
+        doc
+    )
 
 
 # /**

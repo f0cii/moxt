@@ -70,7 +70,11 @@ struct HttpClient:
         logd("HttpClient.__init__")
         self._base_url = base_url
         self._method = method
-        self.ptr = seq_client_new(base_url._as_ptr()._as_scalar_pointer(), len(base_url), method)
+        self.ptr = seq_client_new(
+            unsafe_ptr_as_scalar_pointer(base_url.unsafe_ptr()),
+            len(base_url),
+            method,
+        )
         self._verbose = False
         logd("HttpClient.__init__ done")
 
@@ -79,17 +83,17 @@ struct HttpClient:
         self._base_url = existing._base_url
         self._method = existing._method
         self.ptr = seq_client_new(
-            self._base_url._as_ptr()._as_scalar_pointer(),
+            unsafe_ptr_as_scalar_pointer(self._base_url.unsafe_ptr()),
             len(self._base_url),
             self._method,
         )
         self._verbose = existing._verbose
-        existing.ptr = c_void_pointer.get_null()
+        existing.ptr = c_void_pointer()
         logd("HttpClient.__moveinit__ done")
 
     fn __del__(owned self):
         logd("HttpClient.__del__")
-        var NULL = c_void_pointer.get_null()
+        var NULL = c_void_pointer()
         if self.ptr != NULL:
             seq_client_free(self.ptr)
             self.ptr = NULL
@@ -104,7 +108,9 @@ struct HttpClient:
         inout headers: Headers,
         buff_size: Int = DEFAULT_BUFF_SIZE,
     ) -> HttpResponse:
-        var res = self.do_request(request_path, VERB_DELETE, headers, "", buff_size)
+        var res = self.do_request(
+            request_path, VERB_DELETE, headers, "", buff_size
+        )
         return res
 
     fn get(
@@ -113,7 +119,9 @@ struct HttpClient:
         inout headers: Headers,
         buff_size: Int = DEFAULT_BUFF_SIZE,
     ) -> HttpResponse:
-        var res = self.do_request(request_path, VERB_GET, headers, "", buff_size)
+        var res = self.do_request(
+            request_path, VERB_GET, headers, "", buff_size
+        )
         return res
 
     fn head(
@@ -123,7 +131,9 @@ struct HttpClient:
         inout headers: Headers,
         buff_size: Int = DEFAULT_BUFF_SIZE,
     ) -> HttpResponse:
-        var res = self.do_request(request_path, VERB_HEAD, headers, data, buff_size)
+        var res = self.do_request(
+            request_path, VERB_HEAD, headers, data, buff_size
+        )
         return res
 
     fn post(
@@ -133,7 +143,9 @@ struct HttpClient:
         inout headers: Headers,
         buff_size: Int = DEFAULT_BUFF_SIZE,
     ) -> HttpResponse:
-        var res = self.do_request(request_path, VERB_POST, headers, data, buff_size)
+        var res = self.do_request(
+            request_path, VERB_POST, headers, data, buff_size
+        )
         return res
 
     fn put(
@@ -143,7 +155,9 @@ struct HttpClient:
         inout headers: Headers,
         buff_size: Int = DEFAULT_BUFF_SIZE,
     ) -> HttpResponse:
-        var res = self.do_request(request_path, VERB_PUT, headers, data, buff_size)
+        var res = self.do_request(
+            request_path, VERB_PUT, headers, data, buff_size
+        )
         return res
 
     fn do_request(
@@ -156,18 +170,18 @@ struct HttpClient:
     ) -> HttpResponse:
         var n: Int = 0
         headers["User-Agent"] = "MOXT/1.0.0"
-        var buff = Pointer[UInt8].alloc(buff_size)
+        var buff = UnsafePointer[UInt8].alloc(buff_size)
         var status = seq_cclient_do_request(
             self.ptr,
-            path._as_ptr()._as_scalar_pointer(),
+            unsafe_ptr_as_scalar_pointer(path.unsafe_ptr()),
             len(path),
             verb,
             headers.ptr,
-            body._as_ptr()._as_scalar_pointer(),
+            unsafe_ptr_as_scalar_pointer(body.unsafe_ptr()),
             len(body),
             buff,
             buff_size,
-            Pointer[Int].address_of(n),
+            UnsafePointer[Int].address_of(n),
             self._verbose,
         )
 

@@ -30,7 +30,7 @@ from trade.platform import Platform
 fn test_c_str() raises:
     var s = String("100000001")
     var c_str = to_char_ptr(s)
-    assert_true(c_str != Pointer[c_char].get_null())
+    assert_true(c_str != UnsafePointer[c_char]())
 
 
 fn test_decimal_places() raises:
@@ -132,18 +132,19 @@ fn test_sonic_raw() raises:
     var doc = seq_sonic_json_document_new()
     var alloc = seq_sonic_json_document_get_allocator(doc)
     seq_sonic_json_document_set_object(doc)
-    var key = "a"
+    var key = String("a")
     var value = String("12345")
-    seq_sonic_json_document_add_string(doc, alloc, key.data()._as_scalar_pointer(), len(key), value._as_ptr()._as_scalar_pointer(), len(value))
+    seq_sonic_json_document_add_string(doc, alloc, unsafe_ptr_as_scalar_pointer(key.unsafe_ptr()), len(key), unsafe_ptr_as_scalar_pointer(value.unsafe_ptr()), len(value))
     
-    var result = Pointer[c_schar].alloc(1024)
+    var result = UnsafePointer[c_schar].alloc(1024)
     var n = seq_sonic_json_document_to_string(doc, result)
     var result_str = c_str_to_string(result, n)
     result.free()
     assert_equal(result_str, '{"a":"12345"}')
     seq_sonic_json_document_free(doc)
 
-    _ = value ^
+    key._strref_keepalive()
+    value._strref_keepalive()
 
 
 fn test_sonic() raises:
@@ -203,7 +204,7 @@ fn test_order_info() raises:
 
 
 fn test_base() raises:
-    var s = '{"retCode":1001,"retMsg":"OK","result":{"category":"linear","list":[],"nextPageCursor":""},"retExtInfo":{},"time":1696236288675}'
+    var s = String('{"retCode":1001,"retMsg":"OK","result":{"category":"linear","list":[],"nextPageCursor":""},"retExtInfo":{},"time":1696236288675}')
     var op = OndemandParser(1000 * 1000)
     var doc = op.parse(s)
 
@@ -230,7 +231,7 @@ fn test_base() raises:
 
 
 fn test_parse_order() raises:
-    var s = '{"topic":"order","id":"0305b86c-e2ac-437d-89dc-3caff6c13c9e","creationTime":1702776926306,"data":[{"avgPrice":"","blockTradeId":"","cancelType":"UNKNOWN","category":"linear","closeOnTrigger":false,"createdTime":"1702776926299","cumExecFee":"0","cumExecQty":"0","cumExecValue":"0","leavesQty":"0.01","leavesValue":"100","orderId":"cf7a63a5-4c78-40f5-be9e-393645bb7339","orderIv":"","isLeverage":"","lastPriceOnCreated":"42184.00","orderStatus":"New","orderLinkId":"","orderType":"Limit","positionIdx":1,"price":"10000.00","qty":"0.01","reduceOnly":false,"rejectReason":"EC_NoError","side":"Buy","slTriggerBy":"UNKNOWN","stopLoss":"0.00","stopOrderType":"UNKNOWN","symbol":"BTCUSDT","takeProfit":"0.00","timeInForce":"GTC","tpTriggerBy":"UNKNOWN","triggerBy":"UNKNOWN","triggerDirection":0,"triggerPrice":"0.00","updatedTime":"1702776926303","placeType":"","smpType":"None","smpGroup":0,"smpOrderId":"","tpslMode":"UNKNOWN","createType":"CreateByUser","tpLimitPrice":"","slLimitPrice":""}]}'
+    var s = String('{"topic":"order","id":"0305b86c-e2ac-437d-89dc-3caff6c13c9e","creationTime":1702776926306,"data":[{"avgPrice":"","blockTradeId":"","cancelType":"UNKNOWN","category":"linear","closeOnTrigger":false,"createdTime":"1702776926299","cumExecFee":"0","cumExecQty":"0","cumExecValue":"0","leavesQty":"0.01","leavesValue":"100","orderId":"cf7a63a5-4c78-40f5-be9e-393645bb7339","orderIv":"","isLeverage":"","lastPriceOnCreated":"42184.00","orderStatus":"New","orderLinkId":"","orderType":"Limit","positionIdx":1,"price":"10000.00","qty":"0.01","reduceOnly":false,"rejectReason":"EC_NoError","side":"Buy","slTriggerBy":"UNKNOWN","stopLoss":"0.00","stopOrderType":"UNKNOWN","symbol":"BTCUSDT","takeProfit":"0.00","timeInForce":"GTC","tpTriggerBy":"UNKNOWN","triggerBy":"UNKNOWN","triggerDirection":0,"triggerPrice":"0.00","updatedTime":"1702776926303","placeType":"","smpType":"None","smpGroup":0,"smpOrderId":"","tpslMode":"UNKNOWN","createType":"CreateByUser","tpLimitPrice":"","slLimitPrice":""}]}')
     var op = OndemandParser(1000 * 1000)
     var doc = op.parse(s)
 
@@ -294,7 +295,7 @@ fn test_parse_order() raises:
 
 
 fn test_parse_position() raises:
-    var s = '{"topic":"position","id":"d890e61f-141f-4994-a26d-eafc002ac342","creationTime":1702780274788,"data":[{"bustPrice":"0.10","category":"linear","createdTime":"1682125794703","cumRealisedPnl":"849.94008886","entryPrice":"42182.55","leverage":"1","liqPrice":"","markPrice":"42056.10","positionBalance":"846.18","positionIdx":1,"positionMM":"0.00001","positionIM":"8.43651","positionStatus":"Normal","positionValue":"843.651","riskId":1,"riskLimitValue":"2000000","side":"Buy","size":"0.02","stopLoss":"0.00","symbol":"BTCUSDT","takeProfit":"0.00","tpslMode":"Full","tradeMode":0,"autoAddMargin":0,"trailingStop":"0.00","unrealisedPnl":"-2.529","updatedTime":"1702780274785","adlRankIndicator":2,"seq":8793822126,"isReduceOnly":false,"mmrSysUpdateTime":"","leverageSysUpdatedTime":""},{"bustPrice":"0.00","category":"linear","createdTime":"1682125794703","cumRealisedPnl":"-60.88336213","entryPrice":"0","leverage":"1","liqPrice":"","markPrice":"42056.10","positionBalance":"0","positionIdx":2,"positionMM":"0","positionIM":"0","positionStatus":"Normal","positionValue":"0","riskId":1,"riskLimitValue":"2000000","side":"None","size":"0","stopLoss":"0.00","symbol":"BTCUSDT","takeProfit":"0.00","tpslMode":"Full","tradeMode":0,"autoAddMargin":0,"trailingStop":"0.00","unrealisedPnl":"0","updatedTime":"1702780274785","adlRankIndicator":0,"seq":8793673384,"isReduceOnly":false,"mmrSysUpdateTime":"","leverageSysUpdatedTime":""}]}'
+    var s = String('{"topic":"position","id":"d890e61f-141f-4994-a26d-eafc002ac342","creationTime":1702780274788,"data":[{"bustPrice":"0.10","category":"linear","createdTime":"1682125794703","cumRealisedPnl":"849.94008886","entryPrice":"42182.55","leverage":"1","liqPrice":"","markPrice":"42056.10","positionBalance":"846.18","positionIdx":1,"positionMM":"0.00001","positionIM":"8.43651","positionStatus":"Normal","positionValue":"843.651","riskId":1,"riskLimitValue":"2000000","side":"Buy","size":"0.02","stopLoss":"0.00","symbol":"BTCUSDT","takeProfit":"0.00","tpslMode":"Full","tradeMode":0,"autoAddMargin":0,"trailingStop":"0.00","unrealisedPnl":"-2.529","updatedTime":"1702780274785","adlRankIndicator":2,"seq":8793822126,"isReduceOnly":false,"mmrSysUpdateTime":"","leverageSysUpdatedTime":""},{"bustPrice":"0.00","category":"linear","createdTime":"1682125794703","cumRealisedPnl":"-60.88336213","entryPrice":"0","leverage":"1","liqPrice":"","markPrice":"42056.10","positionBalance":"0","positionIdx":2,"positionMM":"0","positionIM":"0","positionStatus":"Normal","positionValue":"0","riskId":1,"riskLimitValue":"2000000","side":"None","size":"0","stopLoss":"0.00","symbol":"BTCUSDT","takeProfit":"0.00","tpslMode":"Full","tradeMode":0,"autoAddMargin":0,"trailingStop":"0.00","unrealisedPnl":"0","updatedTime":"1702780274785","adlRankIndicator":0,"seq":8793673384,"isReduceOnly":false,"mmrSysUpdateTime":"","leverageSysUpdatedTime":""}]}')
     var op = OndemandParser(1000 * 1000)
     var doc = op.parse(s)
 
@@ -364,7 +365,7 @@ fn test_parse_position() raises:
 
 
 fn test_parse_orderbook() raises:
-    var s = '{"topic":"orderbook.1.BTCUSDT","type":"snapshot","ts":1702645020909,"data":{"s":"BTCUSDT","b":[["42663.50","0.910"]],"a":[["42663.60","11.446"]],"u":2768099,"seq":108881526829},"cts":1702645020906}'
+    var s = String('{"topic":"orderbook.1.BTCUSDT","type":"snapshot","ts":1702645020909,"data":{"s":"BTCUSDT","b":[["42663.50","0.910"]],"a":[["42663.60","11.446"]],"u":2768099,"seq":108881526829},"cts":1702645020906}')
     var parser = DomParser(1000 * 100)
     var doc = parser.parse(s)
 
@@ -456,7 +457,7 @@ fn test_platform() raises:
 fn test_orderbook() raises:
     # var s = '{"topic":"orderbook.1.BTCUSDT","type":"delta","ts":1703836880546,"data":{"s":"BTCUSDT","b":[],"a":[["42356.10","51.549"]],"u":327868,"seq":8817611928},"cts":1703836880544}'
     # var s = '{"success":true,"ret_msg":"pong","conn_id":"d87b8332-6029-4e42-93e2-103e65c35517","req_id":"8_Abvtu2BNj5OKB_Wye_l","op":"ping"}'
-    var s = '{"topic":"orderbook.1.BTCUSDT","type":"delta","ts":1703838824626,"data":{"s":"BTCUSDT","b":[["42440.40","90.668"]],"a":[],"u":329020,"seq":8817654104},"cts":1703838824623}'
+    var s = String('{"topic":"orderbook.1.BTCUSDT","type":"delta","ts":1703838824626,"data":{"s":"BTCUSDT","b":[["42440.40","90.668"]],"a":[],"u":329020,"seq":8817654104},"cts":1703838824623}')
     var parser = DomParser(100 * 1024)
     var doc = parser.parse(s)
     var topic = doc.get_str("topic")
@@ -466,7 +467,7 @@ fn test_orderbook() raises:
 
 
 fn test_parse_orderbook_bids() raises:
-    var s = '{"topic":"orderbook.1.BTCUSDT","type":"delta","ts":1703838824626,"data":{"s":"BTCUSDT","b":[["42440.40","90.668"]],"a":[],"u":329020,"seq":8817654104},"cts":1703838824623}'
+    var s = String('{"topic":"orderbook.1.BTCUSDT","type":"delta","ts":1703838824626,"data":{"s":"BTCUSDT","b":[["42440.40","90.668"]],"a":[],"u":329020,"seq":8817654104},"cts":1703838824623}')
     var dom_parser = DomParser(1000 * 100)
     var doc = dom_parser.parse(s)
 
@@ -510,6 +511,7 @@ fn test_parse_orderbook_bids() raises:
 
     _ = doc ^
     _ = dom_parser ^
+    _ = s ^
 
     assert_equal(len(orderbook.asks), 0)
     assert_equal(len(orderbook.bids), 1)
@@ -526,14 +528,14 @@ fn test_ti() raises:
             break
         
         # var info_ = info.value[]
-        var info_ = move_from_pointee(info)
-        var input_names = info_.input_names()
+        # var info_ = move_from_pointee(info)
+        var input_names = info[].input_names()
         # var input_names_str = list_to_str(input_names)
         # logi("input_names_str=" + input_names_str)
-        var option_names = info_.option_names()
+        var option_names = info[].option_names()
         # var option_names_str = list_to_str(option_names)
         # logi("option_names_str=" + option_names_str)
-        var output_names = info_.output_names()
+        var output_names = info[].output_names()
         # var output_names_str = list_to_str(output_names)
         # logi("output_names_str=" + output_names_str)
         info = seq_ti_get_next_indicator(info)
@@ -570,34 +572,34 @@ fn test_ti() raises:
 
 fn test_ti_call() raises:
     var s = StringRef("sma")
-    var info = seq_ti_find_indicator(s.data._as_scalar_pointer())
+    var info = seq_ti_find_indicator(unsafe_ptr_as_scalar_pointer(s.unsafe_ptr()))
     assert_equal(seq_ti_is_valid_indicator(info), True)
 
     var input_length: c_int = 10
 
     var data_in = Pointer[Float64].alloc(int(input_length))
-    data_in.store(0, 5)
-    data_in.store(1, 8)
-    data_in.store(2, 12)
-    data_in.store(3, 11)
-    data_in.store(4, 9)
-    data_in.store(5, 8)
-    data_in.store(6, 7)
-    data_in.store(7, 10)
-    data_in.store(8, 11)
-    data_in.store(9, 13)
+    data_in[0] = 5
+    data_in[1] = 8
+    data_in[2] = 12
+    data_in[3] = 11
+    data_in[4] = 9
+    data_in[5] = 8
+    data_in[6] = 7
+    data_in[7] = 10
+    data_in[8] = 11
+    data_in[9] = 13
     var options = Pointer[Float64].alloc(1)
-    options.store(0, 3)
+    options[0] = 3
     
     var inputs = Pointer[Pointer[Float64]].alloc(1)
-    inputs.store(0, data_in)
+    inputs[0] = data_in
     
     var start = seq_ti_indicator_start(info, options)
     var output_length = input_length - start
 
     var outputs = Pointer[Pointer[Float64]].alloc(1)
     var data_out = Pointer[Float64].alloc(int(output_length))
-    outputs.store(0, data_out)
+    outputs[0] = data_out
     var ok = seq_ti_indicator_run(info, input_length, inputs, options, outputs)
     assert_equal(ok, True)
 
@@ -615,28 +617,28 @@ fn test_ti_call_at_index() raises:
     var input_length: c_int = 10
 
     var data_in = Pointer[Float64].alloc(int(input_length))
-    data_in.store(0, 5)
-    data_in.store(1, 8)
-    data_in.store(2, 12)
-    data_in.store(3, 11)
-    data_in.store(4, 9)
-    data_in.store(5, 8)
-    data_in.store(6, 7)
-    data_in.store(7, 10)
-    data_in.store(8, 11)
-    data_in.store(9, 13)
+    data_in[0] = 5
+    data_in[1] = 8
+    data_in[2] = 12
+    data_in[3] = 11
+    data_in[4] = 9
+    data_in[5] = 8
+    data_in[6] = 7
+    data_in[7] = 10
+    data_in[8] = 11
+    data_in[9] = 13
     var options = Pointer[Float64].alloc(1)
-    options.store(0, 3)
+    options[0] = 3
     
     var inputs = Pointer[Pointer[Float64]].alloc(1)
-    inputs.store(0, data_in)
+    inputs[0] = data_in
     
     var start = seq_ti_indicator_start(info, options)
     var output_length = input_length - start
 
     var outputs = Pointer[Pointer[Float64]].alloc(1)
     var data_out = Pointer[Float64].alloc(int(output_length))
-    outputs.store(0, data_out)
+    outputs[0] = data_out
     var ok = seq_ti_indicator_run(info, input_length, inputs, options, outputs)
     assert_equal(ok, True)
 
@@ -670,7 +672,7 @@ fn test_ti_call_at_index2() raises:
     assert_equal(len(options), 1)
     
     var inputs = Pointer[UnsafePointer[Float64]].alloc(1)
-    inputs.store(0, data_in.data)
+    inputs[0] = data_in.data
     
     var start = seq_ti_indicator_start(info, options.data)
     var output_length = int(input_length - start)
@@ -678,7 +680,7 @@ fn test_ti_call_at_index2() raises:
     var outputs = Pointer[UnsafePointer[Float64]].alloc(1)
     var data_out = List[Float64](capacity=output_length)
     data_out.resize(output_length, 0.0)
-    outputs.store(0, data_out.data)
+    outputs[0] = data_out.data
     var ok = seq_ti_indicator_run(info, input_length, inputs, options.data, outputs)
     assert_equal(ok, True)
 
@@ -719,11 +721,11 @@ fn test_queue() raises:
     q.enqueue(101)
     q.enqueue(102)
     var a100 = q.dequeue()
-    assert_equal(a100.value()[], 100)
+    assert_equal(a100.value(), 100)
     var a101 = q.dequeue()
-    assert_equal(a101.value()[], 101)
+    assert_equal(a101.value(), 101)
     var a102 = q.dequeue()
-    assert_equal(a102.value()[], 102)
+    assert_equal(a102.value(), 102)
     var a103 = q.dequeue()
     assert_equal(a103.__bool__(), False)
 
@@ -742,6 +744,15 @@ fn test_local_position() raises:
     lp.add(100, 3000)
 
 
+fn test_atomic_bool() raises:
+    var b = AtomicBool(False)
+    var b_value = b.load()
+    assert_true(b_value == False)
+    b.store(True)
+    b_value = b.load()
+    assert_true(b_value == True)
+
+
 fn run_forever():
     seq_photon_join_current_vcpu_into_workpool(seq_photon_work_pool())
 
@@ -749,7 +760,7 @@ fn run_forever():
 fn main() raises:
     _ = seq_ct_init()
     var ret = seq_photon_init_default()
-    seq_init_photon_work_pool(1)
+    # seq_init_photon_work_pool(1)
 
     var n = 1
     n = 1
@@ -759,55 +770,52 @@ fn main() raises:
     else:
         seq_init_log(LOG_LEVEL_INF, "")
     
-    # seq_test_sonic_cpp()
-    # logi("seq_test_sonic_cpp_wrap")
-    # seq_test_sonic_cpp_wrap()
-    # logi("seq_test_sonic_cpp_wrap done")
+    seq_test_sonic_cpp()
+    logi("seq_test_sonic_cpp_wrap")
+    seq_test_sonic_cpp_wrap()
+    logi("seq_test_sonic_cpp_wrap done")
 
-    # test_platform()
-    # test_lockfree_queue()
-    # seq_test_ti()
-    # seq_test_ti1()
+    test_platform()
     
-    # test_ti()
-    # test_ti3()
-    # test_ti_call()
-    # test_ti_call_at_index()
-    # test_ti_call_at_index2()
+    test_ti()
+    test_ti_call()
+    test_ti_call_at_index()
+    test_ti_call_at_index2()
     test_fixed()
-    # test_queue()
+    test_queue()
     # test_httpget()
+    test_atomic_bool()
 
 
     for i in range (n):
         # test_str()
-        # test_c_str()
-        # test_decimal_places()
-        # test_fixed()
-        # test_hmac_sha256_b64()
+        test_c_str()
+        test_decimal_places()
+        test_fixed()
+        test_hmac_sha256_b64()
         # test_lockfree_queue()
 
-        # test_str_cache()
-        # test_query_values()
-        # test_sonic_raw()
-        # test_sonic()
-        # test_subscribe_message()
-        # test_base()
-        # test_order_info()
+        test_str_cache()
+        test_query_values()
+        test_sonic_raw()
+        test_sonic()
+        test_subscribe_message()
+        test_base()
+        test_order_info()
 
-        # test_parse_order()
-        # test_parse_position()
-        # test_parse_orderbook()
-        # test_app_config()
-        # test_orderbook()
-        # test_parse_orderbook_bids()
-        # # test_ti()
-        # test_ti_call()
-        # test_ti_call_at_index()
-        # test_ti_call_at_index2()
+        test_parse_order()
+        test_parse_position()
+        test_parse_orderbook()
+        test_app_config()
+        test_orderbook()
+        test_parse_orderbook_bids()
+        # test_ti()
+        test_ti_call()
+        test_ti_call_at_index()
+        test_ti_call_at_index2()
         # test_ti_indicator()
-        # test_sma()
-        pass
+        test_sma()
+        test_atomic_bool()
 
     logi("Done!!!")
     # run_forever()

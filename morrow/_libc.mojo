@@ -65,7 +65,7 @@ fn c_gettimeofday() -> CTimeval:
 @always_inline
 fn c_localtime(owned tv_sec: Int) -> CTm:
     var p_tv_sec = Pointer[Int].address_of(tv_sec)
-    var tm = external_call["localtime", Pointer[CTm], Pointer[Int]](p_tv_sec).load()
+    var tm = external_call["localtime", Pointer[CTm], Pointer[Int]](p_tv_sec)[0]
     return tm
 
 
@@ -82,7 +82,7 @@ fn c_strptime(time_str: String, time_format: String) -> CTm:
 @always_inline
 fn c_gmtime(owned tv_sec: Int) -> CTm:
     var p_tv_sec = Pointer[Int].address_of(tv_sec)
-    var tm = external_call["gmtime", Pointer[CTm], Pointer[Int]](p_tv_sec).load()
+    var tm = external_call["gmtime", Pointer[CTm], Pointer[Int]](p_tv_sec)[0]
     return tm
 
 
@@ -90,5 +90,5 @@ fn to_char_ptr(s: String) -> Pointer[c_char]:
     """Only ASCII-based strings."""
     var ptr = Pointer[c_char]().alloc(len(s))
     for i in range(len(s)):
-        ptr.store(i, ord(s[i]))
+        ptr[i] = ord(s[i])
     return ptr

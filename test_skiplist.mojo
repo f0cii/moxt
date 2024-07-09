@@ -7,7 +7,9 @@ fn test_skiplist() raises:
     var asks = seq_skiplist_new(True)
     _ = seq_skiplist_insert(asks, Fixed(3000).value(), Fixed(100).value(), True)
     _ = seq_skiplist_insert(asks, Fixed(3005).value(), Fixed(200).value(), True)
-    _ = seq_skiplist_insert(asks, Fixed(2700.1).value(), Fixed(200).value(), True)
+    _ = seq_skiplist_insert(
+        asks, Fixed(2700.1).value(), Fixed(200).value(), True
+    )
     seq_skiplist_dump(asks)
 
     var node = seq_skiplist_begin(asks)
@@ -16,7 +18,9 @@ fn test_skiplist() raises:
         var key: Int64 = 0
         var value: Int64 = 0
         seq_skiplist_node_value(
-            node, Pointer[Int64].address_of(key), Pointer[Int64].address_of(value)
+            node,
+            Pointer[Int64].address_of(key),
+            Pointer[Int64].address_of(value),
         )
         var key_ = Fixed.from_value(key)
         var value_ = Fixed.from_value(value)

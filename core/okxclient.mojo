@@ -9,13 +9,13 @@ from base.httpclient import (
 
 from base.c import *
 from base.mo import *
-import .okxconsts as c
+import . okxconsts as c
 from .okxconsts import GET, POST
 from morrow.morrow import Morrow
 from .sign import hmac_sha256_b64
 
 
-def get_timestamp() -> String:
+fn get_timestamp() raises -> String:
     # var now = Morrow.now()
     var now = Morrow.utcnow()
     var t = now.isoformat("T", "milliseconds")
@@ -24,7 +24,7 @@ def get_timestamp() -> String:
     return t + "Z"
 
 
-def pre_hash(
+fn pre_hash(
     timestamp: String,
     method: String,
     request_path: String,
@@ -37,7 +37,7 @@ def pre_hash(
     return timestamp + method + request_path + body
 
 
-def get_header(
+fn get_header(
     api_key: String,
     sign: String,
     timestamp: String,
@@ -54,16 +54,16 @@ def get_header(
     headers["x-simulated-trading"] = flag
     # if debug:
     #     print('header: ', header)
-    return headers ^
+    return headers^
 
 
-def get_header_no_sign(flag: String, debug: Bool = True) -> Headers:
+fn get_header_no_sign(flag: String, debug: Bool = True) -> Headers:
     var headers = Headers()
     headers[c.CONTENT_TYPE] = c.APPLICATION_JSON
     headers["x-simulated-trading"] = flag
     # if debug:
     #     print('headers: ', headers)
-    return headers ^
+    return headers^
 
 
 struct OkxClient:
@@ -97,14 +97,18 @@ struct OkxClient:
         self.client = HttpClient(base_url)
 
     # Get Positions
-    fn get_position_risk(self, instType: StringLiteral = "") raises -> HttpResponse:
+    fn get_position_risk(
+        self, instType: StringLiteral = ""
+    ) raises -> HttpResponse:
         var params = QueryParams()
         if instType:
             params["instType"] = instType
         return self._request_with_params(GET, c.POSITION_RISK, params)
 
     # Get Balance
-    fn get_account_balance(self, ccy: StringLiteral = "") raises -> HttpResponse:
+    fn get_account_balance(
+        self, ccy: StringLiteral = ""
+    ) raises -> HttpResponse:
         var params = QueryParams()
         if ccy:
             params["ccy"] = ccy
@@ -258,7 +262,10 @@ struct OkxClient:
 
     # Get the maximum loan of isolated MARGIN
     fn get_max_loan(
-        self, instId: StringLiteral, mgnMode: StringLiteral, mgnCcy: StringLiteral
+        self,
+        instId: StringLiteral,
+        mgnMode: StringLiteral,
+        mgnCcy: StringLiteral,
     ) raises -> HttpResponse:
         var params = QueryParams()
         params["instId"] = instId
@@ -309,7 +316,7 @@ struct OkxClient:
         return self._request_with_params(GET, c.INTEREST_RATE, params)
 
     # Set Greeks (PA/BS)
-    def set_greeks(self, greeksType: StringLiteral) -> HttpResponse:
+    fn set_greeks(self, greeksType: StringLiteral) raises -> HttpResponse:
         var params = QueryParams()
         params["greeksType"] = greeksType
         return self._request_with_params(POST, c.SET_GREEKS, params)
@@ -445,7 +452,9 @@ struct OkxClient:
         params["after"] = after
         params["before"] = before
         params["limit"] = limit
-        return self._request_with_params(GET, c.GET_VIP_INTEREST_ACCRUED_DATA, params)
+        return self._request_with_params(
+            GET, c.GET_VIP_INTEREST_ACCRUED_DATA, params
+        )
 
     # - Get VIP interest deducted data
     fn get_VIP_interest_deducted_data(
@@ -462,7 +471,9 @@ struct OkxClient:
         params["after"] = after
         params["before"] = before
         params["limit"] = limit
-        return self._request_with_params(GET, c.GET_VIP_INTEREST_DEDUCTED_DATA, params)
+        return self._request_with_params(
+            GET, c.GET_VIP_INTEREST_DEDUCTED_DATA, params
+        )
 
     # - Get VIP loan order list
     fn get_VIP_loan_order_list(
@@ -498,10 +509,14 @@ struct OkxClient:
         params["after"] = after
         params["before"] = before
         params["limit"] = limit
-        return self._request_with_params(GET, c.GET_VIP_LOAN_ORDER_DETAIL, params)
+        return self._request_with_params(
+            GET, c.GET_VIP_LOAN_ORDER_DETAIL, params
+        )
 
     # - Set risk offset type
-    fn set_risk_offset_typel(self, type_: StringLiteral = "") raises -> HttpResponse:
+    fn set_risk_offset_typel(
+        self, type_: StringLiteral = ""
+    ) raises -> HttpResponse:
         var params = QueryParams()
         params["type"] = type_
         return self._request_with_params(POST, c.SET_RISK_OFFSET_TYPE, params)
@@ -527,9 +542,9 @@ struct OkxClient:
         param["uly"] = "ETH-USDT"
         var res = self._request_with_params(c.GET, path, param, "")
         print("-----------------")
-        print(res.status)
+        print(res.status_code)
         # print(res.get[1, String]())
-        var ss = res.body  # res.get[1, StringRef]()
+        var ss = res.text  # res.get[1, StringRef]()
         print(ss)
 
     fn _request(
@@ -580,7 +595,9 @@ struct OkxClient:
         if method == c.GET:
             response = self.client.get(request_path_, headers=headers)
         elif method == c.POST:
-            response = self.client.post(request_path_, data=body, headers=headers)
+            response = self.client.post(
+                request_path_, data=body, headers=headers
+            )
         else:
             response = HttpResponse(200, StringRef(""))
         return response
@@ -602,7 +619,7 @@ struct OkxClient:
     ) raises -> HttpResponse:
         return self._request(method, request_path, params, body)
 
-    # def _get_timestamp(self) raises -> HttpResponse:
+    # fn _get_timestamp(self) raises -> HttpResponse:
     #     request_path = c.API_URL + c.SERVER_TIMESTAMP_URL
     #     response = self.client.get(request_path)
     #     if response.status_code == 200:

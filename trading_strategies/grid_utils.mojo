@@ -1,11 +1,8 @@
-import math
 from ylstdlib import *
 from collections.list import List
 from base.fixed import Fixed
 from base.mo import *
 from trade.types import *
-
-# from ylstdlib import MutLifetime, i1
 
 
 fn append_string_to_list_if_not_empty(inout l: List[String], s: String):
@@ -252,7 +249,7 @@ struct GridInfo(Stringable):
 
     fn get_price_by_level(self, level: Int) -> Fixed:
         var offset = level
-        var price = math.pow(1.0 + self.grid_interval.to_float(), offset).cast[
+        var price = pow(1.0 + self.grid_interval.to_float(), offset).cast[
             DType.float64
         ]() * self.base_price.to_float()
         # var a = math.pow(Float64(10.0), self.precision)
@@ -274,7 +271,7 @@ struct GridInfo(Stringable):
         self.update(self.base_price)
 
     # fn cell_mut_ref[
-    #     L: MutLifetime
+    #     L: MutableLifetime
     # ](inout self, i: Int) -> Reference[GridCellInfo, i1, L]:
     #     """Gets a reference to the list element at the given index.
 

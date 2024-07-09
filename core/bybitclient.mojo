@@ -19,7 +19,7 @@ from .bybitmodel import (
     BalanceInfo,
     OrderInfo,
 )
-from core.sign import hmac_sha256_hex
+from .sign import hmac_sha256_hex
 from ylstdlib.time import time_ns
 
 
@@ -32,7 +32,9 @@ struct BybitClient:
     var secret_key: String
     var client: HttpClient
 
-    fn __init__(inout self, testnet: Bool, access_key: String, secret_key: String):
+    fn __init__(
+        inout self, testnet: Bool, access_key: String, secret_key: String
+    ):
         # print(base_url)
         self.testnet = testnet
         self.access_key = access_key
@@ -46,7 +48,7 @@ struct BybitClient:
         self.access_key = existing.access_key
         self.secret_key = existing.secret_key
         var base_url = "https://api-testnet.bybit.com" if self.testnet else "https://api.bybit.com"
-        self.client = existing.client ^
+        self.client = existing.client^
         logd("BybitClient.__moveinit__ done")
 
     fn set_verbose(inout self, verbose: Bool):
@@ -66,15 +68,17 @@ struct BybitClient:
         var ret_code = doc.get_int("retCode")
         var ret_msg = doc.get_str("retMsg")
         if ret_code != 0:
-            raise Error("error retCode=" + str(ret_code) + ", retMsg=" + str(ret_msg))
+            raise Error(
+                "error retCode=" + str(ret_code) + ", retMsg=" + str(ret_msg)
+            )
 
         var result = doc.get_object("result")
 
         var time_second = atol(result.get_str("timeSecond"))
         var time_nano = atol(result.get_str("timeNano"))
 
-        _ = doc ^
-        _ = parser ^
+        _ = doc^
+        _ = parser^
 
         return ServerTime(time_second, time_nano)
 
@@ -102,7 +106,9 @@ struct BybitClient:
         var ret_code = doc.get_int("retCode")
         var ret_msg = doc.get_str("retMsg")
         if ret_code != 0:
-            raise Error("error retCode=" + str(ret_code) + ", retMsg=" + str(ret_msg))
+            raise Error(
+                "error retCode=" + str(ret_code) + ", retMsg=" + str(ret_msg)
+            )
 
         var result = doc.get_object("result")
         var result_list = result.get_array("list")
@@ -129,14 +135,14 @@ struct BybitClient:
             # logi("tick_size: " + str(tick_size))
             # logi("stepSize: " + str(stepSize))
 
-            _ = obj ^
+            _ = obj^
 
             list_iter.step()
 
-        _ = result_list ^
-        _ = result ^
-        _ = doc ^
-        _ = parser ^
+        _ = result_list^
+        _ = result^
+        _ = doc^
+        _ = parser^
 
         return ExchangeInfo(symbol, tick_size, stepSize)
 
@@ -174,7 +180,9 @@ struct BybitClient:
         var ret_code = doc.get_int("retCode")
         var ret_msg = doc.get_str("retMsg")
         if ret_code != 0:
-            raise Error("error retCode=" + str(ret_code) + ", retMsg=" + ret_msg)
+            raise Error(
+                "error retCode=" + str(ret_code) + ", retMsg=" + ret_msg
+            )
 
         var result = doc.get_object("result")
         var result_list = result.get_array("list")
@@ -206,14 +214,14 @@ struct BybitClient:
                 )
             )
 
-            _ = obj ^
+            _ = obj^
 
             list_iter.step()
 
-        _ = result_list ^
-        _ = result ^
-        _ = doc ^
-        _ = parser ^
+        _ = result_list^
+        _ = result^
+        _ = doc^
+        _ = parser^
 
         return res
 
@@ -254,7 +262,9 @@ struct BybitClient:
         var ret_code = doc.get_int("retCode")
         var ret_msg = doc.get_str("retMsg")
         if ret_code != 0:
-            raise Error("error retCode=" + str(ret_code) + ", retMsg=" + ret_msg)
+            raise Error(
+                "error retCode=" + str(ret_code) + ", retMsg=" + ret_msg
+            )
 
         var result = doc.get_object("result")
         var a_list = result.get_array("a")
@@ -269,10 +279,10 @@ struct BybitClient:
             var qty = i_arr_list.at_str(1)
 
             asks.append(OrderBookItem(price, qty))
-            _ = obj ^
+            _ = obj^
             list_iter_a.step()
 
-        _ = a_list ^
+        _ = a_list^
 
         var b_list = result.get_array("b")
 
@@ -289,11 +299,11 @@ struct BybitClient:
 
             list_iter_b.step()
 
-        _ = b_list ^
+        _ = b_list^
 
-        _ = result ^
-        _ = doc ^
-        _ = parser ^
+        _ = result^
+        _ = doc^
+        _ = parser^
 
         return OrderBook(asks, bids)
 
@@ -331,10 +341,12 @@ struct BybitClient:
         var ret_code = doc.get_int("retCode")
         var ret_msg = doc.get_str("retMsg")
         if ret_code != 0:
-            raise Error("error retCode=" + str(ret_code) + ", retMsg=" + ret_msg)
+            raise Error(
+                "error retCode=" + str(ret_code) + ", retMsg=" + ret_msg
+            )
 
-        _ = doc ^
-        _ = parser ^
+        _ = doc^
+        _ = parser^
 
         return True
 
@@ -373,10 +385,12 @@ struct BybitClient:
         var ret_code = doc.get_int("retCode")
         var ret_msg = doc.get_str("retMsg")
         if ret_code != 0:
-            raise Error("error retCode=" + str(ret_code) + ", retMsg=" + ret_msg)
+            raise Error(
+                "error retCode=" + str(ret_code) + ", retMsg=" + ret_msg
+            )
 
-        _ = doc ^
-        _ = parser ^
+        _ = doc^
+        _ = parser^
 
         return True
 
@@ -436,15 +450,17 @@ struct BybitClient:
         var ret_code = doc.get_int("retCode")
         var ret_msg = doc.get_str("retMsg")
         if ret_code != 0:
-            raise Error("error retCode=" + str(ret_code) + ", retMsg=" + ret_msg)
+            raise Error(
+                "error retCode=" + str(ret_code) + ", retMsg=" + ret_msg
+            )
 
         var result = doc.get_object("result")
         var _order_id = result.get_str("orderId")
         var _order_link_id = result.get_str("orderLinkId")
 
-        _ = result ^
-        _ = doc ^
-        _ = parser ^
+        _ = result^
+        _ = doc^
+        _ = parser^
 
         return OrderResponse(order_id=_order_id, order_link_id=_order_link_id)
 
@@ -485,15 +501,17 @@ struct BybitClient:
         var ret_code = doc.get_int("retCode")
         var ret_msg = doc.get_str("retMsg")
         if ret_code != 0:
-            raise Error("error retCode=" + str(ret_code) + ", retMsg=" + ret_msg)
+            raise Error(
+                "error retCode=" + str(ret_code) + ", retMsg=" + ret_msg
+            )
 
         var result = doc.get_object("result")
         var _order_id = result.get_str("orderId")
         var _order_link_id = result.get_str("orderLinkId")
 
-        _ = result ^
-        _ = doc ^
-        _ = parser ^
+        _ = result^
+        _ = doc^
+        _ = parser^
 
         return OrderResponse(_order_id, _order_link_id)
 
@@ -533,7 +551,9 @@ struct BybitClient:
         var ret_code = doc.get_int("retCode")
         var ret_msg = doc.get_str("retMsg")
         if ret_code != 0:
-            raise Error("error retCode=" + str(ret_code) + ", retMsg=" + ret_msg)
+            raise Error(
+                "error retCode=" + str(ret_code) + ", retMsg=" + ret_msg
+            )
 
         var result = doc.get_object("result")
         var a_list = result.get_array("list")
@@ -544,14 +564,16 @@ struct BybitClient:
 
             var order_id = obj.get_str("orderId")
             var order_link_id = obj.get_str("orderLinkId")
-            res.append(OrderResponse(order_id=order_id, order_link_id=order_link_id))
+            res.append(
+                OrderResponse(order_id=order_id, order_link_id=order_link_id)
+            )
 
             list_iter_a.step()
 
-        _ = a_list ^
-        _ = result ^
-        _ = doc ^
-        _ = parser ^
+        _ = a_list^
+        _ = result^
+        _ = doc^
+        _ = parser^
 
         return res
 
@@ -580,7 +602,9 @@ struct BybitClient:
         var ret_code = doc.get_int("retCode")
         var ret_msg = doc.get_str("retMsg")
         if ret_code != 0:
-            raise Error("error retCode=" + str(ret_code) + ", retMsg=" + ret_msg)
+            raise Error(
+                "error retCode=" + str(ret_code) + ", retMsg=" + ret_msg
+            )
 
         var result_list = doc.get_object("result").get_array("list")
         var list_iter = result_list.iter()
@@ -601,10 +625,20 @@ struct BybitClient:
                         var available_to_withdraw = strtod(
                             coin_obj.get_str("availableToWithdraw")
                         )
-                        var wallet_balance = strtod(coin_obj.get_str("walletBalance"))
-                        var total_order_im = strtod(coin_obj.get_str("totalOrderIM"))
+                        var wallet_balance = strtod(
+                            coin_obj.get_str("walletBalance")
+                        )
+                        var total_order_im = strtod(
+                            coin_obj.get_str("totalOrderIM")
+                        )
                         var total_position_im = strtod(
                             coin_obj.get_str("totalPositionIM")
+                        )
+                        var unrealised_pnl = strtod(
+                            coin_obj.get_str("unrealisedPnl")
+                        )
+                        var cum_realised_pnl = strtod(
+                            coin_obj.get_str("cumRealisedPnl")
                         )
                         res.append(
                             BalanceInfo(
@@ -614,20 +648,22 @@ struct BybitClient:
                                 wallet_balance=wallet_balance,
                                 total_order_im=total_order_im,
                                 total_position_im=total_position_im,
+                                unrealised_pnl=unrealised_pnl,
+                                cum_realised_pnl=cum_realised_pnl,
                             )
                         )
                     coin_iter.step()
 
-                _ = coin_list ^
+                _ = coin_list^
             elif account_type == "SPOT":
                 pass
 
-            _ = obj ^
+            _ = obj^
             list_iter.step()
 
-        _ = result_list ^
-        _ = doc ^
-        _ = parser ^
+        _ = result_list^
+        _ = doc^
+        _ = parser^
 
         return res
 
@@ -656,7 +692,12 @@ struct BybitClient:
         logd("query_str: " + query_str)
         var ret = self.do_get("/v5/order/realtime", query_str, True)
         if ret.status_code != 200:
-            raise Error("error status_code=" + str(ret.status_code) + " text=" + str(ret.text))
+            raise Error(
+                "error status_code="
+                + str(ret.status_code)
+                + " text="
+                + str(ret.text)
+            )
 
         # {"retCode":0,"retMsg":"OK","result":{"list":[],"nextPageCursor":"","category":"linear"},"retExtInfo":{},"time":1696392159183}
         # {"retCode":10002,"retMsg":"invalid request, please check your server timestamp or recv_window param. req_timestamp[1696396708819],server_timestamp[1696396707813],recv_window[15000]","result":{},"retExtInfo":{},"time":1696396707814}
@@ -668,7 +709,9 @@ struct BybitClient:
         var ret_code = doc.get_int("retCode")
         var ret_msg = doc.get_str("retMsg")
         if ret_code != 0:
-            raise Error("error retCode=" + str(ret_code) + ", retMsg=" + ret_msg)
+            raise Error(
+                "error retCode=" + str(ret_code) + ", retMsg=" + ret_msg
+            )
 
         var result = doc.get_object("result")
         var result_list = result.get_array("list")
@@ -717,10 +760,10 @@ struct BybitClient:
 
             list_iter.step()
 
-        _ = result_list ^
-        _ = result ^
-        _ = doc ^
-        _ = parser ^
+        _ = result_list^
+        _ = result^
+        _ = doc^
+        _ = parser^
 
         return res
 
@@ -775,7 +818,9 @@ struct BybitClient:
         var ret_code = doc.get_int("retCode")
         var ret_msg = doc.get_str("retMsg")
         if ret_code != 0:
-            raise Error("error retCode=" + str(ret_code) + ", retMsg=" + ret_msg)
+            raise Error(
+                "error retCode=" + str(ret_code) + ", retMsg=" + ret_msg
+            )
 
         var result = doc.get_object("result")
         var a_list = result.get_array("list")
@@ -840,10 +885,10 @@ struct BybitClient:
 
             list_iter_a.step()
 
-        _ = a_list ^
-        _ = result ^
-        _ = doc ^
-        _ = parser ^
+        _ = a_list^
+        _ = result^
+        _ = doc^
+        _ = parser^
 
         return res
 
@@ -869,7 +914,9 @@ struct BybitClient:
         var ret_code = doc.get_int("retCode")
         var ret_msg = doc.get_str("retMsg")
         if ret_code != 0:
-            raise Error("error retCode=" + str(ret_code) + ", retMsg=" + ret_msg)
+            raise Error(
+                "error retCode=" + str(ret_code) + ", retMsg=" + ret_msg
+            )
 
         var result = doc.get_object("result")
         var a_list = result.get_array("list")
@@ -955,10 +1002,10 @@ struct BybitClient:
 
             list_iter_a.step()
 
-        _ = a_list ^
-        _ = result ^
-        _ = doc ^
-        _ = parser ^
+        _ = a_list^
+        _ = result^
+        _ = doc^
+        _ = parser^
 
         return res
 
@@ -996,7 +1043,7 @@ struct BybitClient:
         # logd("request_path: " + request_path)
         # logd("param: " + param_)
         var res = self.client.get(request_path, headers=headers)
-        logd("res.status_code=" + str(res.status_code) + " text=" + res.text)
+        # logd("res.status_code=" + str(res.status_code) + " text=" + res.text)
         return res
 
     fn do_post(
@@ -1007,7 +1054,7 @@ struct BybitClient:
         headers["Content-Type"] = "application/json"
         self.do_sign(headers, body, sign)
         var res = self.client.post(path, data=body, headers=headers)
-        logd("res.status=" + str(res.status_code) + " text=" + res.text)
+        # logd("res.status=" + str(res.status_code) + " text=" + res.text)
         return res
 
 

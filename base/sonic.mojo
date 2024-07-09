@@ -1,7 +1,7 @@
 from memory import unsafe
 from .c import *
 from .mo import *
-from base.str_cache import *
+from .str_cache import *
 
 
 fn seq_sonic_json_document_new() -> c_void_pointer:
@@ -268,6 +268,17 @@ fn seq_sonic_json_node_add_bool(
     ](node, alloc, key, key_len, value)
 
 
+fn str_join[
+    T: StringableCollectionElement
+](sep: String, elems: List[T]) -> String:
+    if len(elems) == 0:
+        return ""
+    var curr = str(elems[0])
+    for i in range(1, len(elems)):
+        curr += sep + str(elems[i])
+    return curr
+
+
 @value
 struct SonicDocument:
     var _doc: c_void_pointer
@@ -287,60 +298,117 @@ struct SonicDocument:
         seq_sonic_json_document_set_object(self._doc)
 
     @always_inline
-    fn add_string(inout self, key: String, value: String) raises -> None:
+    fn add_string(inout self, key: StringLiteral, value: String) raises -> None:
         var v = self._sc.set_string(value)
         seq_sonic_json_document_add_string(
             self._doc,
             self._alloc,
-            key._as_ptr()._as_scalar_pointer(),
+            unsafe_ptr_as_scalar_pointer(key.unsafe_ptr()),
             len(key),
             v.data,
             v.len,
         )
 
     @always_inline
-    fn add_int(inout self, key: String, value: Int) raises -> None:
+    fn add_int(inout self, key: StringLiteral, value: Int) raises -> None:
         seq_sonic_json_document_add_int(
             self._doc,
             self._alloc,
-            key._as_ptr()._as_scalar_pointer(),
+            unsafe_ptr_as_scalar_pointer(key.unsafe_ptr()),
             len(key),
             value,
         )
 
     @always_inline
-    fn add_float(inout self, key: String, value: Float64) raises -> None:
+    fn add_float(inout self, key: StringLiteral, value: Float64) raises -> None:
         seq_sonic_json_document_add_double(
             self._doc,
             self._alloc,
-            key._as_ptr()._as_scalar_pointer(),
+            unsafe_ptr_as_scalar_pointer(key.unsafe_ptr()),
             len(key),
             value,
         )
 
     @always_inline
-    fn add_bool(inout self, key: String, value: Bool) raises -> None:
+    fn add_bool(inout self, key: StringLiteral, value: Bool) raises -> None:
         seq_sonic_json_document_add_bool(
             self._doc,
             self._alloc,
-            key._as_ptr()._as_scalar_pointer(),
+            unsafe_ptr_as_scalar_pointer(key.unsafe_ptr()),
             len(key),
             value,
         )
 
     @always_inline
-    fn add_node(inout self, key: String, node: SonicNode) raises -> None:
+    fn add_node(inout self, key: StringLiteral, node: SonicNode) raises -> None:
         seq_sonic_json_document_add_node(
             self._doc,
             self._alloc,
-            key._as_ptr()._as_scalar_pointer(),
+            unsafe_ptr_as_scalar_pointer(key.unsafe_ptr()),
             len(key),
             node._node,
         )
 
     @always_inline
+    fn add_string_array(
+        inout self, key: StringLiteral, values: List[String]
+    ) raises -> None:
+        var value = str_join(",", values)
+        var v = self._sc.set_string(value)
+        seq_sonic_json_document_add_string_array(
+            self._doc,
+            self._alloc,
+            unsafe_ptr_as_scalar_pointer(key.unsafe_ptr()),
+            len(key),
+            v.data,
+            v.len,
+        )
+
+    @always_inline
+    fn add_int_array(inout self, key: StringLiteral, values: List[Int]) raises -> None:
+        var value = str_join(",", values)
+        var v = self._sc.set_string(value)
+        seq_sonic_json_document_add_int_array(
+            self._doc,
+            self._alloc,
+            unsafe_ptr_as_scalar_pointer(key.unsafe_ptr()),
+            len(key),
+            v.data,
+            v.len,
+        )
+
+    @always_inline
+    fn add_float_array(
+        inout self, key: StringLiteral, values: List[Float64]
+    ) raises -> None:
+        var value = str_join(",", values)
+        var v = self._sc.set_string(value)
+        seq_sonic_json_document_add_int_array(
+            self._doc,
+            self._alloc,
+            unsafe_ptr_as_scalar_pointer(key.unsafe_ptr()),
+            len(key),
+            v.data,
+            v.len,
+        )
+
+    @always_inline
+    fn add_bool_array(
+        inout self, key: StringLiteral, values: List[Bool]
+    ) raises -> None:
+        var value = str_join(",", values)
+        seq_sonic_json_document_add_int_array(
+            self._doc,
+            self._alloc,
+            unsafe_ptr_as_scalar_pointer(key.unsafe_ptr()),
+            len(key),
+            unsafe_ptr_as_scalar_pointer(value.unsafe_ptr()),
+            len(value),
+        )
+
+    @always_inline
     fn to_string(self, buff_size: Int = 1024) -> String:
-        var result = Pointer[c_schar].alloc(buff_size)
+        var result = UnsafePointer[c_schar].alloc(buff_size)
         var n = seq_sonic_json_document_to_string(self._doc, result)
         var result_str = c_str_to_string(result, n)
         result.free()
@@ -371,7 +439,7 @@ struct SonicNode:
         seq_sonic_json_node_add_string(
             self._node,
             self._alloc,
-            key._as_ptr()._as_scalar_pointer(),
+            unsafe_ptr_as_scalar_pointer(key.unsafe_ptr()),
             len(key),
             v.data,
             v.len,
@@ -382,7 +450,7 @@ struct SonicNode:
         seq_sonic_json_node_add_int(
             self._node,
             self._alloc,
-            key._as_ptr()._as_scalar_pointer(),
+            unsafe_ptr_as_scalar_pointer(key.unsafe_ptr()),
             len(key),
             value,
         )
@@ -392,7 +460,7 @@ struct SonicNode:
         seq_sonic_json_node_add_double(
             self._node,
             self._alloc,
-            key._as_ptr()._as_scalar_pointer(),
+            unsafe_ptr_as_scalar_pointer(key.unsafe_ptr()),
             len(key),
             value,
         )
@@ -402,7 +470,7 @@ struct SonicNode:
         seq_sonic_json_node_add_bool(
             self._node,
             self._alloc,
-            key._as_ptr()._as_scalar_pointer(),
+            unsafe_ptr_as_scalar_pointer(key.unsafe_ptr()),
             len(key),
             value,
         )

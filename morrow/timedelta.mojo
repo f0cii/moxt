@@ -109,7 +109,7 @@ struct TimeDelta(Stringable):
     fn __pos__(self) -> Self:
         return self
 
-    def __abs__(self) -> Self:
+    fn __abs__(self) -> Self:
         if self.days < 0:
             return -self
         else:

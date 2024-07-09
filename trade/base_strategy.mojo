@@ -1,33 +1,23 @@
 from base.c import *
 from base.mo import *
 from base.fixed import Fixed
-from core.bybitmodel import *
+from core.bybitmodel import PositionInfo, OrderBookLite
 from .config import AppConfig
-from .types import *
+from .types import Order
 from .platform import Platform
 
 
-trait DefaultConstructible:
-    fn __init__(inout self) raises:
-        ...
-
-
-trait StrategyConstructible:
+trait BaseStrategy(Movable):
     fn __init__(inout self, config: AppConfig) raises:
         ...
 
-
-trait BaseStrategy(StrategyConstructible, Movable):
-    fn setup(inout self) raises:
+    fn setup(inout self, platform: UnsafePointer[Platform]) raises:
         ...
 
     fn on_init(inout self) raises:
         ...
 
     fn on_exit(inout self) raises:
-        ...
-
-    fn get_platform_pointer(inout self) -> UnsafePointer[Platform]:
         ...
 
     fn on_tick(inout self) raises:
@@ -41,7 +31,3 @@ trait BaseStrategy(StrategyConstructible, Movable):
 
     fn on_position(inout self, position: PositionInfo) raises:
         ...
-
-
-fn create_strategy[T: BaseStrategy](config: AppConfig) raises -> T:
-    return T(config)

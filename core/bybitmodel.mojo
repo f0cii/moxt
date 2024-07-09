@@ -108,9 +108,9 @@ struct OrderBookItem(Stringable, CollectionElement):
     fn __str__(self) -> String:
         return (
             "<OrderBookItem: price="
-            + String(self.price)
+            + str(self.price)
             + ", qty="
-            + String(self.qty)
+            + str(self.qty)
             + ">"
         )
 
@@ -124,13 +124,19 @@ struct OrderBook(Stringable):
     var asks: List[OrderBookItem]
     var bids: List[OrderBookItem]
 
-    def __init__(inout self, asks: List[OrderBookItem], bids: List[OrderBookItem]):
+    fn __init__(
+        inout self, asks: List[OrderBookItem], bids: List[OrderBookItem]
+    ):
         self.asks = asks
         self.bids = bids
 
     fn __str__(self) -> String:
         return (
-            "<OrderBook: asks=" + "str(self.asks)" + ", bids=" + "str(self.bids)" + "}>"
+            "<OrderBook: asks="
+            + "str(self.asks)"
+            + ", bids="
+            + "str(self.bids)"
+            + "}>"
         )
 
 
@@ -283,6 +289,8 @@ struct BalanceInfo(Stringable, CollectionElement):
     var wallet_balance: Float64
     var total_order_im: Float64
     var total_position_im: Float64
+    var unrealised_pnl: Fixed
+    var cum_realised_pnl: Fixed
 
     fn __init__(
         inout self,
@@ -292,6 +300,8 @@ struct BalanceInfo(Stringable, CollectionElement):
         wallet_balance: Float64,
         total_order_im: Float64,
         total_position_im: Float64,
+        unrealised_pnl: Fixed,
+        cum_realised_pnl: Fixed,
     ):
         self.coin_name = coin_name
         self.equity = equity
@@ -299,6 +309,8 @@ struct BalanceInfo(Stringable, CollectionElement):
         self.wallet_balance = wallet_balance
         self.total_order_im = total_order_im
         self.total_position_im = total_position_im
+        self.unrealised_pnl = unrealised_pnl
+        self.cum_realised_pnl = cum_realised_pnl
 
     fn __str__(self) -> String:
         return (
@@ -314,6 +326,10 @@ struct BalanceInfo(Stringable, CollectionElement):
             + str(self.total_order_im)
             + ", total_position_im="
             + str(self.total_position_im)
+            + ", unrealised_pnl="
+            + str(self.unrealised_pnl)
+            + ", cum_realised_pnl="
+            + str(self.cum_realised_pnl)
             + ">"
         )
 

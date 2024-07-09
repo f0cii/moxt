@@ -1,5 +1,5 @@
 from sys.ffi import _get_global
-from base.mo import seq_set_global_int, seq_get_global_int
+from .mo import seq_set_global_int, seq_get_global_int
 
 
 # Set global pointer
@@ -42,23 +42,18 @@ struct __G:
         self.vars = Dict[String, String]()
 
 
-fn _GLOBAL() -> Pointer[__G]:
+fn _GLOBAL() -> UnsafePointer[__G]:
     var p = _get_global["_GLOBAL", _init_global, _destroy_global]()
     return p.bitcast[__G]()
 
 
-fn _init_global(payload: Pointer[NoneType]) -> Pointer[NoneType]:
-    # var data = Pointer[__G].alloc(1)
-    # data[] = __G()
-    # # data.store(__G())
-    # return data.bitcast[NoneType]()
-    var p = UnsafePointer[__G].alloc(1)
-    initialize_pointee_move(p, __G())
-    var data = Pointer[__G](address=int(p))
-    return data.bitcast[NoneType]()
+fn _init_global(payload: UnsafePointer[NoneType]) -> UnsafePointer[NoneType]:
+    var ptr = UnsafePointer[__G].alloc(1)
+    ptr.init_pointee_move(__G())
+    return ptr.bitcast[NoneType]()
 
 
-fn _destroy_global(p: Pointer[NoneType]):
+fn _destroy_global(p: UnsafePointer[NoneType]):
     p.free()
 
 
@@ -69,7 +64,7 @@ fn _GLOBAL_INT[name: StringLiteral]() -> Pointer[Int]:
 
 fn _initialize_int(payload: Pointer[NoneType]) -> Pointer[NoneType]:
     var data = Pointer[Int].alloc(1)
-    data.store(0)
+    data[0] = 0
     return data.bitcast[NoneType]()
 
 
@@ -107,20 +102,18 @@ fn _destroy_bool(p: Pointer[NoneType]):
     p.free()
 
 
-fn _GLOBAL_STRING[name: StringLiteral]() -> Pointer[String]:
+fn _GLOBAL_STRING[name: StringLiteral]() -> UnsafePointer[String]:
     var p = _get_global[name, _initialize_string, _destroy_string]()
     return p.bitcast[String]()
 
 
-fn _initialize_string(payload: Pointer[NoneType]) -> Pointer[NoneType]:
-    var p = UnsafePointer[String].alloc(1)
-    initialize_pointee_move(p, String(""))
-    var data = Pointer[String](address=int(p))
-    return data.bitcast[NoneType]()
-    # var p = Pointer[String].alloc(1)
-    # p[] = String("")
-    # return p.bitcast[NoneType]()
+fn _initialize_string(
+    payload: UnsafePointer[NoneType],
+) -> UnsafePointer[NoneType]:
+    var ptr = UnsafePointer[String].alloc(1)
+    ptr.init_pointee_move(String(""))
+    return ptr.bitcast[NoneType]()
 
 
-fn _destroy_string(p: Pointer[NoneType]):
+fn _destroy_string(p: UnsafePointer[NoneType]):
     p.free()

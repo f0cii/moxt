@@ -158,7 +158,7 @@ struct Coroutine[type: AnyRegType]:
         self._get_ctx[_CoroutineContext]().store(
             _CoroutineContext {
                 _resume_fn: _coro_resume_noop_callback,
-                _parent_hdl: _CoroutineContext._opaque_handle.get_null(),
+                _parent_hdl: _CoroutineContext._opaque_handle(),
             }
         )
         __mlir_op.`pop.coroutine.resume`(self._handle)
@@ -175,7 +175,7 @@ struct Coroutine[type: AnyRegType]:
         self._get_ctx[_CoroutineContext]().store(
             _CoroutineContext {
                 _resume_fn: _coro_resume_noop_callback,
-                _parent_hdl: _CoroutineContext._opaque_handle.get_null(),
+                _parent_hdl: _CoroutineContext._opaque_handle(),
             }
         )
         __mlir_op.`pop.coroutine.resume`(self._handle)
@@ -300,7 +300,7 @@ struct RaisingCoroutine[type: AnyRegType]:
         self._get_ctx[_CoroutineContext]().store(
             _CoroutineContext {
                 _resume_fn: _coro_resume_noop_callback,
-                _parent_hdl: _CoroutineContext._opaque_handle.get_null(),
+                _parent_hdl: _CoroutineContext._opaque_handle(),
             }
         )
         __mlir_op.`pop.coroutine.resume`(self._handle)

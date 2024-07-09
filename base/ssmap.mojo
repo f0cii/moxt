@@ -1,5 +1,10 @@
 import sys
-from .c import c_str_to_string, c_size_t, c_void_pointer
+from .c import (
+    c_str_to_string,
+    c_size_t,
+    c_void_pointer,
+    unsafe_ptr_as_scalar_pointer,
+)
 from .mo import (
     seq_ssmap_new,
     seq_ssmap_free,
@@ -21,16 +26,20 @@ struct SSMap:
 
     fn __moveinit__(inout self, owned existing: Self):
         self.ptr = existing.ptr
-    
+
     fn __setitem__(inout self, key: String, value: String):
         seq_ssmap_set(
-            self.ptr, key._as_ptr()._as_scalar_pointer(), value._as_ptr()._as_scalar_pointer()
+            self.ptr,
+            unsafe_ptr_as_scalar_pointer(key.unsafe_ptr()),
+            unsafe_ptr_as_scalar_pointer(value.unsafe_ptr()),
         )
 
     fn __getitem__(self, key: String) -> String:
         var n: c_size_t = 0
         var s = seq_ssmap_get(
-            self.ptr, key._as_ptr()._as_scalar_pointer(), Pointer[c_size_t].address_of(n)
+            self.ptr,
+            unsafe_ptr_as_scalar_pointer(key.unsafe_ptr()),
+            Pointer[c_size_t].address_of(n),
         )
         return c_str_to_string(s, n)
 

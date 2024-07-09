@@ -27,13 +27,15 @@ from core.env import env_load
 
 
 fn test_ondemand_parser():
-    var str = '{"retCode":1001,"retMsg":"OK","result":{"category":"linear","list":[],"nextPageCursor":""},"retExtInfo":{},"time":1696236288675}'
+    var data = String(
+        '{"retCode":1001,"retMsg":"OK","result":{"category":"linear","list":[],"nextPageCursor":""},"retExtInfo":{},"time":1696236288675}'
+    )
     var op = OndemandParser(1000 * 1000)
-    var doc = op.parse(str)
+    var doc = op.parse(data)
 
     var key = "retCode"
     var ret_code = doc.get_int(key)
-    logd(ret_code)
+    logd(str(ret_code))
 
     var key1 = "retMsg"
     var retMsg = doc.get_str(key1)
@@ -53,7 +55,9 @@ fn test_ondemand_parser():
 
 
 fn test_ws_auth():
-    var s = '{"req_id":"LzIP5BH2aBVLUkmsOzg-q","success":true,"ret_msg":"","op":"auth","conn_id":"cldfn01dcjmj8l28s6sg-ngkux"}'
+    var s = String(
+        '{"req_id":"LzIP5BH2aBVLUkmsOzg-q","success":true,"ret_msg":"","op":"auth","conn_id":"cldfn01dcjmj8l28s6sg-ngkux"}'
+    )
     var od_parser = OndemandParser(1000 * 100)
     var doc = od_parser.parse(s)
     var op = doc.get_str("op")
@@ -77,19 +81,21 @@ fn test_ws_auth():
 
 
 fn test_raw():
-    var str = '{"retCode":1001,"retMsg":"OK","result":{"category":"linear","list":[],"nextPageCursor":""},"retExtInfo":{},"time":1696236288675}'
+    var s = String(
+        '{"retCode":1001,"retMsg":"OK","result":{"category":"linear","list":[],"nextPageCursor":""},"retExtInfo":{},"time":1696236288675}'
+    )
     var max_capacity = 1000 * 1000
     var parser = seq_simdjson_ondemand_parser_new(max_capacity)
     var padded_string = seq_simdjson_padded_string_new(
-        str.data()._as_scalar_pointer(), len(str)
+        unsafe_ptr_as_scalar_pointer(s.unsafe_ptr()), len(s)
     )
     var doc = seq_simdjson_ondemand_parser_parse(parser, padded_string)
     # var key: CString = "retCode"
     # var ret_code = seq_simdjson_ondemand_get_int_d(doc, key.data, key.len)
-    var key = "retCode"
+    var key = String("retCode")
     var ret_code = int(
         seq_simdjson_ondemand_get_int_d(
-            doc, key.data()._as_scalar_pointer(), len(key)
+            doc, unsafe_ptr_as_scalar_pointer(key.unsafe_ptr()), len(key)
         )
     )
     print(ret_code)
@@ -167,10 +173,10 @@ struct A:
 fn req(arg: c_void_pointer) raises -> c_void_pointer:
     logi("req")
     # var url: StringLiteral = "https://reqres.in/api/users?page=1"
-    var url: StringLiteral = "https://reqres.in/api/users?page=1"
-    test_photon_http(url.data()._as_scalar_pointer(), len(url))
+    var url: String = "https://reqres.in/api/users?page=1"
+    test_photon_http(unsafe_ptr_as_scalar_pointer(url.unsafe_ptr()), len(url))
     logi("req end")
-    return c_void_pointer.get_null()
+    return c_void_pointer()
 
 
 fn func1(arg: c_void_pointer) raises -> c_void_pointer:
@@ -182,9 +188,9 @@ fn func1(arg: c_void_pointer) raises -> c_void_pointer:
         # logi(a.a)
 
         logi("call start")
-        # seq_photon_thread_create_and_migrate_to_work_pool(req, c_void_pointer.get_null())
+        # seq_photon_thread_create_and_migrate_to_work_pool(req, c_void_pointer())
         # test_1()
-        _ = req(c_void_pointer.get_null())
+        _ = req(c_void_pointer())
         logi("call end")
 
         seq_photon_thread_sleep_s(3)
@@ -195,7 +201,7 @@ fn func1(arg: c_void_pointer) raises -> c_void_pointer:
         #     logi("call end")
         # except:
         #     logi("error")
-    # return c_void_pointer.get_null()
+    # return c_void_pointer()
 
 
 fn test_ssmap():
@@ -288,7 +294,7 @@ fn test_httpclient():
 
 
 fn get_on_message() -> on_message_callback:
-    fn wrapper(data: c_char_pointer, data_len: Int):
+    fn wrapper(msg: String):
         # print("get_on_message")
         # var s = String(data, data_len)
         # logd("get_on_message::on_message: " + s)
@@ -297,8 +303,8 @@ fn get_on_message() -> on_message_callback:
         # var s_ref = to_string_ref(data, data_len)
         # logi("s_ref: " + String(s_ref))
 
-        var s = c_str_to_string(data, data_len)
-        logi("s=" + s)
+        # var s = c_str_to_string(data, data_len)
+        logi("msg=" + msg)
 
     return wrapper
 
@@ -633,7 +639,7 @@ fn main() raises:
     # test_ws_auth()
     # test_parse_order()
 
-    # seq_photon_thread_create_and_migrate_to_work_pool(func1, c_void_pointer.get_null())
+    # seq_photon_thread_create_and_migrate_to_work_pool(func1, c_void_pointer())
 
     logi("started")
     run_forever()

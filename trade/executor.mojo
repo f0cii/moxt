@@ -6,7 +6,8 @@ from core.bybitclient import BybitClient
 from core.bybitmodel import *
 from core.bybitws import *
 from base.mo import logd, logi, logw, loge
-import base.log
+
+# import base.log
 from .config import AppConfig
 from .platform import *
 from .base_strategy import *
@@ -35,21 +36,26 @@ trait IExecutor:
 
 
 struct Executor[T: BaseStrategy](Movable, Runable, IExecutor):
+    var _config: AppConfig
     var _client: BybitClient
     var _public_ws: BybitWS
     var _private_ws: BybitWS
     var _strategy: T
-    var _is_initialized: AtomicBool
-    var _is_running: AtomicBool  # Is it currently running
-    var _stop_requested: AtomicBool  # Indicate whether a stop request has been received
-    var _is_stopped: AtomicBool  # Has it already ceased
+    var _is_initialized: Atomic[DType.int64]
+    var _is_running: Atomic[DType.int64]  # Is it currently running
+    var _stop_requested: Atomic[
+        DType.int64
+    ]  # Indicate whether a stop request has been received
+    var _is_stopped: Atomic[DType.int64]  # Has it already ceased
     var _platform: UnsafePointer[Platform]
+    var _rwlock: RWLock
 
     fn __init__(inout self, config: AppConfig, owned strategy: T) raises:
         logi("Executor.__init__")
         logi("config.testnet: " + str(config.testnet))
         logi("config.access_key: " + config.access_key)
         logi("config.secret_key: " + config.secret_key)
+        self._config = config
         self._client = BybitClient(
             testnet=config.testnet,
             access_key=config.access_key,
@@ -79,23 +85,27 @@ struct Executor[T: BaseStrategy](Movable, Runable, IExecutor):
             topics=private_topic,
         )
         self._strategy = strategy^
-        self._is_initialized = AtomicBool(False)
-        self._is_running = AtomicBool(False)
-        self._stop_requested = AtomicBool(False)
-        self._is_stopped = AtomicBool(False)
-        self._platform = self._strategy.get_platform_pointer()
+        self._is_initialized = 0
+        self._is_running = 0
+        self._stop_requested = 0
+        self._is_stopped = 0
+        self._platform = UnsafePointer[Platform].alloc(1)
+        self._platform.init_pointee_move(Platform(config))
+        self._rwlock = RWLock()
 
     fn __moveinit__(inout self, owned existing: Self):
         print("Executor.__moveinit__")
+        self._config = existing._config
         self._client = existing._client^
         self._public_ws = existing._public_ws^
         self._private_ws = existing._private_ws^
         self._strategy = existing._strategy^
-        self._is_initialized = AtomicBool(existing._is_initialized.load())
-        self._is_running = AtomicBool(existing._is_running.load())
-        self._stop_requested = AtomicBool(existing._stop_requested.load())
-        self._is_stopped = AtomicBool(existing._is_stopped.load())
-        self._platform = self._strategy.get_platform_pointer()
+        self._is_initialized = existing._is_initialized.load()
+        self._is_running = existing._is_running.load()
+        self._stop_requested = existing._stop_requested.load()
+        self._is_stopped = existing._is_stopped.load()
+        self._platform = existing._platform
+        self._rwlock = RWLock()
 
     fn start(inout self) raises:
         var on_connect_private = self._private_ws.get_on_connect()
@@ -114,26 +124,24 @@ struct Executor[T: BaseStrategy](Movable, Runable, IExecutor):
         self._public_ws.set_on_heartbeat(on_heartbeat_public)
         self._public_ws.set_on_message(on_message_public)
 
-        self._strategy.setup()
+        self._strategy.setup(self._platform)
 
         self._strategy.on_init()
 
         self._private_ws.connect()
         self._public_ws.connect()
 
-        # seq_photon_timer_new(1000 * 50, trade_executor_on_timer, True)
-
-        self._is_initialized.store(True)
-        self._is_running.store(True)
-        self._stop_requested.store(False)
-        self._is_stopped.store(False)
+        self._is_initialized = 1
+        self._is_running = 1
+        self._stop_requested = 0
+        self._is_stopped = 0
 
         logi("Executor started")
 
     fn stop_now(inout self):
-        logi("Executor.stop")
+        logi("Executor.stop_now")
         # Set stop flag
-        self._stop_requested.store(True)
+        self._stop_requested = 1
         self._private_ws.disconnect()
         self._public_ws.disconnect()
         # _ = sleep_ms(1000)
@@ -143,52 +151,46 @@ struct Executor[T: BaseStrategy](Movable, Runable, IExecutor):
             # self._public_ws.release()
         except err:
             loge("on_exit error: " + str(err))
-        logi("Executor.stop done")
-
-    # fn _get_ptr[T: Movable](inout self) -> UnsafePointer[T]:
-    #     # constrained[Self._check[T]() != -1, "not a union element type"]()
-    #     var ptr = Pointer.address_of(self).address
-    #     var result = UnsafePointer[T]()
-    #     result.value = __mlir_op.`pop.pointer.bitcast`[
-    #         _type = __mlir_type[`!kgen.pointer<:`, Movable, ` `, T, `>`]
-    #     ](ptr)
-    #     return result
+        logi("Executor stopped")
 
     fn get_private_on_message(inout self) -> on_message_callback:
         var self_ptr = UnsafePointer.address_of(self)
 
-        fn wrapper(data: c_char_pointer, data_len: Int):
-            self_ptr[].on_private_message(data, data_len)
+        fn wrapper(msg: String):
+            self_ptr[].on_private_message(msg)
 
         return wrapper
 
     fn get_public_on_message(inout self) -> on_message_callback:
         var self_ptr = UnsafePointer.address_of(self)
 
-        fn wrapper(data: c_char_pointer, data_len: Int):
-            self_ptr[].on_public_message(data, data_len)
+        fn wrapper(msg: String):
+            self_ptr[].on_public_message(msg)
             # var s = c_str_to_string(data, data_len)
             # logd("get_public_on_message message: " + s)
 
         return wrapper
 
-    fn on_private_message(inout self, data: c_char_pointer, data_len: Int):
-        var s = c_str_to_string(data, data_len)
+    fn on_private_message(inout self, msg: String):
+        # logi("on_private_message message: " + msg)
+        # self._rwlock.lock()
+        # print("on_private_message")
+        # var s = c_str_to_string(data, data_len)
         # logd("on_private_message message: " + s)
         var parser = OndemandParser(ParserBufferSize)
-        var doc = parser.parse(s)
+        var doc = parser.parse(msg)
         var topic = doc.get_str("topic")
 
         if topic == "order":
-            logi("order message: " + s)
+            logi("order message: " + msg)
             self.process_order_message(doc)
         elif topic == "position":
-            logi("position message: " + s)
+            logi("position message: " + msg)
             self.process_position_message(doc)
         elif topic == "execution":
             pass
         elif topic == "wallet":
-            logi("wallet message: " + s)
+            logi("wallet message: " + msg)
             self.process_wallet_message(doc)
         elif topic != "":
             return
@@ -196,15 +198,18 @@ struct Executor[T: BaseStrategy](Movable, Runable, IExecutor):
         _ = doc^
         _ = parser^
 
-        self._private_ws.on_message(s)
+        self._private_ws.on_message(msg)
+        # self._rwlock.unlock()
+        # logi("on_private_message done")
 
-    fn on_public_message(inout self, data: c_char_pointer, data_len: Int):
+    fn on_public_message(inout self, msg: String):
+        # logi("on_public_message message: " + msg)
+        # self._rwlock.lock()
         try:
-            var s = c_str_to_string(data, data_len)
-            # logd("on_public_message message: " + s)
+            # logd("on_public_message message: " + msg)
 
             var parser = DomParser(ParserBufferSize)
-            var doc = parser.parse(s)
+            var doc = parser.parse(msg)
             # var doc = parser.parse(data, data_len)
             var topic = doc.get_str("topic")
 
@@ -215,6 +220,8 @@ struct Executor[T: BaseStrategy](Movable, Runable, IExecutor):
             _ = parser^
         except err:
             loge("on_public_message error: " + str(err))
+        # self._rwlock.unlock()
+        # logi("on_public_message done")
 
     fn process_orderbook_message(
         inout self, inout doc: DomElement
@@ -222,6 +229,8 @@ struct Executor[T: BaseStrategy](Movable, Runable, IExecutor):
         # logd("process_orderbook_message")
         # {"topic":"orderbook.1.BTCUSDT","type":"snapshot","ts":1702645020909,"data":{"s":"BTCUSDT","b":[["42663.50","0.910"]],"a":[["42663.60","11.446"]],"u":2768099,"seq":108881526829},"cts":1702645020906}
         # {"topic":"orderbook.1.BTCUSDT","type":"snapshot","ts":1703834857207,"data":{"s":"BTCUSDT","b":[["42489.90","130.419"]],"a":[["42493.80","132.979"]],"u":326106,"seq":8817548764},"cts":1703834853055}
+
+        # {"topic":"orderbook.1.BTCUSDT","type":"snapshot","ts":1716274864889,"data":{"s":"BTCUSDT","b":[["71217.20","50.143"]],"a":[["71220.60","104.146"]],"u":517699,"seq":9227412505},"cts":1716274861496}
         var type_ = doc.get_str("type")
         var data = doc.get_object("data")
         # logd("type_: " + type_) # snapshot,delta
@@ -463,44 +472,53 @@ struct Executor[T: BaseStrategy](Movable, Runable, IExecutor):
 
         _ = data^
 
-        self._platform[].on_update_accounts(accounts)
+        self._platform[]._on_update_accounts(accounts)
 
-    fn is_initialized(self) -> Bool:
-        return self._is_initialized.load()
+    fn is_initialized(inout self) -> Bool:
+        return self._is_initialized.load() == 1
 
     fn run_once(inout self):
-        if not self._is_running.load():
+        # logi("run_once")
+        if self._is_running.load() == 0:
+            logi("Executor is not running")
             return
-        if self._stop_requested.load():
+        # logi("run_once 100")
+        if self._stop_requested.load() == 1:
             logi("Executor stopping...")
-            self._is_running.store(False)
-            self._is_stopped.store(True)
+            self._is_running = 0
+            self._is_stopped = 1
             logi("Executor stopped")
             return
+
+        # logi("start lock")
+        # self._rwlock.lock()
+        # logi("start lock done")
         try:
             # logi("run tick")
             self._strategy.on_tick()
+            # logi("run tick done")
         except err:
             loge("on_tick error: " + str(err))
-            sleep(3)
+        # self._rwlock.unlock()
+        # logi("Executor.run_once done")
 
     fn run(inout self):
         logi("Executor starting...")
         # 定义时间，之后用来控制循环，间隔100ms
-        var log_servie = log.log_service_itf()
+        # var log_servie = log.log_service_itf()
         var last = time_ns()
         while self._is_running.load():
             # logi("run loop")
             # Check for stop request
             if self._stop_requested.load():
                 logi("Executor stopping...")
-                self._is_running.store(False)
-                self._is_stopped.store(True)
+                self._is_running = 0
+                self._is_stopped = 1
                 logi("Executor stopped")
                 return
 
             # Check for log messages
-            _ = log_servie[].perform()
+            # _ = log_servie[].perform()
 
             # Check if it's time to run
             var now = time_ns()

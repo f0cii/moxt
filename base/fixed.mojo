@@ -7,15 +7,15 @@ alias FIXED_SCALE_F = 1000000000000.0
 
 
 fn seq_fixed12_new_string(cstr: c_char_pointer, cstr_len: c_size_t) -> Int64:
-    return external_call["seq_fixed12_new_string", Int64, c_char_pointer, c_size_t](
-        cstr, cstr_len
-    )
+    return external_call[
+        "seq_fixed12_new_string", Int64, c_char_pointer, c_size_t
+    ](cstr, cstr_len)
 
 
 fn seq_fixed12_to_string(fixed: Int64, result: c_void_pointer) -> c_size_t:
-    return external_call["seq_fixed12_to_string", c_size_t, Int64, c_void_pointer](
-        fixed, result
-    )
+    return external_call[
+        "seq_fixed12_to_string", c_size_t, Int64, c_void_pointer
+    ](fixed, result)
 
 
 # Customize multiplication operation
@@ -29,7 +29,9 @@ fn seq_fixed_truediv(a: Int64, b: Int64) -> Int64:
 
 
 fn seq_fixed_round_to_fractional(a: Int64, scale: Int64) -> Int64:
-    return external_call["seq_fixed_round_to_fractional", Int64, Int64, Int64](a, scale)
+    return external_call["seq_fixed_round_to_fractional", Int64, Int64, Int64](
+        a, scale
+    )
 
 
 fn seq_fixed_round(a: Int64, decimalPlaces: Int) -> Int64:
@@ -70,7 +72,9 @@ struct Fixed(Stringable):
         return Self {_value: Int64(FIXED_SCALE_F * v)}
 
     fn __init__(v: String) -> Self:
-        var v_ = seq_fixed12_new_string(v._as_ptr()._as_scalar_pointer(), len(v))
+        var v_ = seq_fixed12_new_string(
+            unsafe_ptr_as_scalar_pointer(v.unsafe_ptr()), len(v)
+        )
         return Self {
             _value: v_,
         }
@@ -102,7 +106,7 @@ struct Fixed(Stringable):
 
     @always_inline
     fn to_string(self) -> String:
-        var ptr = Pointer[c_char].alloc(17)
+        var ptr = UnsafePointer[c_char].alloc(17)
         var n = seq_fixed12_to_string(self._value, ptr)
         var s = c_str_to_string(ptr, n)
         ptr.free()
@@ -146,7 +150,7 @@ struct Fixed(Stringable):
         return self._value >= other._value
 
     # Customizing negation
-    def __neg__(self) -> Self:
+    fn __neg__(self) -> Self:
         return Self {_value: -self._value}
 
     # Customizing addition

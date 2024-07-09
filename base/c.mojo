@@ -27,10 +27,10 @@ alias ptrdiff_t = Int64
 alias intptr_t = Int64
 alias uintptr_t = UInt64
 
-alias c_char_pointer = Pointer[c_schar]
+alias c_char_pointer = UnsafePointer[c_schar]
 # alias c_char_any_pointer = UnsafePointer[c_schar]
 
-alias c_void_pointer = Pointer[c_void]
+alias c_void_pointer = UnsafePointer[c_void]
 # alias c_void_any_pointer = UnsafePointer[c_void]
 
 
@@ -90,7 +90,7 @@ fn exit(status: Int32) -> UInt8:
     return external_call["exit", UInt8, Int32](status)
 
 
-fn strlen(s: Pointer[c_char]) -> c_size_t:
+fn strlen(s: UnsafePointer[c_char]) -> c_size_t:
     """
     :strlen libc POSIX `strlen` function
     Reference: https://man7.org/linux/man-pages/man3/strlen.3p.html
@@ -100,10 +100,10 @@ fn strlen(s: Pointer[c_char]) -> c_size_t:
     Returns:
     .
     """
-    return external_call["strlen", c_size_t, Pointer[c_char]](s)
+    return external_call["strlen", c_size_t, UnsafePointer[c_char]](s)
 
 
-fn strlen(s: Pointer[c_schar]) -> c_size_t:
+fn strlen(s: UnsafePointer[c_schar]) -> c_size_t:
     """
     :strlen libc POSIX `strlen` function
     Reference: https://man7.org/linux/man-pages/man3/strlen.3p.html
@@ -113,66 +113,105 @@ fn strlen(s: Pointer[c_schar]) -> c_size_t:
     Returns:
     .
     """
-    return external_call["strlen", c_size_t, Pointer[c_schar]](s)
+    return external_call["strlen", c_size_t, UnsafePointer[c_schar]](s)
 
 
-fn to_char_ptr(s: String) -> Pointer[c_char]:
+fn to_char_ptr(s: String) -> UnsafePointer[c_char]:
     """Only ASCII-based strings."""
-    var ptr = Pointer[c_char]().alloc(len(s) + 1)
+    var ptr = UnsafePointer[c_char]().alloc(len(s) + 1)
     for i in range(len(s)):
-        ptr.store(i, ord(s[i]))
-    ptr.store(len(s), ord("\0"))
+        ptr[i] = ord(s[i])
+    ptr[len(s)] = ord("\0")
     return ptr
 
 
-fn to_schar_ptr(s: String) -> Pointer[c_schar]:
+fn to_schar_ptr(s: String) -> UnsafePointer[c_schar]:
     """Only ASCII-based strings."""
-    var ptr = Pointer[c_schar]().alloc(len(s) + 1)
+    var ptr = UnsafePointer[c_schar]().alloc(len(s) + 1)
     for i in range(len(s)):
-        ptr.store(i, ord(s[i]))
-    ptr.store(len(s), ord("\0"))
+        ptr[i] = ord(s[i])
+    ptr[len(s)] = ord("\0")
     return ptr
 
 
-fn c_str_to_string_raw(s: Pointer[c_char]) -> String:
-    return String(s.bitcast[Int8](), strlen(s))
+fn c_str_to_string_raw(s: UnsafePointer[c_char]) -> String:
+    return String(s.bitcast[UInt8](), strlen(s))
 
 
-fn c_str_to_string_raw(s: Pointer[UInt8], n: Int) -> String:
-    return String(s.bitcast[Int8](), n)
+fn c_str_to_string_raw(s: UnsafePointer[UInt8], n: Int) -> String:
+    return String(s, n)
 
 
-fn c_str_to_string(s: Pointer[c_schar], n: Int) -> String:
+fn c_str_to_string(s: UnsafePointer[c_schar], n: Int) -> String:
     var size = n + 1
     var ptr = Pointer[Int8]().alloc(size)
+    memset_zero(ptr.offset(n), 1)
+    memcpy(ptr, s, n)
+    return String(ptr.bitcast[UInt8](), size)
+
+
+fn c_str_to_string(s: UnsafePointer[c_char], n: Int) -> String:
+    var size = n + 1
+    var ptr = Pointer[UInt8]().alloc(size)
     memset_zero(ptr.offset(n), 1)
     memcpy(ptr, s, n)
     return String(ptr, size)
 
 
-fn c_str_to_string(s: Pointer[c_char], n: Int) -> String:
-    var size = n + 1
-    var ptr = Pointer[UInt8]().alloc(size)
-    memset_zero(ptr.offset(n), 1)
-    memcpy(ptr, s, n)
-    return String(ptr.bitcast[Int8](), size)
+# fn to_string_ref(s: String) -> StringRef:
+#     var slen = len(s)
+#     var ptr = Pointer[Int8]().alloc(slen)
+#     memcpy(ptr, s.unsafe_ptr(), slen)
+#     var s_ref = StringRef(
+#         ptr.bitcast[__mlir_type.`!pop.scalar<si8>`]().address, slen
+#     )
+#     return s_ref
 
 
-fn to_string_ref(s: String) -> StringRef:
-    var slen = len(s)
-    var ptr = Pointer[Int8]().alloc(slen)
-    memcpy(ptr, s._buffer.data.value, slen)
-    var s_ref = StringRef(ptr.bitcast[__mlir_type.`!pop.scalar<si8>`]().address, slen)
-    return s_ref
+# fn to_string_ref(data: Pointer[Int8], data_len: Int) -> StringRef:
+#     var ptr = Pointer[Int8]().alloc(data_len)
+#     memcpy(ptr, data, data_len)
+#     return StringRef(
+#         ptr.bitcast[__mlir_type.`!pop.scalar<si8>`]().address, data_len
+#     )
 
 
-fn to_string_ref(data: Pointer[Int8], data_len: Int) -> StringRef:
-    var ptr = Pointer[Int8]().alloc(data_len)
-    memcpy(ptr, data, data_len)
-    return StringRef(ptr.bitcast[__mlir_type.`!pop.scalar<si8>`]().address, data_len)
+# fn to_string_ref(data: Pointer[UInt8], data_len: Int) -> StringRef:
+#     var ptr = Pointer[Int8]().alloc(data_len)
+#     memcpy(ptr, data.bitcast[Int8](), data_len)
+#     return StringRef(
+#         ptr.bitcast[__mlir_type.`!pop.scalar<si8>`]().address, data_len
+#     )
 
 
-fn to_string_ref(data: Pointer[UInt8], data_len: Int) -> StringRef:
-    var ptr = Pointer[Int8]().alloc(data_len)
-    memcpy(ptr, data.bitcast[Int8](), data_len)
-    return StringRef(ptr.bitcast[__mlir_type.`!pop.scalar<si8>`]().address, data_len)
+@always_inline
+fn unsafe_ptr_as_scalar_pointer(
+    ptr: UnsafePointer[UInt8],
+) -> UnsafePointer[Scalar[DType.int8]]:
+    # return DTypePointer[DType.int8](ptr.bitcast[Int8]())._as_scalar_pointer()
+    return DTypePointer[DType.int8](ptr.bitcast[Int8]())._as_scalar_pointer()
+
+
+@always_inline
+fn unsafe_ptr_as_uint8_scalar_pointer(
+    ptr: UnsafePointer[UInt8],
+) -> UnsafePointer[Scalar[DType.uint8]]:
+    return (
+        DTypePointer[DType.int8](ptr.bitcast[Int8]())
+        ._as_scalar_pointer()
+        .bitcast[UInt8]()
+    )
+
+
+@always_inline
+fn unsafe_ptr_as_scalar_pointer(
+    ptr: UnsafePointer[Int8],
+) -> UnsafePointer[Scalar[DType.int8]]:
+    return DTypePointer[DType.int8](ptr)._as_scalar_pointer()
+
+
+@always_inline
+fn unsafe_ptr_as_uint8_scalar_pointer(
+    ptr: UnsafePointer[Int8],
+) -> UnsafePointer[Scalar[DType.uint8]]:
+    return DTypePointer[DType.int8](ptr)._as_scalar_pointer().bitcast[UInt8]()

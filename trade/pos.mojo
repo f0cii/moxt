@@ -71,4 +71,6 @@ struct LocalPosition:
         self.log_position_change()
 
     fn log_position_change(self):
-        logi("Change in position " + str(self.qty) + " @ " + str(self.avg_price))
+        logi(
+            "Change in position " + str(self.qty) + " @ " + str(self.avg_price)
+        )

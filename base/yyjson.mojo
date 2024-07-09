@@ -3,7 +3,7 @@ import sys
 import os
 from memory import unsafe
 from collections.list import List
-from base.str_cache import *
+from .str_cache import *
 from .c import *
 from .mo import *
 from .yyjsonbase import *
@@ -17,7 +17,7 @@ struct yyjson_mut_doc:
 
     @always_inline
     fn __init__(inout self):
-        self.doc = seq_yyjson_mut_doc_new(Pointer[UInt8]())
+        self.doc = seq_yyjson_mut_doc_new(UnsafePointer[UInt8]())
         self.root = seq_yyjson_mut_obj(self.doc)
         seq_yyjson_mut_doc_set_root(self.doc, self.root)
         self._sc = MyStringCache()
@@ -32,62 +32,82 @@ struct yyjson_mut_doc:
         _ = seq_yyjson_mut_obj_add_strn(
             self.doc,
             self.root,
-            key.data()._as_scalar_pointer(),
+            unsafe_ptr_as_scalar_pointer(key.unsafe_ptr()),
             v.data,
             v.len,
         )
 
     @always_inline
-    fn add_int(self, key: StringLiteral, value: Int):
+    fn add_int(inout self, key: StringLiteral, value: Int):
         _ = seq_yyjson_mut_obj_add_int(
-            self.doc, self.root, key.data()._as_scalar_pointer(), value
+            self.doc,
+            self.root,
+            unsafe_ptr_as_scalar_pointer(key.unsafe_ptr()),
+            value,
         )
 
     @always_inline
-    fn add_float(self, key: StringLiteral, value: Float64):
+    fn add_float(inout self, key: StringLiteral, value: Float64):
         _ = seq_yyjson_mut_obj_add_real(
-            self.doc, self.root, key.data()._as_scalar_pointer(), value
+            self.doc,
+            self.root,
+            unsafe_ptr_as_scalar_pointer(key.unsafe_ptr()),
+            value,
         )
 
     @always_inline
-    fn add_bool(self, key: StringLiteral, value: Bool):
+    fn add_bool(inout self, key: StringLiteral, value: Bool):
         _ = seq_yyjson_mut_obj_add_bool(
-            self.doc, self.root, key.data()._as_scalar_pointer(), value
+            self.doc,
+            self.root,
+            unsafe_ptr_as_scalar_pointer(key.unsafe_ptr()),
+            value,
         )
 
     @always_inline
-    fn arr_with_bool(self, key: StringLiteral, value: List[Bool]) raises:
+    fn arr_with_bool(inout self, key: StringLiteral, value: List[Bool]) raises:
         var n = len(value)
         var vp = Pointer[Bool].alloc(n)
         for i in range(0, n):
             vp[i] = value[i]
         var harr = seq_yyjson_mut_arr_with_bool(self.doc, vp, n)
         _ = seq_yyjson_mut_obj_add_val(
-            self.doc, self.root, key.data()._as_scalar_pointer(), harr
+            self.doc,
+            self.root,
+            unsafe_ptr_as_scalar_pointer(key.unsafe_ptr()),
+            harr,
         )
         vp.free()
 
     @always_inline
-    fn arr_with_float(self, key: StringLiteral, value: List[Float64]) raises:
+    fn arr_with_float(
+        inout self, key: StringLiteral, value: List[Float64]
+    ) raises:
         var n = len(value)
         var vp = Pointer[Float64].alloc(n)
         for i in range(0, n):
             vp[i] = value[i]
         var harr = seq_yyjson_mut_arr_with_real(self.doc, vp, n)
         _ = seq_yyjson_mut_obj_add_val(
-            self.doc, self.root, key.data()._as_scalar_pointer(), harr
+            self.doc,
+            self.root,
+            unsafe_ptr_as_scalar_pointer(key.unsafe_ptr()),
+            harr,
         )
         vp.free()
 
     @always_inline
-    fn arr_with_int(self, key: StringLiteral, value: List[Int]) raises:
+    fn arr_with_int(inout self, key: StringLiteral, value: List[Int]) raises:
         var n = len(value)
         var vp = Pointer[Int].alloc(n)
         for i in range(0, n):
             vp[i] = value[i]
         var harr = seq_yyjson_mut_arr_with_sint64(self.doc, vp, n)
         _ = seq_yyjson_mut_obj_add_val(
-            self.doc, self.root, key.data()._as_scalar_pointer(), harr
+            self.doc,
+            self.root,
+            unsafe_ptr_as_scalar_pointer(key.unsafe_ptr()),
+            harr,
         )
         vp.free()
 
@@ -100,7 +120,10 @@ struct yyjson_mut_doc:
             vp[i] = v.data
         var harr = seq_yyjson_mut_arr_with_str(self.doc, vp, n)
         _ = seq_yyjson_mut_obj_add_val(
-            self.doc, self.root, key.data()._as_scalar_pointer(), harr
+            self.doc,
+            self.root,
+            unsafe_ptr_as_scalar_pointer(key.unsafe_ptr()),
+            harr,
         )
         vp.free()
 
@@ -110,7 +133,8 @@ struct yyjson_mut_doc:
         var json_cstr = seq_yyjson_mut_write(
             self.doc, YYJSON_WRITE_NOFLAG, Pointer[Int].address_of(pLen)
         )
-        return String(json_cstr.bitcast[Int8](), pLen + 1)
+        # return c_str_to_string(json_cstr, pLen)
+        return String(json_cstr.bitcast[UInt8](), pLen + 1)
 
     fn __repr__(self) -> String:
         return "<yyjson_mut_doc: doc={self.doc}, root={self.root}>"
@@ -125,13 +149,15 @@ struct yyjson_val(CollectionElement):
         self.p = p
 
     @always_inline
-    fn __getitem__(self, key: StringLiteral) -> yyjson_val:
+    fn __getitem__(self, key: String) -> yyjson_val:
         return yyjson_val(
-            seq_yyjson_obj_getn(self.p, key.data()._as_scalar_pointer(), len(key))
+            seq_yyjson_obj_getn(
+                self.p, unsafe_ptr_as_scalar_pointer(key.unsafe_ptr()), len(key)
+            )
         )
 
     fn __bool__(self) -> Bool:
-        return self.p == c_void_pointer.get_null()
+        return self.p == c_void_pointer()
 
     @always_inline
     fn type(self) -> Int:
@@ -175,7 +201,9 @@ struct yyjson_val(CollectionElement):
     @always_inline
     fn object(self, key: StringLiteral) -> yyjson_val:
         return yyjson_val(
-            seq_yyjson_obj_getn(self.p, key.data()._as_scalar_pointer(), len(key))
+            seq_yyjson_obj_getn(
+                self.p, unsafe_ptr_as_scalar_pointer(key.unsafe_ptr()), len(key)
+            )
         )
 
     @always_inline
@@ -204,7 +232,9 @@ struct yyjson_doc:
 
     fn __init__(inout self, s: String, read_insitu: Bool = False):
         var flg = YYJSON_READ_INSITU if read_insitu else 0
-        self.doc = seq_yyjson_read(to_char_ptr(s), len(s), flg)
+        self.doc = seq_yyjson_read(
+            unsafe_ptr_as_uint8_scalar_pointer(s.unsafe_ptr()), len(s), flg
+        )
 
     @always_inline
     fn __del__(owned self):

@@ -13,29 +13,33 @@ struct Far:
         self.ptr = ptr
 
     @always_inline
-    fn get_int(self, key: StringLiteral) -> Int:
+    fn get_int(self, key: String) -> Int:
         return int(
-            seq_far_get_int(self.ptr, key.data()._as_scalar_pointer(), len(key))
+            seq_far_get_int(
+                self.ptr,
+                unsafe_ptr_as_scalar_pointer(key.unsafe_ptr()),
+                len(key),
+            )
         )
 
     @always_inline
-    fn get_float(self, key: StringLiteral) -> Float64:
+    fn get_float(self, key: String) -> Float64:
         return seq_far_get_float(
-            self.ptr, key.data()._as_scalar_pointer(), len(key)
+            self.ptr, unsafe_ptr_as_scalar_pointer(key.unsafe_ptr()), len(key)
         )
 
     @always_inline
-    fn get_bool(self, key: StringLiteral) -> Bool:
+    fn get_bool(self, key: String) -> Bool:
         return seq_far_get_bool(
-            self.ptr, key.data()._as_scalar_pointer(), len(key)
+            self.ptr, unsafe_ptr_as_scalar_pointer(key.unsafe_ptr()), len(key)
         )
 
     @always_inline
-    fn get_str(self, key: StringLiteral) -> String:
+    fn get_str(self, key: String) -> String:
         var n: c_size_t = 0
         var c_str = seq_far_get_string(
             self.ptr,
-            key.data()._as_scalar_pointer(),
+            unsafe_ptr_as_scalar_pointer(key.unsafe_ptr()),
             len(key),
             Pointer[c_size_t].address_of(n),
         )
@@ -46,30 +50,39 @@ struct Far:
         return seq_far_size(self.ptr)
 
     @always_inline
-    fn set_int(self, key: StringLiteral, value: Int):
+    fn set_int(self, key: String, value: Int):
         _ = seq_far_set_int(
-            self.ptr, key.data()._as_scalar_pointer(), len(key), value
+            self.ptr,
+            unsafe_ptr_as_scalar_pointer(key.unsafe_ptr()),
+            len(key),
+            value,
         )
 
     @always_inline
-    fn set_float(self, key: StringLiteral, value: Float64):
+    fn set_float(self, key: String, value: Float64):
         _ = seq_far_set_float(
-            self.ptr, key.data()._as_scalar_pointer(), len(key), value
+            self.ptr,
+            unsafe_ptr_as_scalar_pointer(key.unsafe_ptr()),
+            len(key),
+            value,
         )
 
     @always_inline
-    fn set_bool(self, key: StringLiteral, value: Bool):
+    fn set_bool(self, key: String, value: Bool):
         _ = seq_far_set_bool(
-            self.ptr, key.data()._as_scalar_pointer(), len(key), value
+            self.ptr,
+            unsafe_ptr_as_scalar_pointer(key.unsafe_ptr()),
+            len(key),
+            value,
         )
 
     @always_inline
-    fn set_str(self, key: StringLiteral, value: StringLiteral):
+    fn set_str(self, key: String, value: String):
         _ = seq_far_set_string(
             self.ptr,
-            key.data()._as_scalar_pointer(),
+            unsafe_ptr_as_scalar_pointer(key.unsafe_ptr()),
             len(key),
-            value.data()._as_scalar_pointer(),
+            unsafe_ptr_as_scalar_pointer(value.unsafe_ptr()),
             len(value),
         )
 

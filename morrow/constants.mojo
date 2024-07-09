@@ -1,3 +1,5 @@
+from utils import StaticTuple
+
 # todo: hardcode for tmp
 alias _MAX_TIMESTAMP: Int = 32503737600
 alias MAX_TIMESTAMP = _MAX_TIMESTAMP
@@ -10,7 +12,6 @@ alias _DAYS_IN_MONTH = VariadicList[Int](
 alias _DAYS_BEFORE_MONTH = VariadicList[Int](
     -1, 0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334
 )  # -1 is a placeholder for indexing purposes.
-
 
 alias MONTH_NAMES = StaticTuple[StringLiteral, 13](
     "",

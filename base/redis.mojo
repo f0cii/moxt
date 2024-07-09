@@ -75,15 +75,15 @@ fn seq_redis_set(redis: c_void_pointer, key: String, value: String) -> Bool:
         c_size_t,
     ](
         redis,
-        key._as_ptr()._as_scalar_pointer(),
+        unsafe_ptr_as_scalar_pointer(key.unsafe_ptr()),
         len(key),
-        value._as_ptr()._as_scalar_pointer(),
+        unsafe_ptr_as_scalar_pointer(value.unsafe_ptr()),
         len(value),
     )
 
 
 fn seq_redis_get(redis: c_void_pointer, key: String) -> String:
-    var value_data = Pointer[UInt8].alloc(1024)
+    var value_data = UnsafePointer[Int8].alloc(1024)
     var value_len = c_size_t(0)
     var ok = external_call[
         "seq_redis_get",
@@ -91,12 +91,14 @@ fn seq_redis_get(redis: c_void_pointer, key: String) -> String:
         c_void_pointer,
         c_char_pointer,
         c_size_t,
+        c_char_pointer,
+        UnsafePointer[c_size_t],
     ](
         redis,
-        key._as_ptr()._as_scalar_pointer(),
+        unsafe_ptr_as_scalar_pointer(key.unsafe_ptr()),
         len(key),
         value_data,
-        Pointer[c_size_t].address_of(value_len),
+        UnsafePointer[c_size_t].address_of(value_len),
     )
     if ok:
         var s = c_str_to_string(value_data, value_len)
@@ -118,9 +120,9 @@ fn seq_redis_rpush(redis: c_void_pointer, key: String, value: String) -> Int64:
         c_size_t,
     ](
         redis,
-        key._as_ptr()._as_scalar_pointer(),
+        unsafe_ptr_as_scalar_pointer(key.unsafe_ptr()),
         len(key),
-        value._as_ptr()._as_scalar_pointer(),
+        unsafe_ptr_as_scalar_pointer(value.unsafe_ptr()),
         len(value),
     )
     return result

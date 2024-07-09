@@ -69,28 +69,20 @@ fn test_websocket() raises:
     var ws = WebSocket(host=host, port=port, path=path)
     var id = ws.get_id()
     var on_connect = ws.get_on_connect()
-    var on_connect_ptr = int(Pointer[on_connect_callback].address_of(on_connect))
-    # print("on_connect_ptr: " + str(aon_connect_ptr))
     var on_heartbeat = ws.get_on_heartbeat()
-    var on_heartbeat_ptr = int(Pointer[on_heartbeat_callback].address_of(on_heartbeat))
-    # print("on_heartbeat_ptr: " + str(on_heartbeat_ptr))
     var on_message = ws.get_on_message()
-    var on_message_ptr = int(Pointer[on_message_callback].address_of(on_message))
-    # print("on_message_ptr: " + str(on_message_ptr))
-    set_on_connect(id, on_connect_ptr)
-    set_on_heartbeat(id, on_heartbeat_ptr)
-    set_on_message(id, on_message_ptr)
+    set_on_connect(id, on_connect^)
+    set_on_heartbeat(id, on_heartbeat^)
+    set_on_message(id, on_message^)
     ws.connect()
     logi("connect done")
     run_forever()
-    _ = ws ^
+    _ = ws^
 
 
 fn get_on_message() -> on_message_callback:
-    # @parameter
-    fn wrapper(data: c_char_pointer, data_len: Int):
-        var s = c_str_to_string(data, data_len)
-        logi("get_on_message=" + s)
+    fn wrapper(msg: String):
+        logi("get_on_message=" + msg)
 
     return wrapper
 
@@ -106,31 +98,24 @@ fn test_bybitws() raises:
         topics="orderbook.1.BTCUSDT",
     )
 
-    # var id = ws.get_id()
+    var id = ws.get_id()
     var on_connect = ws.get_on_connect()
     var on_heartbeat = ws.get_on_heartbeat()
-    var on_message = get_on_message()
+    # var on_message = get_on_message()
+    var on_message = ws.get_on_message()
 
-    # var on_connect_ptr = Pointer[on_connect_callback].address_of(on_connect).__as_index()
-    # var on_heartbeat_ptr = Pointer[on_heartbeat_callback].address_of(on_heartbeat).__as_index()
-    # var on_message_ptr = Pointer[on_message_callback].address_of(on_message).__as_index()
+    set_on_connect(id, on_connect)
+    # set_on_heartbeat(id, on_heartbeat^)
+    # set_on_message(id, on_message^)
 
-    # ws.set_on_connect(on_connect_ptr)
-    ws.set_on_connect(on_connect)
-    ws.set_on_heartbeat(on_heartbeat)
-    ws.set_on_message(on_message)
-
-    # var topics = List[String]()
-    # topics.append("orderbook.1.BTCUSDT")
-    # ws.set_subscription(topics)
-    ws.connect()
-
-    logd("start")
-    perform_ioc_poll()
-
+    ## var topics = List[String]()
+    ## topics.append("orderbook.1.BTCUSDT")
+    ## ws.set_subscription(topics)
+    # ws.connect()
+    logi("connect done")
     # run_forever()
-
-    _ = ws ^
+    # perform_ioc_poll()
+    _ = ws^
 
 
 fn sum_int_list(v: List[Int]) raises -> Int:
@@ -182,7 +167,9 @@ fn test_bybitclient() raises:
     for item in ob.bids:
         logi(str(item[]))
 
-    var switch_position_mode_res = client.switch_position_mode(category, symbol, "3")
+    var switch_position_mode_res = client.switch_position_mode(
+        category, symbol, "3"
+    )
     logi("res=" + str(switch_position_mode_res))
     # retCode=1, retMsg=Open orders exist, so you cannot change position mode
 
@@ -231,7 +218,7 @@ fn test_bybitclient() raises:
 
     run_forever()
 
-    _ = client ^
+    _ = client^
 
 
 fn test_ob_price() raises:
@@ -254,7 +241,9 @@ fn test_ob_price() raises:
     var symbol = "BTCUSDT"
     # var symbol = "XRPUSDT"
 
-    var text = '{"retCode":0,"retMsg":"OK","result":{"s":"BTCUSDT","b":[["69445.9","49.567"],["69445.7","87.003"],["69445.6","38.998"],["69445.5","57.319"],["69445.3","96.109"]],"a":[["69448.3","106.435"],["69448.5","93.792"],["69448.7","81.649"],["69448.9","75.391"],["69449.1","40.254"]],"ts":1711960701415,"u":1603656,"seq":9092034245},"retExtInfo":{},"time":1711960701661}'
+    var text = String(
+        '{"retCode":0,"retMsg":"OK","result":{"s":"BTCUSDT","b":[["69445.9","49.567"],["69445.7","87.003"],["69445.6","38.998"],["69445.5","57.319"],["69445.3","96.109"]],"a":[["69448.3","106.435"],["69448.5","93.792"],["69448.7","81.649"],["69448.9","75.391"],["69449.1","40.254"]],"ts":1711960701415,"u":1603656,"seq":9092034245},"retExtInfo":{},"time":1711960701661}'
+    )
 
     var asks = List[OrderBookItem]()
     var bids = List[OrderBookItem]()
@@ -279,10 +268,10 @@ fn test_ob_price() raises:
         var qty = i_arr_list.at_str(1)
 
         asks.append(OrderBookItem(price, qty))
-        _ = obj ^
+        _ = obj^
         list_iter_a.step()
 
-    _ = a_list ^
+    _ = a_list^
 
     var b_list = result.get_array("b")
 
@@ -299,19 +288,20 @@ fn test_ob_price() raises:
 
         list_iter_b.step()
 
-    _ = b_list ^
+    _ = b_list^
 
-    _ = result ^
-    _ = doc ^
-    _ = parser ^
+    _ = result^
+    _ = doc^
+    _ = parser^
+    _ = text^
 
     var ob = OrderBook(asks, bids)
 
     # var ob = client.fetch_orderbook(category, symbol, 5)
     logi("ob=" + str(ob))
 
-    var ask = Fixed(ob.asks[0].price)
-    var bid = Fixed(ob.bids[0].price)
+    var ask = ob.asks[0].price
+    var bid = ob.bids[0].price
     logi("ask.value=" + str(ask.value()) + " bid.value=" + str(bid.value()))
     logi("ask=" + str(ask) + " bid=" + str(bid))
     var mid = (ask / Fixed(2)) + (bid / Fixed(2))
@@ -321,7 +311,7 @@ fn test_ob_price() raises:
 
     run_forever()
 
-    _ = client ^
+    _ = client^
 
 
 fn test_bybit_perf() raises:
@@ -351,8 +341,12 @@ fn test_bybit_perf() raises:
 
     # Test order placement speed
     var times = 30
-    var order_times = List[Int]()  # Record the time taken for each order placement
-    var cancel_times = List[Int]()  # Record the time taken for each order cancellation
+    var order_times = List[
+        Int
+    ]()  # Record the time taken for each order placement
+    var cancel_times = List[
+        Int
+    ]()  # Record the time taken for each order cancellation
 
     var start_time = time_us()
 
@@ -419,7 +413,7 @@ fn test_bybit_perf() raises:
 
     run_forever()
 
-    _ = client ^
+    _ = client^
 
 
 fn run_forever():
@@ -459,10 +453,11 @@ fn main() raises:
 
     # while True:
     # test_httpclient_perf()
+    # test_websocket()
     # test_bybitclient()
-    # test_bybitws()
+    test_bybitws()
 
-    test_ob_price()
+    # test_ob_price()
 
     # logi("The program is prepared and ready, awaiting events...")
     # run_forever()

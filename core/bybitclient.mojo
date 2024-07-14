@@ -14,11 +14,11 @@ from .bybitmodel import (
     KlineItem,
     OrderBookItem,
     OrderBook,
-    PositionInfo,
     OrderResponse,
     BalanceInfo,
     OrderInfo,
 )
+from .models import PositionInfo
 from .sign import hmac_sha256_hex
 from ylstdlib.time import time_ns
 

@@ -41,8 +41,8 @@ fn seq_set_global_string(id: Int, s: String) -> None:
 fn seq_get_global_string(id: Int) -> String:
     var s_len: c_size_t = 0
     var s = external_call[
-        "seq_get_global_string", c_char_pointer, Int, Pointer[c_size_t]
-    ](id, Pointer.address_of(s_len))
+        "seq_get_global_string", c_char_pointer, Int, UnsafePointer[c_size_t]
+    ](id, UnsafePointer.address_of(s_len))
     return c_str_to_string(s, s_len)
 
 
@@ -227,7 +227,7 @@ fn seq_simdjson_ondemand_get_string_d(
     p: c_void_pointer,
     key: c_char_pointer,
     len: c_size_t,
-    n: Pointer[c_size_t],
+    n: UnsafePointer[c_size_t],
 ) -> c_char_pointer:
     return external_call[
         "seq_simdjson_ondemand_get_string_d",
@@ -235,7 +235,7 @@ fn seq_simdjson_ondemand_get_string_d(
         c_void_pointer,
         c_char_pointer,
         c_size_t,
-        Pointer[c_size_t],
+        UnsafePointer[c_size_t],
     ](p, key, len, n)
 
 
@@ -243,7 +243,7 @@ fn seq_simdjson_ondemand_get_string_v(
     p: c_void_pointer,
     key: c_char_pointer,
     len: c_size_t,
-    n: Pointer[c_size_t],
+    n: UnsafePointer[c_size_t],
 ) -> c_char_pointer:
     return external_call[
         "seq_simdjson_ondemand_get_string_v",
@@ -251,7 +251,7 @@ fn seq_simdjson_ondemand_get_string_v(
         c_void_pointer,
         c_char_pointer,
         c_size_t,
-        Pointer[c_size_t],
+        UnsafePointer[c_size_t],
     ](p, key, len, n)
 
 
@@ -259,7 +259,7 @@ fn seq_simdjson_ondemand_get_string_o(
     p: c_void_pointer,
     key: c_char_pointer,
     len: c_size_t,
-    n: Pointer[c_size_t],
+    n: UnsafePointer[c_size_t],
 ) -> c_char_pointer:
     return external_call[
         "seq_simdjson_ondemand_get_string_o",
@@ -267,7 +267,7 @@ fn seq_simdjson_ondemand_get_string_o(
         c_void_pointer,
         c_char_pointer,
         c_size_t,
-        Pointer[c_size_t],
+        UnsafePointer[c_size_t],
     ](p, key, len, n)
 
 
@@ -400,13 +400,13 @@ fn seq_simdjson_ondemand_bool_v(p: c_void_pointer) -> Bool:
 # const char *
 # seq_simdjson_ondemand_string_v(ondemand ::value *p, size_t *n)
 fn seq_simdjson_ondemand_string_v(
-    p: c_void_pointer, n: Pointer[c_size_t]
+    p: c_void_pointer, n: UnsafePointer[c_size_t]
 ) -> c_char_pointer:
     return external_call[
         "seq_simdjson_ondemand_string_v",
         c_char_pointer,
         c_void_pointer,
-        Pointer[c_size_t],
+        UnsafePointer[c_size_t],
     ](p, n)
 
 
@@ -739,14 +739,14 @@ fn seq_simdjson_ondemand_array_at_bool(
 #                                                         size_t index,
 #                                                         size_t *n);
 fn seq_simdjson_ondemand_array_at_str(
-    p: c_void_pointer, index: c_size_t, n: Pointer[c_size_t]
+    p: c_void_pointer, index: c_size_t, n: UnsafePointer[c_size_t]
 ) -> c_char_pointer:
     return external_call[
         "seq_simdjson_ondemand_array_at_str",
         c_char_pointer,
         c_void_pointer,
         c_size_t,
-        Pointer[c_size_t],
+        UnsafePointer[c_size_t],
     ](p, index, n)
 
 
@@ -806,13 +806,13 @@ fn seq_simdjson_ondemand_array_iter_get_bool(p: c_void_pointer) -> Bool:
 # const char *seq_simdjson_ondemand_array_iter_get_str(
 #     ondemand::array_iterator *self, size_t *n);
 fn seq_simdjson_ondemand_array_iter_get_str(
-    p: c_void_pointer, n: Pointer[c_size_t]
+    p: c_void_pointer, n: UnsafePointer[c_size_t]
 ) -> c_char_pointer:
     return external_call[
         "seq_simdjson_ondemand_array_iter_get_str",
         c_char_pointer,
         c_void_pointer,
-        Pointer[c_size_t],
+        UnsafePointer[c_size_t],
     ](p, n)
 
 
@@ -877,7 +877,7 @@ fn seq_simdjson_ondemand_array_iter_not_equal(
 # SEQ_FUNC void
 # seq_simdjson_ondemand_array_iter_step(ondemand::array_iterator *self);
 fn seq_simdjson_ondemand_array_iter_step(it: c_void_pointer) -> None:
-    return external_call[
+    external_call[
         "seq_simdjson_ondemand_array_iter_step", NoneType, c_void_pointer
     ](it)
 
@@ -885,7 +885,7 @@ fn seq_simdjson_ondemand_array_iter_step(it: c_void_pointer) -> None:
 # SEQ_FUNC void
 # seq_simdjson_ondemand_array_iter_free(ondemand::array_iterator *p)
 fn seq_simdjson_ondemand_array_iter_free(it: c_void_pointer) -> None:
-    return external_call[
+    external_call[
         "seq_simdjson_ondemand_array_iter_free",
         NoneType,
         c_void_pointer,
@@ -1120,7 +1120,7 @@ fn seq_far_get_string(
     p: c_void_pointer,
     key: c_char_pointer,
     key_len: c_size_t,
-    n: Pointer[c_size_t],
+    n: UnsafePointer[c_size_t],
 ) -> c_char_pointer:
     return external_call[
         "seq_far_get_string",
@@ -1128,7 +1128,7 @@ fn seq_far_get_string(
         c_void_pointer,
         c_char_pointer,
         c_size_t,
-        Pointer[c_size_t],
+        UnsafePointer[c_size_t],
     ](p, key, key_len, n)
 
 
@@ -1286,14 +1286,14 @@ fn seq_ssmap_set(
 # SEQ_FUNC const char *seq_ssmap_get(std::map<std::string, std::string> *p,
 #                                    const char *name, size_t *n)
 fn seq_ssmap_get(
-    p: c_void_pointer, name: c_char_pointer, n: Pointer[c_size_t]
+    p: c_void_pointer, name: c_char_pointer, n: UnsafePointer[c_size_t]
 ) -> c_char_pointer:
     return external_call[
         "seq_ssmap_get",
         c_char_pointer,
         c_void_pointer,
         c_char_pointer,
-        Pointer[c_size_t],
+        UnsafePointer[c_size_t],
     ](p, name, n)
 
 
@@ -1397,15 +1397,15 @@ fn seq_strtod(s: c_char_pointer, s_len: c_size_t) -> Float64:
 
 
 fn test_identity_pool() -> None:
-    return external_call["test_identity_pool", NoneType]()
+    external_call["test_identity_pool", NoneType]()
 
 
 fn seq_test_spdlog() -> None:
-    return external_call["seq_test_spdlog", NoneType]()
+    external_call["seq_test_spdlog", NoneType]()
 
 
 fn test_ondemand_parser_pool() -> None:
-    return external_call["test_ondemand_parser_pool", NoneType]()
+    external_call["test_ondemand_parser_pool", NoneType]()
 
 
 fn seq_add(a: Int, b: Int) -> Int:
@@ -1426,14 +1426,12 @@ alias signal_handle_t = fn (c_int) raises -> None
 
 # SEQ_FUNC void seq_init_signal(signal_handle_t handle);
 fn seq_init_signal(callback: signal_handle_t) -> None:
-    return external_call["seq_init_signal", NoneType, signal_handle_t](callback)
+    external_call["seq_init_signal", NoneType, signal_handle_t](callback)
 
 
 # SEQ_FUNC void seq_init_photon_signal(signal_handle_t handle);
 fn seq_init_photon_signal(callback: signal_handle_t) -> None:
-    return external_call["seq_init_photon_signal", NoneType, signal_handle_t](
-        callback
-    )
+    external_call["seq_init_photon_signal", NoneType, signal_handle_t](callback)
 
 
 fn seq_skiplist_new(is_forward: Bool) -> c_void_pointer:
@@ -1465,7 +1463,7 @@ fn seq_skiplist_search(list: c_void_pointer, key: Int64) -> Int64:
 
 
 fn seq_skiplist_dump(list: c_void_pointer) -> None:
-    return external_call["seq_skiplist_dump", NoneType, c_void_pointer](list)
+    external_call["seq_skiplist_dump", NoneType, c_void_pointer](list)
 
 
 fn seq_skiplist_begin(list: c_void_pointer) -> c_void_pointer:
@@ -1489,14 +1487,14 @@ fn seq_skiplist_next(
 
 
 fn seq_skiplist_node_value(
-    node: c_void_pointer, key: Pointer[Int64], value: Pointer[Int64]
+    node: c_void_pointer, key: UnsafePointer[Int64], value: UnsafePointer[Int64]
 ) -> None:
     external_call[
         "seq_skiplist_node_value",
         NoneType,
         c_void_pointer,
-        Pointer[Int64],
-        Pointer[Int64],
+        UnsafePointer[Int64],
+        UnsafePointer[Int64],
     ](node, key, value)
 
 

@@ -57,48 +57,48 @@ fn _destroy_global(p: UnsafePointer[NoneType]):
     p.free()
 
 
-fn _GLOBAL_INT[name: StringLiteral]() -> Pointer[Int]:
+fn _GLOBAL_INT[name: StringLiteral]() -> UnsafePointer[Int]:
     var p = _get_global[name, _initialize_int, _destroy_int]()
     return p.bitcast[Int]()
 
 
-fn _initialize_int(payload: Pointer[NoneType]) -> Pointer[NoneType]:
-    var data = Pointer[Int].alloc(1)
+fn _initialize_int(payload: UnsafePointer[NoneType]) -> UnsafePointer[NoneType]:
+    var data = UnsafePointer[Int].alloc(1)
     data[0] = 0
     return data.bitcast[NoneType]()
 
 
-fn _destroy_int(p: Pointer[NoneType]):
+fn _destroy_int(p: UnsafePointer[NoneType]):
     p.free()
 
 
-fn _GLOBAL_FLOAT[name: StringLiteral]() -> Pointer[Float64]:
+fn _GLOBAL_FLOAT[name: StringLiteral]() -> UnsafePointer[Float64]:
     var p = _get_global[name, _initialize_float64, _destroy_float64]()
     return p.bitcast[Float64]()
 
 
-fn _initialize_float64(payload: Pointer[NoneType]) -> Pointer[NoneType]:
-    var data = Pointer[Float64].alloc(1)
-    data.store(0)
+fn _initialize_float64(payload: UnsafePointer[NoneType]) -> UnsafePointer[NoneType]:
+    var data = UnsafePointer[Float64].alloc(1)
+    data[0] = 0
     return data.bitcast[NoneType]()
 
 
-fn _destroy_float64(p: Pointer[NoneType]):
+fn _destroy_float64(p: UnsafePointer[NoneType]):
     p.free()
 
 
-fn _GLOBAL_BOOL[name: StringLiteral]() -> Pointer[Bool]:
+fn _GLOBAL_BOOL[name: StringLiteral]() -> UnsafePointer[Bool]:
     var p = _get_global[name, _initialize_bool, _destroy_bool]()
     return p.bitcast[Bool]()
 
 
-fn _initialize_bool(payload: Pointer[NoneType]) -> Pointer[NoneType]:
-    var data = Pointer[Bool].alloc(1)
-    data.store(False)
+fn _initialize_bool(payload: UnsafePointer[NoneType]) -> UnsafePointer[NoneType]:
+    var data = UnsafePointer[Bool].alloc(1)
+    data[0] = False
     return data.bitcast[NoneType]()
 
 
-fn _destroy_bool(p: Pointer[NoneType]):
+fn _destroy_bool(p: UnsafePointer[NoneType]):
     p.free()
 
 

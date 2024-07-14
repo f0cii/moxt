@@ -20,22 +20,22 @@ struct ti_stream:
 
 
 alias ti_indicator_start_function = fn (
-    options: Pointer[Float64]
+    options: UnsafePointer[Float64]
 ) raises -> c_int
 alias ti_indicator_function = fn (
     size: c_int,
-    inputs: Pointer[Pointer[Float64]],
-    options: Pointer[Float64],
-    outputs: Pointer[Pointer[Float64]],
+    inputs: UnsafePointer[UnsafePointer[Float64]],
+    options: UnsafePointer[Float64],
+    outputs: UnsafePointer[UnsafePointer[Float64]],
 ) raises -> c_int
 alias ti_indicator_stream_new = fn (
-    options: Pointer[Float64], stream: Pointer[UnsafePointer[ti_stream]]
+    options: UnsafePointer[Float64], stream: UnsafePointer[UnsafePointer[ti_stream]]
 ) raises -> c_int
 alias ti_indicator_stream_run = fn (
     stream: UnsafePointer[ti_stream],
     size: c_int,
-    inputs: Pointer[Pointer[Float64]],
-    outputs: Pointer[Pointer[Float64]],
+    inputs: UnsafePointer[UnsafePointer[Float64]],
+    outputs: UnsafePointer[UnsafePointer[Float64]],
 ) raises -> c_int
 alias ti_indicator_stream_free = fn (stream: UnsafePointer[ti_stream]) -> None
 
@@ -145,18 +145,6 @@ fn seq_ti_indicator_at_index(index: c_int) -> UnsafePointer[ti_indicator_info]:
 
 fn seq_ti_indicator_start(
     info: UnsafePointer[ti_indicator_info],
-    options: Pointer[Float64],
-) -> c_int:
-    return external_call[
-        "seq_ti_indicator_start",
-        c_int,
-        UnsafePointer[ti_indicator_info],
-        Pointer[Float64],
-    ](info, options)
-
-
-fn seq_ti_indicator_start(
-    info: UnsafePointer[ti_indicator_info],
     options: UnsafePointer[Float64],
 ) -> c_int:
     return external_call[
@@ -167,48 +155,60 @@ fn seq_ti_indicator_start(
     ](info, options)
 
 
-fn seq_ti_indicator_run(
-    info: UnsafePointer[ti_indicator_info],
-    input_size: c_int,
-    inputs: Pointer[Pointer[Float64]],
-    options: Pointer[Float64],
-    outputs: Pointer[Pointer[Float64]],
-) -> Bool:
-    return external_call[
-        "seq_ti_indicator_run",
-        Bool,
-        UnsafePointer[ti_indicator_info],
-        c_int,
-        Pointer[Pointer[Float64]],
-        Pointer[Float64],
-        Pointer[Pointer[Float64]],
-    ](info, input_size, inputs, options, outputs)
+# fn seq_ti_indicator_start(
+#     info: UnsafePointer[ti_indicator_info],
+#     options: UnsafePointer[Float64],
+# ) -> c_int:
+#     return external_call[
+#         "seq_ti_indicator_start",
+#         c_int,
+#         UnsafePointer[ti_indicator_info],
+#         UnsafePointer[Float64],
+#     ](info, options)
 
 
 fn seq_ti_indicator_run(
     info: UnsafePointer[ti_indicator_info],
     input_size: c_int,
-    inputs: Pointer[UnsafePointer[Float64]],
+    inputs: UnsafePointer[UnsafePointer[Float64]],
     options: UnsafePointer[Float64],
-    outputs: Pointer[UnsafePointer[Float64]],
+    outputs: UnsafePointer[UnsafePointer[Float64]],
 ) -> Bool:
     return external_call[
         "seq_ti_indicator_run",
         Bool,
         UnsafePointer[ti_indicator_info],
         c_int,
-        Pointer[UnsafePointer[Float64]],
+        UnsafePointer[UnsafePointer[Float64]],
         UnsafePointer[Float64],
-        Pointer[UnsafePointer[Float64]],
+        UnsafePointer[UnsafePointer[Float64]],
     ](info, input_size, inputs, options, outputs)
+
+
+# fn seq_ti_indicator_run(
+#     info: UnsafePointer[ti_indicator_info],
+#     input_size: c_int,
+#     inputs: UnsafePointer[UnsafePointer[Float64]],
+#     options: UnsafePointer[Float64],
+#     outputs: UnsafePointer[UnsafePointer[Float64]],
+# ) -> Bool:
+#     return external_call[
+#         "seq_ti_indicator_run",
+#         Bool,
+#         UnsafePointer[ti_indicator_info],
+#         c_int,
+#         Pointer[UnsafePointer[Float64]],
+#         UnsafePointer[Float64],
+#         Pointer[UnsafePointer[Float64]],
+#     ](info, input_size, inputs, options, outputs)
 
 
 struct Inputs:
-    var data: Pointer[UnsafePointer[Float64]]
+    var data: UnsafePointer[UnsafePointer[Float64]]
     var data_index: Int
 
     fn __init__(inout self, capacity: Int = 16):
-        self.data = Pointer[UnsafePointer[Float64]].alloc(capacity)
+        self.data = UnsafePointer[UnsafePointer[Float64]].alloc(capacity)
         self.data_index = 0
 
     fn __del__(owned self):
@@ -220,12 +220,12 @@ struct Inputs:
 
 
 struct Outputs:
-    var data: Pointer[UnsafePointer[Float64]]
+    var data: UnsafePointer[UnsafePointer[Float64]]
     var data_list: List[Series]
     var outputs: Int
 
     fn __init__(inout self, outputs: Int = 4):
-        self.data = Pointer[UnsafePointer[Float64]].alloc(outputs)
+        self.data = UnsafePointer[UnsafePointer[Float64]].alloc(outputs)
         self.data_list = List[Series](capacity=outputs)
         self.outputs = outputs
 

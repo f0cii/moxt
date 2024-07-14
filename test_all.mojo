@@ -540,7 +540,7 @@ fn test_yyjson():
     _ = doc_str
 
 
-fn a(p: Pointer[UInt8]) -> None:
+fn a(p: UnsafePointer[UInt8]) -> None:
     _ = p
 
 
@@ -550,7 +550,7 @@ fn test_res_perf():
     @parameter
     fn test():
         for i in range(total):
-            var res = Pointer[UInt8].alloc(1024 * 64)
+            var res = UnsafePointer[UInt8].alloc(1024 * 64)
             res[0] = 0
             a(res)
 
@@ -559,7 +559,7 @@ fn test_res_perf():
     # test()
 
     for i in range(total):
-        var res = Pointer[UInt8].alloc(1024 * 64)
+        var res = UnsafePointer[UInt8].alloc(1024 * 64)
         res[0] = 0
         a(res)
 

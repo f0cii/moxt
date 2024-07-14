@@ -41,7 +41,7 @@ struct Far:
             self.ptr,
             unsafe_ptr_as_scalar_pointer(key.unsafe_ptr()),
             len(key),
-            Pointer[c_size_t].address_of(n),
+            UnsafePointer[c_size_t].address_of(n),
         )
         return c_str_to_string(c_str, n)
 

@@ -67,7 +67,7 @@ struct yyjson_mut_doc:
     @always_inline
     fn arr_with_bool(inout self, key: StringLiteral, value: List[Bool]) raises:
         var n = len(value)
-        var vp = Pointer[Bool].alloc(n)
+        var vp = UnsafePointer[Bool].alloc(n)
         for i in range(0, n):
             vp[i] = value[i]
         var harr = seq_yyjson_mut_arr_with_bool(self.doc, vp, n)
@@ -84,7 +84,7 @@ struct yyjson_mut_doc:
         inout self, key: StringLiteral, value: List[Float64]
     ) raises:
         var n = len(value)
-        var vp = Pointer[Float64].alloc(n)
+        var vp = UnsafePointer[Float64].alloc(n)
         for i in range(0, n):
             vp[i] = value[i]
         var harr = seq_yyjson_mut_arr_with_real(self.doc, vp, n)
@@ -99,7 +99,7 @@ struct yyjson_mut_doc:
     @always_inline
     fn arr_with_int(inout self, key: StringLiteral, value: List[Int]) raises:
         var n = len(value)
-        var vp = Pointer[Int].alloc(n)
+        var vp = UnsafePointer[Int].alloc(n)
         for i in range(0, n):
             vp[i] = value[i]
         var harr = seq_yyjson_mut_arr_with_sint64(self.doc, vp, n)
@@ -114,7 +114,7 @@ struct yyjson_mut_doc:
     @always_inline
     fn arr_with_str(inout self, key: StringLiteral, value: List[String]) raises:
         var n = len(value)
-        var vp = Pointer[c_char_pointer].alloc(n)
+        var vp = UnsafePointer[c_char_pointer].alloc(n)
         for i in range(0, n):
             var v = self._sc.set_string(value[i])
             vp[i] = v.data
@@ -131,7 +131,7 @@ struct yyjson_mut_doc:
     fn mut_write(self) -> String:
         var pLen: Int = 0
         var json_cstr = seq_yyjson_mut_write(
-            self.doc, YYJSON_WRITE_NOFLAG, Pointer[Int].address_of(pLen)
+            self.doc, YYJSON_WRITE_NOFLAG, UnsafePointer[Int].address_of(pLen)
         )
         # return c_str_to_string(json_cstr, pLen)
         return String(json_cstr.bitcast[UInt8](), pLen + 1)

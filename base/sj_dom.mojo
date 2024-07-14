@@ -229,13 +229,13 @@ fn seq_simdjson_dom_array_iter_free(p: c_void_pointer) -> None:
 
 
 fn seq_simdjson_dom_element_str(
-    p: c_void_pointer, n: Pointer[c_size_t]
+    p: c_void_pointer, n: UnsafePointer[c_size_t]
 ) -> c_void_pointer:
     return external_call[
         "seq_simdjson_dom_element_str",
         c_void_pointer,
         c_void_pointer,
-        Pointer[c_size_t],
+        UnsafePointer[c_size_t],
     ](p, n)
 
 
@@ -258,7 +258,10 @@ fn seq_simdjson_dom_element_array(p: c_void_pointer) -> c_void_pointer:
 
 
 fn seq_simdjson_dom_element_get_str(
-    p: c_void_pointer, key: c_char_pointer, len: c_size_t, n: Pointer[c_size_t]
+    p: c_void_pointer,
+    key: c_char_pointer,
+    len: c_size_t,
+    n: UnsafePointer[c_size_t],
 ) -> c_char_pointer:
     return external_call[
         "seq_simdjson_dom_element_get_str",
@@ -266,12 +269,15 @@ fn seq_simdjson_dom_element_get_str(
         c_void_pointer,
         c_char_pointer,
         c_size_t,
-        Pointer[c_size_t],
+        UnsafePointer[c_size_t],
     ](p, key, len, n)
 
 
 fn seq_simdjson_dom_object_get_str(
-    p: c_void_pointer, key: c_char_pointer, len: c_size_t, n: Pointer[c_size_t]
+    p: c_void_pointer,
+    key: c_char_pointer,
+    len: c_size_t,
+    n: UnsafePointer[c_size_t],
 ) -> c_char_pointer:
     return external_call[
         "seq_simdjson_dom_object_get_str",
@@ -279,7 +285,7 @@ fn seq_simdjson_dom_object_get_str(
         c_void_pointer,
         c_char_pointer,
         c_size_t,
-        Pointer[c_size_t],
+        UnsafePointer[c_size_t],
     ](p, key, len, n)
 
 
@@ -340,14 +346,14 @@ fn seq_simdjson_dom_array_at_bool(p: c_void_pointer, index: c_size_t) -> Bool:
 
 
 fn seq_simdjson_dom_array_at_str(
-    p: c_void_pointer, index: c_size_t, n: Pointer[c_size_t]
+    p: c_void_pointer, index: c_size_t, n: UnsafePointer[c_size_t]
 ) -> c_char_pointer:
     return external_call[
         "seq_simdjson_dom_array_at_str",
         c_char_pointer,
         c_void_pointer,
         c_size_t,
-        Pointer[c_size_t],
+        UnsafePointer[c_size_t],
     ](p, index, n)
 
 
@@ -416,13 +422,13 @@ fn seq_simdjson_dom_array_iter_get_bool(it: c_void_pointer) -> Bool:
 
 
 fn seq_simdjson_dom_array_iter_get_str(
-    it: c_void_pointer, n: Pointer[c_size_t]
+    it: c_void_pointer, n: UnsafePointer[c_size_t]
 ) -> c_void_pointer:
     return external_call[
         "seq_simdjson_dom_array_iter_get_str",
         c_void_pointer,
         c_void_pointer,
-        Pointer[c_size_t],
+        UnsafePointer[c_size_t],
     ](it, n)
 
 
@@ -507,7 +513,7 @@ struct DomElement:
             self.p,
             unsafe_ptr_as_scalar_pointer(key.unsafe_ptr()),
             len(key),
-            Pointer[c_size_t].address_of(n),
+            UnsafePointer[c_size_t].address_of(n),
         )
         return c_str_to_string(s, n)
 
@@ -583,7 +589,7 @@ struct DomElement:
     fn str(self) -> String:
         var n: c_size_t = 0
         var s = seq_simdjson_dom_element_str(
-            self.p, Pointer[c_size_t].address_of(n)
+            self.p, UnsafePointer[c_size_t].address_of(n)
         )
         return c_str_to_string(s, n)
 
@@ -636,7 +642,7 @@ struct DomObject(CollectionElement):
             self.p,
             unsafe_ptr_as_scalar_pointer(key.unsafe_ptr()),
             len(key),
-            Pointer[c_size_t].address_of(n),
+            UnsafePointer[c_size_t].address_of(n),
         )
         return c_str_to_string(s, n)
 
@@ -705,7 +711,7 @@ struct DomArray:
     fn at_str(self, index: Int) -> String:
         var n: c_size_t = 0
         var s = seq_simdjson_dom_array_at_str(
-            self.p, index, Pointer[c_size_t].address_of(n)
+            self.p, index, UnsafePointer[c_size_t].address_of(n)
         )
         return c_str_to_string(s, n)
 
@@ -776,7 +782,7 @@ struct DomArrayIter:
     fn get_str(self) -> String:
         var n: c_size_t = 0
         var s = seq_simdjson_dom_array_iter_get_str(
-            self.it, Pointer[c_size_t].address_of(n)
+            self.it, UnsafePointer[c_size_t].address_of(n)
         )
         return c_str_to_string(s, n)
 
@@ -801,6 +807,9 @@ struct DomParser:
         # logd("DomParser.__del__")
         seq_simdjson_dom_parser_free(self.p)
         # logd("DomParser.__del__ done")
+
+    fn _keepalive(self):
+        pass
 
     @always_inline
     fn parse(self, s: StringRef) -> DomElement:

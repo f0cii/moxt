@@ -35,7 +35,7 @@ alias c_void_pointer = UnsafePointer[c_void]
 
 
 alias any_pointer_simd_int8_to_pointer_simd_int8 = rebind[
-    Pointer[SIMD[DType.int8, 1]], UnsafePointer[SIMD[DType.int8, 1]]
+    UnsafePointer[SIMD[DType.int8, 1]], UnsafePointer[SIMD[DType.int8, 1]]
 ]
 
 
@@ -144,7 +144,7 @@ fn c_str_to_string_raw(s: UnsafePointer[UInt8], n: Int) -> String:
 
 fn c_str_to_string(s: UnsafePointer[c_schar], n: Int) -> String:
     var size = n + 1
-    var ptr = Pointer[Int8]().alloc(size)
+    var ptr = UnsafePointer[Int8]().alloc(size)
     memset_zero(ptr.offset(n), 1)
     memcpy(ptr, s, n)
     return String(ptr.bitcast[UInt8](), size)
@@ -152,7 +152,7 @@ fn c_str_to_string(s: UnsafePointer[c_schar], n: Int) -> String:
 
 fn c_str_to_string(s: UnsafePointer[c_char], n: Int) -> String:
     var size = n + 1
-    var ptr = Pointer[UInt8]().alloc(size)
+    var ptr = UnsafePointer[UInt8]().alloc(size)
     memset_zero(ptr.offset(n), 1)
     memcpy(ptr, s, n)
     return String(ptr, size)

@@ -35,7 +35,7 @@ struct BybitWS:
     var _category: String
     var _subscription_topics: List[String]
     var _subscription_topics_str: String
-    var _heartbeat_time: Pointer[Int64]
+    var _heartbeat_time: UnsafePointer[Int64]
 
     fn __init__(
         inout self,
@@ -95,7 +95,7 @@ struct BybitWS:
         logd("BybitWS.register_websocket ws=" + str(ptr))
         self._ptr = ptr
         self._id = seq_voidptr_to_int(ptr)
-        self._heartbeat_time = Pointer[Int64].alloc(1)
+        self._heartbeat_time = UnsafePointer[Int64].alloc(1)
         self._heartbeat_time[0] = 0
 
     fn __moveinit__(inout self, owned existing: Self):

@@ -6,11 +6,11 @@ from ylstdlib.time import time_ns
 
 
 fn time_ms() -> Int64:
-    return time_ns() / 1e6
+    return Int64(int(time_ns() / 1e6))
 
 
 fn time_us() -> Int64:
-    return time_ns() / 1e3
+    return Int64(int(time_ns() / 1e3))
 
 
 fn set_global_value_ptr[V: Intable](id: Int, v: UnsafePointer[V]) -> Int:

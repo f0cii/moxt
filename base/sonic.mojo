@@ -43,7 +43,7 @@ fn seq_sonic_json_document_add_string(
     value: c_char_pointer,
     value_len: c_size_t,
 ) -> None:
-    return __mlir_op.`pop.external_call`[
+    __mlir_op.`pop.external_call`[
         func = "seq_sonic_json_document_add_string".value, _type=NoneType
     ](doc, alloc, key, key_len, value, value_len)
 
@@ -110,7 +110,7 @@ fn seq_sonic_json_document_add_string_array(
     value: c_char_pointer,
     value_len: c_size_t,
 ) -> None:
-    return __mlir_op.`pop.external_call`[
+    __mlir_op.`pop.external_call`[
         func = "seq_sonic_json_document_add_string_array".value, _type=NoneType
     ](doc, alloc, key, key_len, value, value_len)
 
@@ -123,7 +123,7 @@ fn seq_sonic_json_document_add_int_array(
     value: c_char_pointer,
     value_len: c_size_t,
 ) -> None:
-    return __mlir_op.`pop.external_call`[
+    __mlir_op.`pop.external_call`[
         func = "seq_sonic_json_document_add_int_array".value, _type=NoneType
     ](doc, alloc, key, key_len, value, value_len)
 
@@ -136,7 +136,7 @@ fn seq_sonic_json_document_add_double_array(
     value: c_char_pointer,
     value_len: c_size_t,
 ) -> None:
-    return __mlir_op.`pop.external_call`[
+    __mlir_op.`pop.external_call`[
         func = "seq_sonic_json_document_add_double_array".value, _type=NoneType
     ](doc, alloc, key, key_len, value, value_len)
 
@@ -149,7 +149,7 @@ fn seq_sonic_json_document_add_bool_array(
     value: c_char_pointer,
     value_len: c_size_t,
 ) -> None:
-    return __mlir_op.`pop.external_call`[
+    __mlir_op.`pop.external_call`[
         func = "seq_sonic_json_document_add_bool_array".value, _type=NoneType
     ](doc, alloc, key, key_len, value, value_len)
 
@@ -196,7 +196,7 @@ fn seq_sonic_json_document_add_node(
     key_len: c_size_t,
     node: c_void_pointer,
 ):
-    return __mlir_op.`pop.external_call`[
+    __mlir_op.`pop.external_call`[
         func = "seq_sonic_json_document_add_node".value, _type=NoneType
     ](doc, alloc, key, key_len, node)
 
@@ -209,7 +209,7 @@ fn seq_sonic_json_node_add_string(
     value: c_char_pointer,
     value_len: c_size_t,
 ) -> None:
-    return __mlir_op.`pop.external_call`[
+    __mlir_op.`pop.external_call`[
         func = "seq_sonic_json_node_add_string".value, _type=NoneType
     ](node, alloc, key, key_len, value, value_len)
 

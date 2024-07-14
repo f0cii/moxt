@@ -39,7 +39,7 @@ struct OndemandValue:
     fn str(self) -> String:
         var n: c_size_t = 0
         var s = seq_simdjson_ondemand_string_v(
-            self.p, Pointer[c_size_t].address_of(n)
+            self.p, UnsafePointer[c_size_t].address_of(n)
         )
         return c_str_to_string(s, n)
 
@@ -110,7 +110,7 @@ struct OndemandValue:
             self.p,
             unsafe_ptr_as_scalar_pointer(key.unsafe_ptr()),
             len(key),
-            Pointer[c_size_t].address_of(n),
+            UnsafePointer[c_size_t].address_of(n),
         )
         return c_str_to_string(s, n)
 
@@ -175,7 +175,7 @@ struct OndemandArray(Sized):
     fn at_str(self, index: Int) -> String:
         var n: c_size_t = 0
         var s = seq_simdjson_ondemand_array_at_str(
-            self.p, index, Pointer[c_size_t].address_of(n)
+            self.p, index, UnsafePointer[c_size_t].address_of(n)
         )
         return c_str_to_string(s, n)
 
@@ -246,7 +246,7 @@ struct OndemandObject:
             self.p,
             unsafe_ptr_as_scalar_pointer(key.unsafe_ptr()),
             len(key),
-            Pointer[c_size_t].address_of(n),
+            UnsafePointer[c_size_t].address_of(n),
         )
         if n == 0:
             return String("")
@@ -341,7 +341,7 @@ struct OndemandArrayIter:
     fn get_str(self) -> String:
         var n: c_size_t = 0
         var s = seq_simdjson_ondemand_array_iter_get_str(
-            self.it, Pointer[c_size_t].address_of(n)
+            self.it, UnsafePointer[c_size_t].address_of(n)
         )
         return c_str_to_string(s, n)
 
@@ -410,7 +410,7 @@ struct OndemandDocument:
             self.doc,
             unsafe_ptr_as_scalar_pointer(key.unsafe_ptr()),
             len(key),
-            Pointer[c_size_t].address_of(n),
+            UnsafePointer[c_size_t].address_of(n),
         )
         return c_str_to_string(s, n)
 

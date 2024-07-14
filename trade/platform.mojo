@@ -4,7 +4,7 @@ from base.c import *
 from base.mo import *
 from base.thread import *
 from base.fixed import Fixed
-from core.bybitmodel import *
+from core.models import OrderBookLevel, OrderBookLite
 from core.bybitclient import *
 from .config import AppConfig
 from .types import *
@@ -32,8 +32,8 @@ struct Platform:
     var _config: AppConfig
     var _client: BybitClient
     var _symbols: List[String]
-    var _asks: Pointer[c_void_pointer]
-    var _bids: Pointer[c_void_pointer]
+    var _asks: UnsafePointer[c_void_pointer]
+    var _bids: UnsafePointer[c_void_pointer]
     var _symbol_index_dict: Dict[String, Int]
     var _order_cache: Dict[String, Order]  # key: order_client_id
     var _order_cache_lock: RWLock
@@ -49,8 +49,8 @@ struct Platform:
         )
         self._symbols = config.symbols.split(",")
         var symbol_count = len(self._symbols)
-        self._asks = Pointer[c_void_pointer].alloc(symbol_count)
-        self._bids = Pointer[c_void_pointer].alloc(symbol_count)
+        self._asks = UnsafePointer[c_void_pointer].alloc(symbol_count)
+        self._bids = UnsafePointer[c_void_pointer].alloc(symbol_count)
         self._symbol_index_dict = Dict[String, Int]()
         self._order_cache = Dict[String, Order]()
         self._order_cache_lock = RWLock()
@@ -68,8 +68,8 @@ struct Platform:
         self._client = existing._client^
 
         var symbol_count = len(self._symbols)
-        self._asks = Pointer[c_void_pointer].alloc(symbol_count)
-        self._bids = Pointer[c_void_pointer].alloc(symbol_count)
+        self._asks = UnsafePointer[c_void_pointer].alloc(symbol_count)
+        self._bids = UnsafePointer[c_void_pointer].alloc(symbol_count)
 
         self._symbol_index_dict = existing._symbol_index_dict^
         # self._symbol_index_dict = Dict[String, Int]()
@@ -235,8 +235,8 @@ struct Platform:
             var value: Int64 = 0
             seq_skiplist_node_value(
                 a_node,
-                Pointer[Int64].address_of(key),
-                Pointer[Int64].address_of(value),
+                UnsafePointer[Int64].address_of(key),
+                UnsafePointer[Int64].address_of(value),
             )
             var key_ = Fixed.from_value(key)
             var value_ = Fixed.from_value(value)
@@ -256,8 +256,8 @@ struct Platform:
             var value: Int64 = 0
             seq_skiplist_node_value(
                 b_node,
-                Pointer[Int64].address_of(key),
-                Pointer[Int64].address_of(value),
+                UnsafePointer[Int64].address_of(key),
+                UnsafePointer[Int64].address_of(value),
             )
             var key_ = Fixed.from_value(key)
             var value_ = Fixed.from_value(value)

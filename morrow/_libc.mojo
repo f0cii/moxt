@@ -1,6 +1,3 @@
-from memory.unsafe import Pointer
-
-
 alias c_void = UInt8
 alias c_char = UInt8
 alias c_schar = Int8
@@ -57,23 +54,23 @@ struct CTm:
 @always_inline
 fn c_gettimeofday() -> CTimeval:
     var tv = CTimeval()
-    var p_tv = Pointer[CTimeval].address_of(tv)
-    external_call["gettimeofday", NoneType, Pointer[CTimeval], Int32](p_tv, 0)
+    var p_tv = UnsafePointer[CTimeval].address_of(tv)
+    external_call["gettimeofday", NoneType, UnsafePointer[CTimeval], Int32](p_tv, 0)
     return tv
 
 
 @always_inline
 fn c_localtime(owned tv_sec: Int) -> CTm:
-    var p_tv_sec = Pointer[Int].address_of(tv_sec)
-    var tm = external_call["localtime", Pointer[CTm], Pointer[Int]](p_tv_sec)[0]
+    var p_tv_sec = UnsafePointer[Int].address_of(tv_sec)
+    var tm = external_call["localtime", UnsafePointer[CTm], UnsafePointer[Int]](p_tv_sec)[0]
     return tm
 
 
 @always_inline
 fn c_strptime(time_str: String, time_format: String) -> CTm:
     var tm = CTm()
-    var p_tm = Pointer[CTm].address_of(tm)
-    external_call["strptime", NoneType, Pointer[c_char], Pointer[c_char], Pointer[CTm]](
+    var p_tm = UnsafePointer[CTm].address_of(tm)
+    external_call["strptime", NoneType, UnsafePointer[c_char], UnsafePointer[c_char], UnsafePointer[CTm]](
         to_char_ptr(time_str), to_char_ptr(time_format), p_tm
     )
     return tm
@@ -81,14 +78,14 @@ fn c_strptime(time_str: String, time_format: String) -> CTm:
 
 @always_inline
 fn c_gmtime(owned tv_sec: Int) -> CTm:
-    var p_tv_sec = Pointer[Int].address_of(tv_sec)
-    var tm = external_call["gmtime", Pointer[CTm], Pointer[Int]](p_tv_sec)[0]
+    var p_tv_sec = UnsafePointer[Int].address_of(tv_sec)
+    var tm = external_call["gmtime", UnsafePointer[CTm], UnsafePointer[Int]](p_tv_sec)[0]
     return tm
 
 
-fn to_char_ptr(s: String) -> Pointer[c_char]:
+fn to_char_ptr(s: String) -> UnsafePointer[c_char]:
     """Only ASCII-based strings."""
-    var ptr = Pointer[c_char]().alloc(len(s))
+    var ptr = UnsafePointer[c_char]().alloc(len(s))
     for i in range(len(s)):
         ptr[i] = ord(s[i])
     return ptr

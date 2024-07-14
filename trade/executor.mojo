@@ -3,6 +3,7 @@ from base.sj_ondemand import *
 from base.sj_dom import *
 from base.thread import *
 from core.bybitclient import BybitClient
+from core.models import OrderBookLevel, OrderBookLite
 from core.bybitmodel import *
 from core.bybitws import *
 from base.mo import logd, logi, logw, loge

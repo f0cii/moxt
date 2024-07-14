@@ -74,9 +74,9 @@ struct CString:
     var data: c_char_pointer
     var len: Int
 
-    fn data_u8(self) -> Pointer[SIMD[DType.uint8, 1]]:
+    fn data_u8(self) -> UnsafePointer[SIMD[DType.uint8, 1]]:
         return rebind[
-            Pointer[SIMD[DType.uint8, 1]], Pointer[SIMD[DType.int8, 1]]
+            UnsafePointer[SIMD[DType.uint8, 1]], UnsafePointer[SIMD[DType.int8, 1]]
         ](self.data)
 
 

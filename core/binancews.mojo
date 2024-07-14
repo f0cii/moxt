@@ -26,7 +26,7 @@ struct BinanceWS:
     var _access_key: String
     var _secret_key: String
     var _topics_str: String
-    var _heartbeat_time: Pointer[Int64]
+    var _heartbeat_time: UnsafePointer[Int64]
     var _client: BinanceClient
 
     fn __init__(
@@ -78,7 +78,7 @@ struct BinanceWS:
         register_websocket(ptr)
         self._ptr = ptr
         self._id = seq_voidptr_to_int(ptr)
-        self._heartbeat_time = Pointer[Int64].alloc(1)
+        self._heartbeat_time = UnsafePointer[Int64].alloc(1)
         self._heartbeat_time[0] = 0
 
     fn __del__(owned self):
@@ -116,7 +116,7 @@ struct BinanceWS:
 
     fn on_connect(self) -> None:
         logd("BinanceWS.on_connect")
-        self._heartbeat_time.store(time_ms())
+        self._heartbeat_time[0] = time_ms()
         if self._is_private:
             pass
         else:
@@ -124,7 +124,7 @@ struct BinanceWS:
 
     fn on_heartbeat(self) -> None:
         # logd("BinanceWS.on_heartbeat")
-        var elapsed_time = time_ms() - self._heartbeat_time.load()
+        var elapsed_time = time_ms() - self._heartbeat_time[0]
         if elapsed_time <= 1000 * 60 * 5:
             # logd("BinanceWS.on_heartbeat ignore [" + str(elapsed_time) + "]")
             return
@@ -134,7 +134,7 @@ struct BinanceWS:
             try:
                 var ret = self._client.extend_listen_key()
                 logi("Renewal of listen_key returns: " + str(ret))
-                self._heartbeat_time.store(time_ms())
+                self._heartbeat_time[0] = time_ms()
             except err:
                 loge("Renewal of listen_key encountered an error: " + str(err))
 

@@ -387,7 +387,7 @@ struct iovec:
         return String(ptr, self.iov_len)
 
     fn free(self):
-        var buff = rebind[Pointer[UInt8]](self.iov_base)
+        var buff = rebind[UnsafePointer[UInt8]](self.iov_base)
         buff.free()
 
 
@@ -501,10 +501,10 @@ fn on_tc_timer(ptr: Int) raises -> UInt64:
 
 @value
 struct TimedClosureExecutor:
-    var _ptr: Pointer[c_void_pointer]
+    var _ptr: UnsafePointer[c_void_pointer]
 
     fn __init__(inout self):
-        self._ptr = Pointer[c_void_pointer].alloc(1)
+        self._ptr = UnsafePointer[c_void_pointer].alloc(1)
 
     fn start(
         self,

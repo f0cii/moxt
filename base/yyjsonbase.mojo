@@ -976,13 +976,13 @@ fn seq_yyjson_mut_arr(doc: c_void_pointer) -> c_void_pointer:
 # SEQ_FUNC yyjson_mut_val *seq_yyjson_mut_arr_with_bool(
 #     yyjson_mut_doc *doc, const bool *vals, size_t count);
 fn seq_yyjson_mut_arr_with_bool(
-    doc: c_void_pointer, vals: Pointer[Bool], count: c_size_t
+    doc: c_void_pointer, vals: UnsafePointer[Bool], count: c_size_t
 ) -> c_void_pointer:
     return external_call[
         "seq_yyjson_mut_arr_with_bool",
         c_void_pointer,
         c_void_pointer,
-        Pointer[Bool],
+        UnsafePointer[Bool],
         c_size_t,
     ](doc, vals, count)
 
@@ -1042,13 +1042,13 @@ fn seq_yyjson_mut_arr_with_bool(
 # SEQ_FUNC yyjson_mut_val *seq_yyjson_mut_arr_with_real(
 #     yyjson_mut_doc *doc, const double *vals, size_t count);
 fn seq_yyjson_mut_arr_with_real(
-    doc: c_void_pointer, vals: Pointer[Float64], count: c_size_t
+    doc: c_void_pointer, vals: UnsafePointer[Float64], count: c_size_t
 ) -> c_void_pointer:
     return external_call[
         "seq_yyjson_mut_arr_with_real",
         c_void_pointer,
         c_void_pointer,
-        Pointer[Float64],
+        UnsafePointer[Float64],
         c_size_t,
     ](doc, vals, count)
 
@@ -1126,13 +1126,13 @@ fn seq_yyjson_mut_arr_with_real(
 # SEQ_FUNC yyjson_mut_val *seq_yyjson_mut_arr_with_sint64(
 #     yyjson_mut_doc *doc, const int64_t *vals, size_t count);
 fn seq_yyjson_mut_arr_with_sint64(
-    doc: c_void_pointer, vals: Pointer[Int], count: c_size_t
+    doc: c_void_pointer, vals: UnsafePointer[Int], count: c_size_t
 ) -> c_void_pointer:
     return external_call[
         "seq_yyjson_mut_arr_with_sint64",
         c_void_pointer,
         c_void_pointer,
-        Pointer[Int],
+        UnsafePointer[Int],
         c_size_t,
     ](doc, vals, count)
 
@@ -1271,14 +1271,13 @@ fn seq_yyjson_mut_arr_with_sint64(
 # SEQ_FUNC yyjson_mut_val *seq_yyjson_mut_arr_with_str(
 #     yyjson_mut_doc *doc, const char **vals, size_t count);
 fn seq_yyjson_mut_arr_with_str(
-    doc: c_void_pointer, vals: Pointer[c_char_pointer], count: c_size_t
+    doc: c_void_pointer, vals: UnsafePointer[c_char_pointer], count: c_size_t
 ) -> c_void_pointer:
     return external_call[
         "seq_yyjson_mut_arr_with_str",
         c_void_pointer,
         c_void_pointer,
-        # Pointer[c_void_pointer],
-        Pointer[c_char_pointer],
+        UnsafePointer[c_char_pointer],
         c_size_t,
     ](doc, vals, count)
 
@@ -1612,14 +1611,14 @@ alias YYJSON_WRITE_PRETTY_TWO_SPACES = 1 << 6
 #                                          yyjson_write_flag flg,
 #                                          size_t *len);
 fn seq_yyjson_mut_write(
-    doc: c_void_pointer, flg: UInt32, len: Pointer[c_size_t]
+    doc: c_void_pointer, flg: UInt32, len: UnsafePointer[c_size_t]
 ) -> c_char_pointer:
     return external_call[
         "seq_yyjson_mut_write",
         c_char_pointer,
         c_void_pointer,
         UInt32,
-        Pointer[c_size_t],
+        UnsafePointer[c_size_t],
     ](doc, flg, len)
 
 

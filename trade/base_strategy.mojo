@@ -1,7 +1,7 @@
 from base.c import *
 from base.mo import *
 from base.fixed import Fixed
-from core.bybitmodel import PositionInfo, OrderBookLite
+from core.models import PositionInfo, OrderBookLevel, OrderBookLite
 from .config import AppConfig
 from .types import Order
 from .platform import Platform

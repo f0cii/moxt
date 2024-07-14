@@ -19,8 +19,8 @@ fn test_skiplist() raises:
         var value: Int64 = 0
         seq_skiplist_node_value(
             node,
-            Pointer[Int64].address_of(key),
-            Pointer[Int64].address_of(value),
+            UnsafePointer[Int64].address_of(key),
+            UnsafePointer[Int64].address_of(value),
         )
         var key_ = Fixed.from_value(key)
         var value_ = Fixed.from_value(value)

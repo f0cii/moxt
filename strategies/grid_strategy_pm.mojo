@@ -48,7 +48,7 @@ struct IContext:
 
 
 # 交易策略
-struct GridStrategy(BaseStrategy):
+struct GridStrategyPM(BaseStrategy):
     var platform: Platform
     var grid: GridInfo
     var category: String
@@ -235,7 +235,7 @@ struct GridStrategy(BaseStrategy):
 
         for i in range(len(self.grid.cells)):
             ctx.cell_index = i
-            var cell_ref = self.grid.cells.__get_ref(i)
+            var cell_ref = Reference(self.grid.cells[i])
             self.on_tick_one(ctx, cell_ref)
 
         self.grid.update(ctx.mid)
@@ -500,7 +500,7 @@ struct GridStrategy(BaseStrategy):
             if not order_opt:
                 break
             for i in range(len(self.grid.cells)):
-                var cell_ref = self.grid.cells.__get_ref(i)
+                var cell_ref = Reference(self.grid.cells[i])
                 if self.on_order_cell(cell_ref, order_opt.value()):
                     break
         self.rwlock.unlock()

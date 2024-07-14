@@ -22,6 +22,7 @@ from core.bybitmodel import *
 from core.bybitclient import *
 from core.bybitclientjson import *
 from core.bybitws import *
+from core.models import *
 from trade.pos import LocalPosition
 from trade.config import *
 from trade.platform import Platform
@@ -577,7 +578,7 @@ fn test_ti_call() raises:
 
     var input_length: c_int = 10
 
-    var data_in = Pointer[Float64].alloc(int(input_length))
+    var data_in = UnsafePointer[Float64].alloc(int(input_length))
     data_in[0] = 5
     data_in[1] = 8
     data_in[2] = 12
@@ -588,17 +589,17 @@ fn test_ti_call() raises:
     data_in[7] = 10
     data_in[8] = 11
     data_in[9] = 13
-    var options = Pointer[Float64].alloc(1)
+    var options = UnsafePointer[Float64].alloc(1)
     options[0] = 3
     
-    var inputs = Pointer[Pointer[Float64]].alloc(1)
+    var inputs = UnsafePointer[UnsafePointer[Float64]].alloc(1)
     inputs[0] = data_in
     
     var start = seq_ti_indicator_start(info, options)
     var output_length = input_length - start
 
-    var outputs = Pointer[Pointer[Float64]].alloc(1)
-    var data_out = Pointer[Float64].alloc(int(output_length))
+    var outputs = UnsafePointer[UnsafePointer[Float64]].alloc(1)
+    var data_out = UnsafePointer[Float64].alloc(int(output_length))
     outputs[0] = data_out
     var ok = seq_ti_indicator_run(info, input_length, inputs, options, outputs)
     assert_equal(ok, True)
@@ -616,7 +617,7 @@ fn test_ti_call_at_index() raises:
 
     var input_length: c_int = 10
 
-    var data_in = Pointer[Float64].alloc(int(input_length))
+    var data_in = UnsafePointer[Float64].alloc(int(input_length))
     data_in[0] = 5
     data_in[1] = 8
     data_in[2] = 12
@@ -627,17 +628,17 @@ fn test_ti_call_at_index() raises:
     data_in[7] = 10
     data_in[8] = 11
     data_in[9] = 13
-    var options = Pointer[Float64].alloc(1)
+    var options = UnsafePointer[Float64].alloc(1)
     options[0] = 3
     
-    var inputs = Pointer[Pointer[Float64]].alloc(1)
+    var inputs = UnsafePointer[UnsafePointer[Float64]].alloc(1)
     inputs[0] = data_in
     
     var start = seq_ti_indicator_start(info, options)
     var output_length = input_length - start
 
-    var outputs = Pointer[Pointer[Float64]].alloc(1)
-    var data_out = Pointer[Float64].alloc(int(output_length))
+    var outputs = UnsafePointer[UnsafePointer[Float64]].alloc(1)
+    var data_out = UnsafePointer[Float64].alloc(int(output_length))
     outputs[0] = data_out
     var ok = seq_ti_indicator_run(info, input_length, inputs, options, outputs)
     assert_equal(ok, True)
@@ -671,13 +672,13 @@ fn test_ti_call_at_index2() raises:
     options.append(3)
     assert_equal(len(options), 1)
     
-    var inputs = Pointer[UnsafePointer[Float64]].alloc(1)
+    var inputs = UnsafePointer[UnsafePointer[Float64]].alloc(1)
     inputs[0] = data_in.data
     
     var start = seq_ti_indicator_start(info, options.data)
     var output_length = int(input_length - start)
 
-    var outputs = Pointer[UnsafePointer[Float64]].alloc(1)
+    var outputs = UnsafePointer[UnsafePointer[Float64]].alloc(1)
     var data_out = List[Float64](capacity=output_length)
     data_out.resize(output_length, 0.0)
     outputs[0] = data_out.data

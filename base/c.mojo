@@ -1,4 +1,5 @@
 from sys.info import sizeof
+from sys.ffi import C_char
 
 # from sys.intrinsics import external_call, _mlirtype_is_eq
 from sys.intrinsics import _mlirtype_is_eq
@@ -28,66 +29,13 @@ alias intptr_t = Int64
 alias uintptr_t = UInt64
 
 alias c_char_pointer = UnsafePointer[c_schar]
-# alias c_char_any_pointer = UnsafePointer[c_schar]
 
 alias c_void_pointer = UnsafePointer[c_void]
-# alias c_void_any_pointer = UnsafePointer[c_void]
 
 
 alias any_pointer_simd_int8_to_pointer_simd_int8 = rebind[
     UnsafePointer[SIMD[DType.int8, 1]], UnsafePointer[SIMD[DType.int8, 1]]
 ]
-
-
-# @always_inline("nodebug")
-# fn external_call6[
-#     callee: StringLiteral,
-#     type: AnyType,
-#     T0: AnyType,
-#     T1: AnyType,
-#     T2: AnyType,
-#     T3: AnyType,
-#     T4: AnyType,
-#     T5: AnyType,
-# ](arg0: T0, arg1: T1, arg2: T2, arg3: T3, arg4: T4, arg5: T5) -> type:
-#     """Call an external function.
-
-#     Parameters:
-#       callee: The name of the external function.
-#       type: The return type.
-#       T0: The first argument type.
-#       T1: The second argument type.
-#       T2: The third argument type.
-#       T3: The fourth argument type.
-#       T4: The fifth argument type.
-#       T5: The fifth argument type.
-
-#     Args:
-#       arg0: The first argument.
-#       arg1: The second argument.
-#       arg2: The third argument.
-#       arg3: The fourth argument.
-#       arg4: The fifth argument.
-#       arg5: The fifth argument.
-
-#     Returns:
-#       The external call result.
-#     """
-
-#     @parameter
-#     if _mlirtype_is_eq[type, NoneType]():
-#         __mlir_op.`pop.external_call`[func : callee.value, _type:None](
-#             arg0, arg1, arg2, arg3, arg4, arg5
-#         )
-#         return rebind[type](None)
-#     else:
-#         return __mlir_op.`pop.external_call`[func : callee.value, _type:type](
-#             arg0, arg1, arg2, arg3, arg4, arg5
-#         )
-
-
-fn exit(status: Int32) -> UInt8:
-    return external_call["exit", UInt8, Int32](status)
 
 
 fn strlen(s: UnsafePointer[c_char]) -> c_size_t:
@@ -158,60 +106,18 @@ fn c_str_to_string(s: UnsafePointer[c_char], n: Int) -> String:
     return String(ptr, size)
 
 
-# fn to_string_ref(s: String) -> StringRef:
-#     var slen = len(s)
-#     var ptr = Pointer[Int8]().alloc(slen)
-#     memcpy(ptr, s.unsafe_ptr(), slen)
-#     var s_ref = StringRef(
-#         ptr.bitcast[__mlir_type.`!pop.scalar<si8>`]().address, slen
-#     )
-#     return s_ref
-
-
-# fn to_string_ref(data: Pointer[Int8], data_len: Int) -> StringRef:
-#     var ptr = Pointer[Int8]().alloc(data_len)
-#     memcpy(ptr, data, data_len)
-#     return StringRef(
-#         ptr.bitcast[__mlir_type.`!pop.scalar<si8>`]().address, data_len
-#     )
-
-
-# fn to_string_ref(data: Pointer[UInt8], data_len: Int) -> StringRef:
-#     var ptr = Pointer[Int8]().alloc(data_len)
-#     memcpy(ptr, data.bitcast[Int8](), data_len)
-#     return StringRef(
-#         ptr.bitcast[__mlir_type.`!pop.scalar<si8>`]().address, data_len
-#     )
+@always_inline
+fn str_as_scalar_pointer(s: StringLiteral) -> UnsafePointer[Scalar[DType.int8]]:
+    return s.unsafe_cstr_ptr()
 
 
 @always_inline
-fn unsafe_ptr_as_scalar_pointer(
-    ptr: UnsafePointer[UInt8],
+fn str_as_scalar_pointer(s: StringRef) -> UnsafePointer[Scalar[DType.int8]]:
+    return s.unsafe_ptr().bitcast[C_char]()
+
+
+@always_inline
+fn str_as_scalar_pointer(
+    s: String,
 ) -> UnsafePointer[Scalar[DType.int8]]:
-    # return DTypePointer[DType.int8](ptr.bitcast[Int8]())._as_scalar_pointer()
-    return DTypePointer[DType.int8](ptr.bitcast[Int8]())._as_scalar_pointer()
-
-
-@always_inline
-fn unsafe_ptr_as_uint8_scalar_pointer(
-    ptr: UnsafePointer[UInt8],
-) -> UnsafePointer[Scalar[DType.uint8]]:
-    return (
-        DTypePointer[DType.int8](ptr.bitcast[Int8]())
-        ._as_scalar_pointer()
-        .bitcast[UInt8]()
-    )
-
-
-@always_inline
-fn unsafe_ptr_as_scalar_pointer(
-    ptr: UnsafePointer[Int8],
-) -> UnsafePointer[Scalar[DType.int8]]:
-    return DTypePointer[DType.int8](ptr)._as_scalar_pointer()
-
-
-@always_inline
-fn unsafe_ptr_as_uint8_scalar_pointer(
-    ptr: UnsafePointer[Int8],
-) -> UnsafePointer[Scalar[DType.uint8]]:
-    return DTypePointer[DType.int8](ptr)._as_scalar_pointer().bitcast[UInt8]()
+    return s.unsafe_cstr_ptr()

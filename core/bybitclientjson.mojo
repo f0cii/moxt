@@ -12,7 +12,6 @@ from .bybitmodel import (
     KlineItem,
     OrderBookItem,
     OrderBook,
-    PositionInfo,
     OrderResponse,
     BalanceInfo,
     OrderInfo,

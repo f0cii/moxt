@@ -478,32 +478,32 @@ struct DomElement:
     @always_inline
     fn __getitem__(self, key: StringLiteral) -> DomElement:
         var elem = seq_simdjson_dom_document_get_element(
-            self.p, unsafe_ptr_as_scalar_pointer(key.unsafe_ptr()), len(key)
+            self.p, str_as_scalar_pointer(key), len(key)
         )
         return DomElement(elem)
 
     @always_inline
     fn get_int(self, key: StringLiteral) -> Int:
         return seq_simdjson_dom_element_get_int(
-            self.p, unsafe_ptr_as_scalar_pointer(key.unsafe_ptr()), len(key)
+            self.p, str_as_scalar_pointer(key), len(key)
         )
 
     @always_inline
     fn get_uint(self, key: StringLiteral) -> Int:
         return seq_simdjson_dom_element_get_uint(
-            self.p, unsafe_ptr_as_scalar_pointer(key.unsafe_ptr()), len(key)
+            self.p, str_as_scalar_pointer(key), len(key)
         )
 
     @always_inline
     fn get_float(self, key: StringLiteral) -> Float64:
         return seq_simdjson_dom_element_get_float(
-            self.p, unsafe_ptr_as_scalar_pointer(key.unsafe_ptr()), len(key)
+            self.p, str_as_scalar_pointer(key), len(key)
         )
 
     @always_inline
     fn get_bool(self, key: StringLiteral) -> Bool:
         return seq_simdjson_dom_element_get_bool(
-            self.p, unsafe_ptr_as_scalar_pointer(key.unsafe_ptr()), len(key)
+            self.p, str_as_scalar_pointer(key), len(key)
         )
 
     @always_inline
@@ -511,7 +511,7 @@ struct DomElement:
         var n: c_size_t = 0
         var s = seq_simdjson_dom_element_get_str(
             self.p,
-            unsafe_ptr_as_scalar_pointer(key.unsafe_ptr()),
+            str_as_scalar_pointer(key),
             len(key),
             UnsafePointer[c_size_t].address_of(n),
         )
@@ -520,14 +520,14 @@ struct DomElement:
     @always_inline
     fn get_object(self, key: StringLiteral) -> DomObject:
         var p = seq_simdjson_dom_element_get_object(
-            self.p, unsafe_ptr_as_scalar_pointer(key.unsafe_ptr()), len(key)
+            self.p, str_as_scalar_pointer(key), len(key)
         )
         return DomObject(p)
 
     @always_inline
     fn get_array(self, key: StringLiteral) -> DomArray:
         var p = seq_simdjson_dom_element_get_array(
-            self.p, unsafe_ptr_as_scalar_pointer(key.unsafe_ptr()), len(key)
+            self.p, str_as_scalar_pointer(key), len(key)
         )
         return DomArray(p)
 
@@ -614,25 +614,25 @@ struct DomObject(CollectionElement):
     @always_inline
     fn get_int(self, key: StringLiteral) -> Int:
         return seq_simdjson_dom_object_get_int(
-            self.p, unsafe_ptr_as_scalar_pointer(key.unsafe_ptr()), len(key)
+            self.p, str_as_scalar_pointer(key), len(key)
         )
 
     @always_inline
     fn get_uint(self, key: StringLiteral) -> Int:
         return seq_simdjson_dom_object_get_uint(
-            self.p, unsafe_ptr_as_scalar_pointer(key.unsafe_ptr()), len(key)
+            self.p, str_as_scalar_pointer(key), len(key)
         )
 
     @always_inline
     fn get_float(self, key: StringLiteral) -> Float64:
         return seq_simdjson_dom_object_get_float(
-            self.p, unsafe_ptr_as_scalar_pointer(key.unsafe_ptr()), len(key)
+            self.p, str_as_scalar_pointer(key), len(key)
         )
 
     @always_inline
     fn get_bool(self, key: StringLiteral) -> Bool:
         return seq_simdjson_dom_object_get_bool(
-            self.p, unsafe_ptr_as_scalar_pointer(key.unsafe_ptr()), len(key)
+            self.p, str_as_scalar_pointer(key), len(key)
         )
 
     @always_inline
@@ -640,7 +640,7 @@ struct DomObject(CollectionElement):
         var n: c_size_t = 0
         var s = seq_simdjson_dom_object_get_str(
             self.p,
-            unsafe_ptr_as_scalar_pointer(key.unsafe_ptr()),
+            str_as_scalar_pointer(key),
             len(key),
             UnsafePointer[c_size_t].address_of(n),
         )
@@ -649,14 +649,14 @@ struct DomObject(CollectionElement):
     @always_inline
     fn get_object(self, key: StringLiteral) -> DomObject:
         var p = seq_simdjson_dom_object_get_object(
-            self.p, unsafe_ptr_as_scalar_pointer(key.unsafe_ptr()), len(key)
+            self.p, str_as_scalar_pointer(key), len(key)
         )
         return DomObject(p)
 
     @always_inline
     fn get_array(self, key: StringLiteral) -> DomArray:
         var p = seq_simdjson_dom_object_get_array(
-            self.p, unsafe_ptr_as_scalar_pointer(key.unsafe_ptr()), len(key)
+            self.p, str_as_scalar_pointer(key), len(key)
         )
         return DomArray(p)
 
@@ -815,14 +815,14 @@ struct DomParser:
     fn parse(self, s: StringRef) -> DomElement:
         return DomElement(
             seq_simdjson_dom_parser_parse(
-                self.p, unsafe_ptr_as_scalar_pointer(s.unsafe_ptr()), len(s)
+                self.p, str_as_scalar_pointer(s), len(s)
             )
         )
 
     @always_inline
     fn parse(self, s: String) raises -> DomElement:
         var p = seq_simdjson_dom_parser_parse(
-            self.p, unsafe_ptr_as_scalar_pointer(s.unsafe_ptr()), len(s)
+            self.p, str_as_scalar_pointer(s), len(s)
         )
         if not seq_simdjson_dom_element_is_valid(p):
             raise Error("JSON parsing error: [" + s + "]")

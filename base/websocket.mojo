@@ -202,7 +202,7 @@ struct WebSocket:
     fn send(self, text: String) -> None:
         seq_websocket_send(
             self._ptr,
-            unsafe_ptr_as_scalar_pointer(text.unsafe_ptr()),
+            str_as_scalar_pointer(text),
             len(text),
         )
 

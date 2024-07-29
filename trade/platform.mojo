@@ -38,7 +38,7 @@ struct Platform:
     var _order_cache: Dict[String, Order]  # key: order_client_id
     var _order_cache_lock: RWLock
     var _accounts_lock: RWLock
-    # var _order_update_callbacks: List[OrderUpdateCallbackWrapper]
+    var _order_update_callbacks: List[OrderUpdateCallback]
     var _accounts: Dict[String, Account]
 
     fn __init__(inout self, config: AppConfig) raises:
@@ -55,9 +55,7 @@ struct Platform:
         self._order_cache = Dict[String, Order]()
         self._order_cache_lock = RWLock()
         self._accounts_lock = RWLock()
-        # self._order_update_callbacks = List[OrderUpdateCallbackWrapper](
-        #     capacity=16
-        # )
+        self._order_update_callbacks = List[OrderUpdateCallback](capacity=16)
         self._accounts = Dict[String, Account]()
         logd("Platform.__init__ done")
 
@@ -76,7 +74,7 @@ struct Platform:
         self._order_cache = existing._order_cache^
         self._order_cache_lock = existing._order_cache_lock
         self._accounts_lock = existing._accounts_lock
-        # self._order_update_callbacks = existing._order_update_callbacks
+        self._order_update_callbacks = existing._order_update_callbacks
         self._accounts = existing._accounts
         logd("Platform.__moveinit__ done")
 
@@ -106,8 +104,7 @@ struct Platform:
     fn register_order_update_callback(
         inout self, owned callback: OrderUpdateCallback
     ) raises:
-        # self._order_update_callbacks.append(callback^)
-        pass
+        self._order_update_callbacks.append(callback^)
 
     fn free(inout self) raises:
         for i in range(len(self._symbols)):
@@ -167,7 +164,7 @@ struct Platform:
                 )
 
     fn on_update_order(inout self, order: Order) -> Bool:
-        logi("on_update_order: " + str(order))
+        # logi("on_update_order: " + str(order))
         var key = order.order_client_id
         self._order_cache_lock.lock()
         # TODO: Order versions need to be compared, returning false if the version is older
@@ -189,6 +186,29 @@ struct Platform:
         self._accounts[account.coin] = account
         self._accounts_lock.unlock()
 
+    # 设置持仓模式
+    fn set_position_mode(
+        self, category: String, symbol: String, mode: Int
+    ) raises:
+        # mode_: 0-PositionModeMergedSingle 3-PositionModeBothSides
+        var mode_ = "0"
+        if mode == PositionMode.BothSides:
+            mode_ = "3"
+        elif mode == PositionMode.MergedSingle:
+            mode_ = "0"
+
+        try:
+            var switch_position_mode_res = self._client.switch_position_mode(
+                category, symbol, mode_
+            )
+            logi("set_position_mode: " + str(switch_position_mode_res))
+        except e:
+            # retCode=110025, retMsg=Position mode is not modified
+            if "Position mode is not modified" in str(e):
+                logi("set_position_mode: " + str(e))
+            else:
+                raise e
+
     fn get_account(self, coin: String) -> Optional[Account]:
         """
         coin: USDT
@@ -204,10 +224,9 @@ struct Platform:
 
     @always_inline
     fn notify_order_update(inout self, order: Order):
-        # for i in range(len(self._order_update_callbacks)):
-        #     var ref = self._order_update_callbacks.__get_ref(i)
-        #     ref[](order)
-        pass
+        for i in range(len(self._order_update_callbacks)):
+            var callback_ref = Reference(self._order_update_callbacks[i])
+            callback_ref[](order)
 
     fn get_order(self, cid: String) raises -> Order:
         self._order_cache_lock.lock()

@@ -183,15 +183,15 @@ struct Executor[T: BaseStrategy](Movable, Runable, IExecutor):
         var topic = doc.get_str("topic")
 
         if topic == "order":
-            logi("order message: " + msg)
+            # logi("order message: " + msg)
             self.process_order_message(doc)
         elif topic == "position":
-            logi("position message: " + msg)
+            # logi("position message: " + msg)
             self.process_position_message(doc)
         elif topic == "execution":
             pass
         elif topic == "wallet":
-            logi("wallet message: " + msg)
+            # logi("wallet message: " + msg)
             self.process_wallet_message(doc)
         elif topic != "":
             return
@@ -322,7 +322,7 @@ struct Executor[T: BaseStrategy](Movable, Runable, IExecutor):
                 status=convert_bybit_order_status(orderStatus),
             )
 
-            logi("order: " + str(order))
+            # logi("order: " + str(order))
 
             _ = self._platform[].on_update_order(order)
 
@@ -478,7 +478,7 @@ struct Executor[T: BaseStrategy](Movable, Runable, IExecutor):
     fn is_initialized(inout self) -> Bool:
         return self._is_initialized.load() == 1
 
-    fn run_once(inout self):
+    fn run_once(inout self) raises:
         # logi("run_once")
         if self._is_running.load() == 0:
             logi("Executor is not running")
@@ -494,12 +494,7 @@ struct Executor[T: BaseStrategy](Movable, Runable, IExecutor):
         # logi("start lock")
         # self._rwlock.lock()
         # logi("start lock done")
-        try:
-            # logi("run tick")
-            self._strategy.on_tick()
-            # logi("run tick done")
-        except err:
-            loge("on_tick error: " + str(err))
+        self._strategy.on_tick()
         # self._rwlock.unlock()
         # logi("Executor.run_once done")
 

@@ -12,6 +12,13 @@ struct OrderType:
     alias SELL = "SELL"
 
 
+struct PositionMode:
+    # 单项持仓模式
+    alias MergedSingle = 0
+    # 双向持仓模式
+    alias BothSides = 3
+
+
 @value
 @register_passable
 struct OrderStatus(Stringable):

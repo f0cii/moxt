@@ -8,7 +8,7 @@ from .thread import LockfreeQueue, lockfree_queue_itf
 from .c import *
 from .mo import *
 from .fixed import Fixed
-from morrow import Morrow
+from ylstdlib.time import time_ns
 
 
 alias Args = Variant[String, Int, Float64, Bool]
@@ -102,16 +102,12 @@ struct LogInterface:
 
             # 2024-03-27 14:10:05.034
             # var formatted_time = "2024-04-01 12:00:00.100"
-            var now = Morrow.now()
-            var formatted_time = now.format("YYYY-MM-DD HH:mm:ss.SSSSSSSSS")
-
-            logi(formatted_time + " seq_id: " + str(seq_id) + " " + message)
 
             # print(s)
             doc.add_string("type", "algo_log")
             doc.add_int("algo_id", self.algo_id)
             doc.add_int("seq_id", seq_id)
-            doc.add_string("timestamp", formatted_time)
+            doc.add_int("timestamp", time_ns())
             doc.add_string("logger", "trading_engine")
             doc.add_string("level", level)
             doc.add_string("message", message)
@@ -154,15 +150,12 @@ struct LogInterface:
         try:
             var seq_id = int(seq_snowflake_id())
 
-            var now = Morrow.now()
-            var formatted_time = now.format("YYYY-MM-DD HH:mm:ss.SSSSSSSSS")
-
             var doc = SonicDocument()
             doc.set_object()
             doc.add_string("type", "event_log")
             doc.add_int("algo_id", self.algo_id)
             doc.add_int("seq_id", seq_id)
-            doc.add_string("timestamp", formatted_time)
+            doc.add_int("timestamp", time_ns())
             doc.add_string("event_type", event_type)
             doc.add_int("grid_level", grid_level)
             doc.add_string("order_type", order_type)
@@ -189,7 +182,7 @@ struct LogInterface:
             doc.add_node("extra_info", extra_info_node)
 
             var doc_str = doc.to_string()
-            print(doc_str)
+            # logi(doc_str)
             _ = self.q[].push(doc_str)
         except e:
             print(str(e))
@@ -235,7 +228,7 @@ struct LogService:
         var e = self.q[].pop()
         if e:
             var s = e.value()
-            logi("log perform s=" + s)
+            # logi("log perform s=" + s)
             _ = self.redis[].rpush("q_moxtflow_log", s)
             return 1
         else:

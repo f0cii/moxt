@@ -154,7 +154,7 @@ struct BinanceWS:
         seq_websocket_delete(self._ptr)
 
     fn send(self, text: String) -> None:
-        seq_websocket_send(self._ptr, unsafe_ptr_as_scalar_pointer(text.unsafe_ptr()), len(text))
+        seq_websocket_send(self._ptr, str_as_scalar_pointer(text), len(text))
 
     fn connect(self):
         seq_websocket_connect(self._ptr)

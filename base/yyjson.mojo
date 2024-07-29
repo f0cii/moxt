@@ -32,7 +32,7 @@ struct yyjson_mut_doc:
         _ = seq_yyjson_mut_obj_add_strn(
             self.doc,
             self.root,
-            unsafe_ptr_as_scalar_pointer(key.unsafe_ptr()),
+            str_as_scalar_pointer(key),
             v.data,
             v.len,
         )
@@ -42,7 +42,7 @@ struct yyjson_mut_doc:
         _ = seq_yyjson_mut_obj_add_int(
             self.doc,
             self.root,
-            unsafe_ptr_as_scalar_pointer(key.unsafe_ptr()),
+            str_as_scalar_pointer(key),
             value,
         )
 
@@ -51,7 +51,7 @@ struct yyjson_mut_doc:
         _ = seq_yyjson_mut_obj_add_real(
             self.doc,
             self.root,
-            unsafe_ptr_as_scalar_pointer(key.unsafe_ptr()),
+            str_as_scalar_pointer(key),
             value,
         )
 
@@ -60,7 +60,7 @@ struct yyjson_mut_doc:
         _ = seq_yyjson_mut_obj_add_bool(
             self.doc,
             self.root,
-            unsafe_ptr_as_scalar_pointer(key.unsafe_ptr()),
+            str_as_scalar_pointer(key),
             value,
         )
 
@@ -74,7 +74,7 @@ struct yyjson_mut_doc:
         _ = seq_yyjson_mut_obj_add_val(
             self.doc,
             self.root,
-            unsafe_ptr_as_scalar_pointer(key.unsafe_ptr()),
+            str_as_scalar_pointer(key),
             harr,
         )
         vp.free()
@@ -91,7 +91,7 @@ struct yyjson_mut_doc:
         _ = seq_yyjson_mut_obj_add_val(
             self.doc,
             self.root,
-            unsafe_ptr_as_scalar_pointer(key.unsafe_ptr()),
+            str_as_scalar_pointer(key),
             harr,
         )
         vp.free()
@@ -106,7 +106,7 @@ struct yyjson_mut_doc:
         _ = seq_yyjson_mut_obj_add_val(
             self.doc,
             self.root,
-            unsafe_ptr_as_scalar_pointer(key.unsafe_ptr()),
+            str_as_scalar_pointer(key),
             harr,
         )
         vp.free()
@@ -122,7 +122,7 @@ struct yyjson_mut_doc:
         _ = seq_yyjson_mut_obj_add_val(
             self.doc,
             self.root,
-            unsafe_ptr_as_scalar_pointer(key.unsafe_ptr()),
+            str_as_scalar_pointer(key),
             harr,
         )
         vp.free()
@@ -151,9 +151,7 @@ struct yyjson_val(CollectionElement):
     @always_inline
     fn __getitem__(self, key: String) -> yyjson_val:
         return yyjson_val(
-            seq_yyjson_obj_getn(
-                self.p, unsafe_ptr_as_scalar_pointer(key.unsafe_ptr()), len(key)
-            )
+            seq_yyjson_obj_getn(self.p, str_as_scalar_pointer(key), len(key))
         )
 
     fn __bool__(self) -> Bool:
@@ -201,9 +199,7 @@ struct yyjson_val(CollectionElement):
     @always_inline
     fn object(self, key: StringLiteral) -> yyjson_val:
         return yyjson_val(
-            seq_yyjson_obj_getn(
-                self.p, unsafe_ptr_as_scalar_pointer(key.unsafe_ptr()), len(key)
-            )
+            seq_yyjson_obj_getn(self.p, str_as_scalar_pointer(key), len(key))
         )
 
     @always_inline
@@ -233,7 +229,7 @@ struct yyjson_doc:
     fn __init__(inout self, s: String, read_insitu: Bool = False):
         var flg = YYJSON_READ_INSITU if read_insitu else 0
         self.doc = seq_yyjson_read(
-            unsafe_ptr_as_uint8_scalar_pointer(s.unsafe_ptr()), len(s), flg
+            s.unsafe_cstr_ptr().bitcast[UInt8](), len(s), flg
         )
 
     @always_inline

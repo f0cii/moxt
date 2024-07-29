@@ -75,9 +75,9 @@ fn seq_redis_set(redis: c_void_pointer, key: String, value: String) -> Bool:
         c_size_t,
     ](
         redis,
-        unsafe_ptr_as_scalar_pointer(key.unsafe_ptr()),
+        str_as_scalar_pointer(key),
         len(key),
-        unsafe_ptr_as_scalar_pointer(value.unsafe_ptr()),
+        str_as_scalar_pointer(value),
         len(value),
     )
 
@@ -95,7 +95,7 @@ fn seq_redis_get(redis: c_void_pointer, key: String) -> String:
         UnsafePointer[c_size_t],
     ](
         redis,
-        unsafe_ptr_as_scalar_pointer(key.unsafe_ptr()),
+        str_as_scalar_pointer(key),
         len(key),
         value_data,
         UnsafePointer[c_size_t].address_of(value_len),
@@ -120,9 +120,9 @@ fn seq_redis_rpush(redis: c_void_pointer, key: String, value: String) -> Int64:
         c_size_t,
     ](
         redis,
-        unsafe_ptr_as_scalar_pointer(key.unsafe_ptr()),
+        str_as_scalar_pointer(key),
         len(key),
-        unsafe_ptr_as_scalar_pointer(value.unsafe_ptr()),
+        str_as_scalar_pointer(value),
         len(value),
     )
     return result

@@ -135,7 +135,7 @@ fn test_sonic_raw() raises:
     seq_sonic_json_document_set_object(doc)
     var key = String("a")
     var value = String("12345")
-    seq_sonic_json_document_add_string(doc, alloc, unsafe_ptr_as_scalar_pointer(key.unsafe_ptr()), len(key), unsafe_ptr_as_scalar_pointer(value.unsafe_ptr()), len(value))
+    seq_sonic_json_document_add_string(doc, alloc, str_as_scalar_pointer(key), len(key), str_as_scalar_pointer(value), len(value))
     
     var result = UnsafePointer[c_schar].alloc(1024)
     var n = seq_sonic_json_document_to_string(doc, result)
@@ -573,7 +573,7 @@ fn test_ti() raises:
 
 fn test_ti_call() raises:
     var s = StringRef("sma")
-    var info = seq_ti_find_indicator(unsafe_ptr_as_scalar_pointer(s.unsafe_ptr()))
+    var info = seq_ti_find_indicator(str_as_scalar_pointer(s))
     assert_equal(seq_ti_is_valid_indicator(info), True)
 
     var input_length: c_int = 10

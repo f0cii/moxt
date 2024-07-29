@@ -17,29 +17,25 @@ struct Far:
         return int(
             seq_far_get_int(
                 self.ptr,
-                unsafe_ptr_as_scalar_pointer(key.unsafe_ptr()),
+                str_as_scalar_pointer(key),
                 len(key),
             )
         )
 
     @always_inline
     fn get_float(self, key: String) -> Float64:
-        return seq_far_get_float(
-            self.ptr, unsafe_ptr_as_scalar_pointer(key.unsafe_ptr()), len(key)
-        )
+        return seq_far_get_float(self.ptr, str_as_scalar_pointer(key), len(key))
 
     @always_inline
     fn get_bool(self, key: String) -> Bool:
-        return seq_far_get_bool(
-            self.ptr, unsafe_ptr_as_scalar_pointer(key.unsafe_ptr()), len(key)
-        )
+        return seq_far_get_bool(self.ptr, str_as_scalar_pointer(key), len(key))
 
     @always_inline
     fn get_str(self, key: String) -> String:
         var n: c_size_t = 0
         var c_str = seq_far_get_string(
             self.ptr,
-            unsafe_ptr_as_scalar_pointer(key.unsafe_ptr()),
+            str_as_scalar_pointer(key),
             len(key),
             UnsafePointer[c_size_t].address_of(n),
         )
@@ -53,7 +49,7 @@ struct Far:
     fn set_int(self, key: String, value: Int):
         _ = seq_far_set_int(
             self.ptr,
-            unsafe_ptr_as_scalar_pointer(key.unsafe_ptr()),
+            str_as_scalar_pointer(key),
             len(key),
             value,
         )
@@ -62,7 +58,7 @@ struct Far:
     fn set_float(self, key: String, value: Float64):
         _ = seq_far_set_float(
             self.ptr,
-            unsafe_ptr_as_scalar_pointer(key.unsafe_ptr()),
+            str_as_scalar_pointer(key),
             len(key),
             value,
         )
@@ -71,7 +67,7 @@ struct Far:
     fn set_bool(self, key: String, value: Bool):
         _ = seq_far_set_bool(
             self.ptr,
-            unsafe_ptr_as_scalar_pointer(key.unsafe_ptr()),
+            str_as_scalar_pointer(key),
             len(key),
             value,
         )
@@ -80,9 +76,9 @@ struct Far:
     fn set_str(self, key: String, value: String):
         _ = seq_far_set_string(
             self.ptr,
-            unsafe_ptr_as_scalar_pointer(key.unsafe_ptr()),
+            str_as_scalar_pointer(key),
             len(key),
-            unsafe_ptr_as_scalar_pointer(value.unsafe_ptr()),
+            str_as_scalar_pointer(value),
             len(value),
         )
 

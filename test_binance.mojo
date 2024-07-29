@@ -405,12 +405,12 @@ fn run_forever():
 
 fn handle_term(sig: c_int) raises -> None:
     print("handle_term")
-    _ = exit(0)
+    sys.exit()
 
 
 fn photon_handle_term(sig: c_int) raises -> None:
     print("photon_handle_term")
-    _ = exit(0)
+    sys.exit()
 
 
 fn main() raises:

@@ -87,7 +87,7 @@ fn test_raw():
     var max_capacity = 1000 * 1000
     var parser = seq_simdjson_ondemand_parser_new(max_capacity)
     var padded_string = seq_simdjson_padded_string_new(
-        unsafe_ptr_as_scalar_pointer(s.unsafe_ptr()), len(s)
+        str_as_scalar_pointer(s), len(s)
     )
     var doc = seq_simdjson_ondemand_parser_parse(parser, padded_string)
     # var key: CString = "retCode"
@@ -95,7 +95,7 @@ fn test_raw():
     var key = String("retCode")
     var ret_code = int(
         seq_simdjson_ondemand_get_int_d(
-            doc, unsafe_ptr_as_scalar_pointer(key.unsafe_ptr()), len(key)
+            doc, str_as_scalar_pointer(key), len(key)
         )
     )
     print(ret_code)
@@ -174,7 +174,7 @@ fn req(arg: c_void_pointer) raises -> c_void_pointer:
     logi("req")
     # var url: StringLiteral = "https://reqres.in/api/users?page=1"
     var url: String = "https://reqres.in/api/users?page=1"
-    test_photon_http(unsafe_ptr_as_scalar_pointer(url.unsafe_ptr()), len(url))
+    test_photon_http(str_as_scalar_pointer(url), len(url))
     logi("req end")
     return c_void_pointer()
 

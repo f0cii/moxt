@@ -347,50 +347,6 @@ fn seq_photon_rwlock_unlock(rwlock: c_void_pointer) -> c_int:
     )
 
 
-@value
-@register_passable
-struct iovec:
-    var iov_base: c_void_pointer  # Pointer to data.
-    var iov_len: c_size_t  # Length of data.
-
-    fn __init__() -> Self:
-        return Self {iov_base: c_void_pointer(), iov_len: 0}
-
-    fn __init__(base: c_void_pointer, len: c_size_t) -> Self:
-        return Self {iov_base: base, iov_len: len}
-
-    fn __init__(data: (DTypePointer[DType.uint8], Int)) -> Self:
-        var ptr = data.get[0, DTypePointer[DType.uint8]]()
-        var data_len = data.get[1, Int]()
-        var c_ptr = rebind[c_void_pointer, DTypePointer[DType.uint8]](ptr)
-        return Self {iov_base: c_ptr, iov_len: data_len}
-
-    fn __init__(data: (DTypePointer[DType.int8], Int)) -> Self:
-        var ptr = data.get[0, DTypePointer[DType.uint8]]()
-        var data_len = data.get[1, Int]()
-        var c_ptr = rebind[c_void_pointer, DTypePointer[DType.uint8]](ptr)
-        return Self {iov_base: c_ptr, iov_len: data_len}
-
-    fn __init__(s: String) -> Self:
-        var buff = UnsafePointer[UInt8].alloc(len(s))
-        memcpy(
-            rebind[DTypePointer[DType.int8]](buff), s.unsafe_cstr_ptr(), len(s)
-        )
-        return Self {iov_base: buff, iov_len: len(s)}
-
-    fn to_data(self) -> (DTypePointer[DType.uint8], Int):
-        var ptr = rebind[DTypePointer[DType.uint8]](self.iov_base)
-        return (ptr, self.iov_len)
-
-    fn to_str(self) -> String:
-        var ptr = rebind[DTypePointer[DType.uint8]](self.iov_base)
-        return String(ptr, self.iov_len)
-
-    fn free(self):
-        var buff = rebind[UnsafePointer[UInt8]](self.iov_base)
-        buff.free()
-
-
 # Create queue
 fn seq_lockfree_queue_new() -> c_void_pointer:
     return external_call["seq_lockfree_queue_new", c_void_pointer]()
@@ -402,21 +358,31 @@ fn seq_lockfree_queue_free(q: c_void_pointer) -> None:
 
 
 # Enqueue operation
-fn seq_lockfree_queue_push(
-    q: c_void_pointer, data: UnsafePointer[iovec]
+fn seq_lockfree_queue_push_data(
+    q: c_void_pointer, data: UnsafePointer[UInt8], data_len: c_size_t
 ) -> Bool:
     return external_call[
-        "seq_lockfree_queue_push", Bool, c_void_pointer, UnsafePointer[iovec]
-    ](q, data)
+        "seq_lockfree_queue_push_data",
+        Bool,
+        c_void_pointer,
+        UnsafePointer[UInt8],
+        c_size_t,
+    ](q, data, data_len)
 
 
 # Dequeue operation
-fn seq_lockfree_queue_pop(
-    q: c_void_pointer, data: UnsafePointer[iovec]
+fn seq_lockfree_queue_pop_data(
+    q: c_void_pointer,
+    output: UnsafePointer[UInt8],
+    len: UnsafePointer[c_size_t],
 ) -> Bool:
     return external_call[
-        "seq_lockfree_queue_pop", Bool, c_void_pointer, UnsafePointer[iovec]
-    ](q, data)
+        "seq_lockfree_queue_pop_data",
+        Bool,
+        c_void_pointer,
+        UnsafePointer[UInt8],
+        UnsafePointer[c_size_t],
+    ](q, output, len)
 
 
 # Get current thread id
@@ -601,173 +567,6 @@ struct ConditionVariable:
         seq_photon_condition_variable_free(self.ptr)
 
 
-# alias CoRunFunction = fn (Dict[String, String]) raises escaping -> String
-
-
-# struct ArgData:
-#     var _data: Dict[String, String]
-#     var _run: CoRunFunction
-
-#     fn __init__(inout self):
-#         # print("__init__")
-#         self._data = Dict[String, String]()
-
-#         fn default_run(arg: Dict[String, String]) raises -> String:
-#             return ""
-
-#         self._run = default_run
-
-#     fn __copyinit__(inout self, existing: Self):
-#         # print("__copyinit__")
-#         self._data = existing._data
-#         self._run = existing._run
-
-#     fn __moveinit__(inout self, owned existing: Self):
-#         # print("__moveinit__")
-#         self._data = existing._data^
-#         self._run = existing._run^
-
-#     fn __del__(owned self):
-#         # print("__del__")
-#         pass
-
-#     fn __getitem__(self, key: String) raises -> String:
-#         return self._data[key]
-
-#     fn __setitem__(inout self, key: String, value: String):
-#         self._data[key] = value
-
-#     fn __len__(self) -> Int:
-#         return len(self._data)
-
-#     fn items(self) -> KeyValueIterator[String, String]:
-#         return self._data.items()
-
-#     fn set_run(inout self, run: CoRunFunction):
-#         self._run = run
-
-#     fn run(self) raises -> String:
-#         return self._run(self._data)
-
-
-# fn to_mem_ref_ptr[T: AnyType](owned t: T) -> Int:
-#     return int(Pointer[T].address_of(t))
-
-
-# fn mem_ref_ptr_to_value[T: AnyRegType](p: Int) -> UnsafePointer[T]:
-#     return UnsafePointer[T](address=p)
-
-
-# @value
-# @register_passable
-# struct ArgDataRef:
-#     var data: Pointer[ArgData]
-
-#     fn __init__(data: Pointer[ArgData]) -> Self:
-#         # print("Arg.__init__")
-#         return Self {data: data}
-
-#     fn __init__(owned value: ArgData) -> Self:
-#         var data = Pointer[ArgData].alloc(1)
-#         data.offset(0)[] = value
-#         return Self {data: data}
-
-#     fn __copyinit__(existing: Self) -> Self:
-#         # print("Arg.__copyinit__")
-#         return Self {data: existing.data}
-
-#     fn __del__(owned self):
-#         # print("Arg.__del__")
-#         pass
-
-#     fn to_ptr(self) -> c_void_pointer:
-#         return seq_int_to_voidptr(to_mem_ref_ptr[Self](self))
-
-#     @staticmethod
-#     fn to_ptr(owned value: ArgData) -> c_void_pointer:
-#         var data = Pointer[ArgData].alloc(1)
-#         __get_address_as_uninit_lvalue(data.offset(0).address) = value
-#         var s = Self {data: data}
-#         return seq_int_to_voidptr(to_mem_ref_ptr[Self](s))
-
-#     @staticmethod
-#     fn from_ptr(ptr: Int) -> UnsafePointer[Self]:
-#         return mem_ref_ptr_to_value[Self](ptr)
-
-#     fn get(self) -> ArgData:
-#         return self.data.offset(0)[]
-
-#     fn get_as_owned(self) -> ArgData:
-#         return __get_address_as_owned_value(self.data.offset(0).address)
-
-#     @staticmethod
-#     fn from_ptr_as_value(ptr: Int) -> ArgData:
-#         var value = mem_ref_ptr_to_value[Self](ptr)
-#         return value.data.offset(0)[]
-
-#     @staticmethod
-#     fn from_ptr_as_owned_value(ptr: Int) -> ArgData:
-#         var value = mem_ref_ptr_to_value[Self](ptr)
-#         var data = __get_address_as_owned_value(value[].data.offset(0).address)
-#         value[].data.free()
-#         return data
-
-#     fn free(self):
-#         # print("Arg.free")
-#         _ = __get_address_as_owned_value(self.data.offset(0).address)
-#         self.data.free()
-
-
-# fn __co_run(arg: c_void_pointer) raises -> c_void_pointer:
-#     var ptr = seq_voidptr_to_int(arg)
-#     var value = ArgDataRef.from_ptr_as_owned_value(ptr)
-#     _ = value.run()
-#     return c_void_pointer()
-
-
-# alias CoroFunction = fn () raises capturing -> None
-
-
-# fn __co_entry(arg: c_void_pointer) raises -> c_void_pointer:
-#     var ptr = seq_voidptr_to_int(arg)
-#     unsafe.bitcast[CoroFunction](ptr).load()()
-#     return c_void_pointer()
-
-
-# fn start_coro(fn_ptr: Pointer[CoroFunction]):
-#     var index = fn_ptr.__as_index()
-#     var ptr = seq_int_to_voidptr(index)
-#     seq_photon_thread_create_and_migrate_to_work_pool(__co_entry, ptr)
-
-
-# fn start_coro(fn_index: Int):
-#     var ptr = seq_int_to_voidptr(fn_index)
-#     seq_photon_thread_create_and_migrate_to_work_pool(__co_entry, ptr)
-
-
-# fn run_coro(f: CoroFunction):
-#     var sem = Semaphore()
-#     var value = ArgData()
-#     value["sem_ptr"] = sem.ptr_to_int()
-
-#     # @parameter
-#     fn co_run(arg: Dict[String, String]) raises -> String:
-#         var p = arg["sem_ptr"]
-#         var ptr = strtoi(p)
-#         f()
-#         var sem1 = Semaphore(ptr)
-#         _ = sem1.signal(1)
-#         return ""
-
-#     value.set_run(co_run)
-#     var ptr = ArgDataRef.to_ptr(value)
-
-#     seq_photon_thread_create_and_migrate_to_work_pool(__co_run, ptr)
-
-#     _ = sem.wait(1)
-#     sem.free()
-
-
 @value
 struct LockfreeQueue:
     var ptr: c_void_pointer
@@ -783,24 +582,30 @@ struct LockfreeQueue:
         if self.ptr != c_void_pointer():
             seq_lockfree_queue_free(self.ptr)
 
-    fn push(self, data: UnsafePointer[iovec]) -> Bool:
-        return seq_lockfree_queue_push(self.ptr, data)
+    fn push(self, data: UnsafePointer[UInt8], data_len: Int) -> Bool:
+        return seq_lockfree_queue_push_data(self.ptr, data, data_len)
 
-    fn pop(self, data: UnsafePointer[iovec]) -> Bool:
-        return seq_lockfree_queue_pop(self.ptr, data)
+    fn pop(
+        self, data: UnsafePointer[UInt8], data_len: UnsafePointer[Int]
+    ) -> Bool:
+        return seq_lockfree_queue_pop_data(self.ptr, data, data_len)
 
     fn push(self, s: String) -> Bool:
-        var iv = iovec(s)
-        return self.push(UnsafePointer[iovec].address_of(iv))
+        var c_ptr = s._buffer.data
+        var ok = self.push(c_ptr, len(s))
+        s._strref_keepalive()
+        return ok
 
     fn pop(self) -> Optional[String]:
-        var iv = iovec()
-        var ok = self.pop(UnsafePointer[iovec].address_of(iv))
+        var buff = UnsafePointer[UInt8].alloc(1024 * 100)
+        var n: Int = 0
+        var ok = self.pop(buff, UnsafePointer[Int].address_of(n))
         if not ok:
+            buff.free()
             return None
         else:
-            var s = iv.to_str()
-            iv.free()
+            var s = c_str_to_string(buff, n)
+            buff.free()
             return s
 
 

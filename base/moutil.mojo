@@ -21,12 +21,12 @@ fn set_global_value_ptr[V: Intable](id: Int, v: UnsafePointer[V]) -> Int:
 
 @always_inline
 fn strtoi(s: String) -> Int:
-    return seq_strtoi(unsafe_ptr_as_scalar_pointer(s.unsafe_ptr()), len(s))
+    return seq_strtoi(str_as_scalar_pointer(s), len(s))
 
 
 @always_inline
 fn strtod(s: String) -> Float64:
-    return seq_strtod(unsafe_ptr_as_scalar_pointer(s.unsafe_ptr()), len(s))
+    return seq_strtod(str_as_scalar_pointer(s), len(s))
 
 
 fn str_to_bool(s: String) -> Bool:

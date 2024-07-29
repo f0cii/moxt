@@ -99,7 +99,9 @@ struct BybitClient:
         # {"retCode":0,"retMsg":"OK","result":{"category":"linear","list":[{"symbol":"BTCUSDT","contractType":"LinearPerpetual","status":"Trading","baseCoin":"BTC","quoteCoin":"USDT","launchTime":"1584230400000","deliveryTime":"0","deliveryFeeRate":"","priceScale":"2","leverageFilter":{"minLeverage":"1","maxLeverage":"100.00","leverageStep":"0.01"},"priceFilter":{"minPrice":"0.10","maxPrice":"199999.80","tickSize":"0.10"},"lotSizeFilter":{"maxOrderQty":"100.000","minOrderQty":"0.001","qtyStep":"0.001","postOnlyMaxOrderQty":"1000.000"},"unifiedMarginTrade":true,"fundingInterval":480,"settleCoin":"USDT","copyTrading":"both"}],"nextPageCursor":""},"retExtInfo":{},"time":1701762078208}
 
         var tick_size: Fixed = Fixed.zero
-        var stepSize: Fixed = Fixed.zero
+        var step_size: Fixed = Fixed.zero
+        var min_order_qty: Fixed = Fixed.zero
+        var min_notional_value: Fixed = Fixed.zero
 
         var parser = OndemandParser(ParserBufferSize)
         var doc = parser.parse(ret.text)
@@ -130,7 +132,9 @@ struct BybitClient:
             var priceFilter = obj.get_object("priceFilter")
             tick_size = Fixed(priceFilter.get_str("tickSize"))
             var lotSizeFilter = obj.get_object("lotSizeFilter")
-            stepSize = Fixed(lotSizeFilter.get_str("qtyStep"))
+            step_size = Fixed(lotSizeFilter.get_str("qtyStep"))
+            min_order_qty = Fixed(lotSizeFilter.get_str("minOrderQty"))
+            min_notional_value = Fixed(lotSizeFilter.get_str("minNotionalValue"))
 
             # logi("tick_size: " + str(tick_size))
             # logi("stepSize: " + str(stepSize))
@@ -144,7 +148,7 @@ struct BybitClient:
         _ = doc^
         _ = parser^
 
-        return ExchangeInfo(symbol, tick_size, stepSize)
+        return ExchangeInfo(symbol, tick_size, min_order_qty, step_size, min_notional_value)
 
     fn fetch_kline(
         self,

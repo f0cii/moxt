@@ -3,7 +3,7 @@ from .c import (
     c_str_to_string,
     c_size_t,
     c_void_pointer,
-    unsafe_ptr_as_scalar_pointer,
+    str_as_scalar_pointer,
 )
 from .mo import (
     seq_ssmap_new,
@@ -30,15 +30,15 @@ struct SSMap:
     fn __setitem__(inout self, key: String, value: String):
         seq_ssmap_set(
             self.ptr,
-            unsafe_ptr_as_scalar_pointer(key.unsafe_ptr()),
-            unsafe_ptr_as_scalar_pointer(value.unsafe_ptr()),
+            str_as_scalar_pointer(key),
+            str_as_scalar_pointer(value),
         )
 
     fn __getitem__(self, key: String) -> String:
         var n: c_size_t = 0
         var s = seq_ssmap_get(
             self.ptr,
-            unsafe_ptr_as_scalar_pointer(key.unsafe_ptr()),
+            str_as_scalar_pointer(key),
             UnsafePointer[c_size_t].address_of(n),
         )
         return c_str_to_string(s, n)

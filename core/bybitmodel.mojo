@@ -22,7 +22,9 @@ struct ServerTime(Stringable):
 struct ExchangeInfo(Stringable):
     var symbol: String
     var tick_size: Fixed  # Price 0.01
+    var min_order_qty: Fixed
     var step_size: Fixed  # Size 0.001
+    var min_notional_value: Fixed
 
     fn __str__(self) -> String:
         return (
@@ -30,8 +32,12 @@ struct ExchangeInfo(Stringable):
             + str(self.symbol)
             + ", tick_size="
             + str(self.tick_size)
+            + ", min_order_qty="
+            + str(self.min_order_qty)
             + ", step_size="
             + str(self.step_size)
+            + ", min_notional_value="
+            + str(self.min_notional_value)
             + ">"
         )
 

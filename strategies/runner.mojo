@@ -287,12 +287,21 @@ fn __run_strategy[T: BaseStrategy](inout executor: Executor[T]) raises:
     var interval = 10_000_000  # 10ms
     var current_time = time.now()
     var ioc = seq_asio_ioc()
+    var err_count = 0
     while not g[].stop_requested_flag:
         seq_asio_ioc_poll(ioc)
         _ = log_servie[].perform()
         current_time = time.now()
         if current_time - last_run_time >= interval:
-            executor.run_once()
+            try:
+                executor.run_once()
+                err_count = 0
+            except e:
+                loge("run_once error: " + str(e))
+                err_count += 1
+            if err_count >= 5:
+                loge("run_once error too many times, stop")
+                break
             last_run_time = current_time
         # _ = sleep_us(1000 * 10)
         time.sleep(0.01)

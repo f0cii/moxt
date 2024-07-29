@@ -117,7 +117,7 @@ fn seq_init_log(level: UInt8, filename: String) -> None:
         "seq_init_log", NoneType, UInt8, UnsafePointer[c_schar], c_int
     ](
         level,
-        unsafe_ptr_as_scalar_pointer(filename.unsafe_ptr()),
+        str_as_scalar_pointer(filename),
         len(filename),
     )
 
@@ -150,7 +150,7 @@ fn seq_loge(s: UnsafePointer[c_schar], length: c_int):
 fn logd(s: String):
     var call_loc = __call_location()
     var s_ = str(call_loc.file_name) + ":" + str(call_loc.line) + ": " + s
-    seq_logd(unsafe_ptr_as_scalar_pointer(s_.unsafe_ptr()), len(s_))
+    seq_logd(str_as_scalar_pointer(s_), len(s_))
     s_._strref_keepalive()
 
 
@@ -160,7 +160,7 @@ fn logi(s: String):
     var s_ = String("") + str(call_loc.file_name) + ":" + str(
         call_loc.line
     ) + ": " + s
-    seq_logi(unsafe_ptr_as_scalar_pointer(s_.unsafe_ptr()), len(s_))
+    seq_logi(str_as_scalar_pointer(s_), len(s_))
     s_._strref_keepalive()
 
 
@@ -168,7 +168,7 @@ fn logi(s: String):
 fn logw(s: String):
     var call_loc = __call_location()
     var s_ = str(call_loc.file_name) + ":" + str(call_loc.line) + ": " + s
-    seq_logw(unsafe_ptr_as_scalar_pointer(s_.unsafe_ptr()), len(s_))
+    seq_logw(str_as_scalar_pointer(s_), len(s_))
     s_._strref_keepalive()
 
 
@@ -176,7 +176,7 @@ fn logw(s: String):
 fn loge(s: String):
     var call_loc = __call_location()
     var s_ = str(call_loc.file_name) + ":" + str(call_loc.line) + ": " + s
-    seq_loge(unsafe_ptr_as_scalar_pointer(s_.unsafe_ptr()), len(s_))
+    seq_loge(str_as_scalar_pointer(s_), len(s_))
     s_._strref_keepalive()
 
 

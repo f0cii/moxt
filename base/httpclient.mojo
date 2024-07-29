@@ -71,7 +71,7 @@ struct HttpClient:
         self._base_url = base_url
         self._method = method
         self.ptr = seq_client_new(
-            unsafe_ptr_as_scalar_pointer(base_url.unsafe_ptr()),
+            str_as_scalar_pointer(base_url),
             len(base_url),
             method,
         )
@@ -83,7 +83,7 @@ struct HttpClient:
         self._base_url = existing._base_url
         self._method = existing._method
         self.ptr = seq_client_new(
-            unsafe_ptr_as_scalar_pointer(self._base_url.unsafe_ptr()),
+            str_as_scalar_pointer(self._base_url),
             len(self._base_url),
             self._method,
         )
@@ -173,11 +173,11 @@ struct HttpClient:
         var buff = UnsafePointer[UInt8].alloc(buff_size)
         var status = seq_cclient_do_request(
             self.ptr,
-            unsafe_ptr_as_scalar_pointer(path.unsafe_ptr()),
+            str_as_scalar_pointer(path),
             len(path),
             verb,
             headers.ptr,
-            unsafe_ptr_as_scalar_pointer(body.unsafe_ptr()),
+            str_as_scalar_pointer(body),
             len(body),
             buff,
             buff_size,

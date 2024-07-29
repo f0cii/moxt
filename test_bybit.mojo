@@ -1,6 +1,7 @@
 import time
 from time import time_function
 from memory import unsafe
+import sys
 from base.mo import *
 from base.c import *
 from base.thread import *
@@ -422,12 +423,12 @@ fn run_forever():
 
 fn handle_term(sig: c_int) raises -> None:
     print("handle_term")
-    _ = exit(0)
+    sys.exit()
 
 
 fn photon_handle_term(sig: c_int) raises -> None:
     print("photon_handle_term")
-    _ = exit(0)
+    sys.exit()
 
 
 fn perform_ioc_poll() -> None:

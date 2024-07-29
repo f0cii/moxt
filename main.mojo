@@ -85,13 +85,54 @@ fn main() raises:
     alias SIGINT = 2
     seq_register_signal_handler(SIGINT, signal_handler)
 
-    var app_config: AppConfig = AppConfig()
-    app_config = load_config(config_file)
+    if host != "" and token != "":
+        # "http://1.94.26.93"
+        var backend_url = "http://" + host if "http://" not in host else host
+        logi(backend_url)
+        var bi = BackendInteractor(backend_url)
+        # var username = ""
+        # var password = ""
+        # var login_res = bi.login(username, password)
+        # var bot_id = id # "2m3snT6YMHo"
+        # var token = ""
 
-    logi("Load configuration information: " + str(app_config))
+        logi("token=" + token)
+        logi("id=" + id)
+        logi("sid=" + sid)
+        logi("algo=" + algo)
 
-    var g = _GLOBAL()
-    g[].current_strategy = app_config.strategy
-    g[].algo_id = 0
+        var res = bi.get_bot_params(sid, token)
+        print(res)
+        var strategy_param = parse_strategy_param(res)
 
-    run_strategy(app_config)
+        var app_config = parse_strategy_param_to_app_config(strategy_param)
+        app_config.strategy = algo
+        logi("Load configuration information: " + str(app_config))
+
+        var g = _GLOBAL()
+        g[].current_strategy = app_config.strategy
+        g[].algo_id = atol(sid)
+
+        # 初始化日志
+        var key = "0c6d6db61905400fee1f39e7fa26be87"
+        var redis_pass = twofish_decrypt(strategy_param.redis.password, key)
+        logi("redis_pass=" + redis_pass)
+        log.log_service_itf()[].init(
+            strategy_param.redis.host,
+            strategy_param.redis.port,
+            redis_pass,
+            strategy_param.redis.db,
+        )
+
+        run_strategy(app_config)
+    else:
+        var app_config: AppConfig = AppConfig()
+        app_config = load_config(config_file)
+
+        logi("Load configuration information: " + str(app_config))
+
+        var g = _GLOBAL()
+        g[].current_strategy = app_config.strategy
+        g[].algo_id = 0
+
+        run_strategy(app_config)

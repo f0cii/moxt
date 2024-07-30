@@ -353,11 +353,9 @@ fn get_on_message() -> on_message_callback:
 struct G:
     var i: Int
 
-    fn __init__(i: Int) -> Self:
+    fn __init__(inout self, i: Int):
         logi("G.__init__")
-        return Self {
-            i: i,
-        }
+        self.i = i
 
     fn debug(self):
         logi("debug: " + String(self.i))

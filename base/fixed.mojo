@@ -55,24 +55,18 @@ struct Fixed(Stringable):
 
     var _value: Int64
 
-    fn __init__() -> Self:
-        return Self {
-            _value: 0,
-        }
+    fn __init__(inout self):
+        self._value = 0
 
-    fn __init__(v: Int) -> Self:
-        return Self {
-            _value: FIXED_SCALE_I * v,
-        }
+    fn __init__(inout self, v: Int):
+        self._value = FIXED_SCALE_I * v
 
-    fn __init__(v: Float64) -> Self:
-        return Self {_value: Int64(int(v * FIXED_SCALE_F))}
+    fn __init__(inout self, v: Float64):
+        self._value = Int64(int(v * FIXED_SCALE_F))
 
-    fn __init__(v: String) -> Self:
+    fn __init__(inout self, v: String):
         var v_ = seq_fixed12_new_string(str_as_scalar_pointer(v), len(v))
-        return Self {
-            _value: v_,
-        }
+        self._value = v_
 
     fn copy_from(inout self, other: Self):
         self._value = other._value

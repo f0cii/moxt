@@ -18,8 +18,9 @@ struct CTimeval:
     var tv_sec: Int  # Seconds
     var tv_usec: Int  # Microseconds
 
-    fn __init__(tv_sec: Int = 0, tv_usec: Int = 0) -> Self:
-        return Self {tv_sec: tv_sec, tv_usec: tv_usec}
+    fn __init__(inout self, tv_sec: Int = 0, tv_usec: Int = 0):
+        self.tv_sec = tv_sec
+        self.tv_usec = tv_usec
 
 
 @value
@@ -55,14 +56,18 @@ struct CTm:
 fn c_gettimeofday() -> CTimeval:
     var tv = CTimeval()
     var p_tv = UnsafePointer[CTimeval].address_of(tv)
-    external_call["gettimeofday", NoneType, UnsafePointer[CTimeval], Int32](p_tv, 0)
+    external_call["gettimeofday", NoneType, UnsafePointer[CTimeval], Int32](
+        p_tv, 0
+    )
     return tv
 
 
 @always_inline
 fn c_localtime(owned tv_sec: Int) -> CTm:
     var p_tv_sec = UnsafePointer[Int].address_of(tv_sec)
-    var tm = external_call["localtime", UnsafePointer[CTm], UnsafePointer[Int]](p_tv_sec)[0]
+    var tm = external_call["localtime", UnsafePointer[CTm], UnsafePointer[Int]](
+        p_tv_sec
+    )[0]
     return tm
 
 
@@ -70,16 +75,22 @@ fn c_localtime(owned tv_sec: Int) -> CTm:
 fn c_strptime(time_str: String, time_format: String) -> CTm:
     var tm = CTm()
     var p_tm = UnsafePointer[CTm].address_of(tm)
-    external_call["strptime", NoneType, UnsafePointer[c_char], UnsafePointer[c_char], UnsafePointer[CTm]](
-        to_char_ptr(time_str), to_char_ptr(time_format), p_tm
-    )
+    external_call[
+        "strptime",
+        NoneType,
+        UnsafePointer[c_char],
+        UnsafePointer[c_char],
+        UnsafePointer[CTm],
+    ](to_char_ptr(time_str), to_char_ptr(time_format), p_tm)
     return tm
 
 
 @always_inline
 fn c_gmtime(owned tv_sec: Int) -> CTm:
     var p_tv_sec = UnsafePointer[Int].address_of(tv_sec)
-    var tm = external_call["gmtime", UnsafePointer[CTm], UnsafePointer[Int]](p_tv_sec)[0]
+    var tm = external_call["gmtime", UnsafePointer[CTm], UnsafePointer[Int]](
+        p_tv_sec
+    )[0]
     return tm
 
 

@@ -11,7 +11,7 @@ from base.c import *
 from base.mo import *
 import . okxconsts as c
 from .okxconsts import GET, POST
-from morrow.morrow import Morrow
+
 from .sign import hmac_sha256_b64
 
 

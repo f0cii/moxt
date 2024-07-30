@@ -59,6 +59,7 @@ struct KlineItem(Stringable, CollectionElement):
     var confirm: Bool
 
     fn __init__(
+        inout self,
         timestamp: Int,
         open: Float64,
         high: Float64,
@@ -67,17 +68,15 @@ struct KlineItem(Stringable, CollectionElement):
         volume: Float64,
         turnover: Float64,
         confirm: Bool,
-    ) -> Self:
-        return Self {
-            timestamp: timestamp,
-            open: open,
-            high: high,
-            low: low,
-            close: close,
-            volume: volume,
-            turnover: turnover,
-            confirm: confirm,
-        }
+    ):
+        self.timestamp = timestamp
+        self.open = open
+        self.high = high
+        self.low = low
+        self.close = close
+        self.volume = volume
+        self.turnover = turnover
+        self.confirm = confirm
 
     fn __str__(self) -> String:
         return (

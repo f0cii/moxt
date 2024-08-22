@@ -1,4 +1,6 @@
 from sys.ffi import _get_global
+from sys import external_call
+from collections.dict import Dict
 from .mo import seq_set_global_int, seq_get_global_int
 
 
@@ -77,7 +79,9 @@ fn _GLOBAL_FLOAT[name: StringLiteral]() -> UnsafePointer[Float64]:
     return p.bitcast[Float64]()
 
 
-fn _initialize_float64(payload: UnsafePointer[NoneType]) -> UnsafePointer[NoneType]:
+fn _initialize_float64(
+    payload: UnsafePointer[NoneType],
+) -> UnsafePointer[NoneType]:
     var data = UnsafePointer[Float64].alloc(1)
     data[0] = 0
     return data.bitcast[NoneType]()
@@ -92,7 +96,9 @@ fn _GLOBAL_BOOL[name: StringLiteral]() -> UnsafePointer[Bool]:
     return p.bitcast[Bool]()
 
 
-fn _initialize_bool(payload: UnsafePointer[NoneType]) -> UnsafePointer[NoneType]:
+fn _initialize_bool(
+    payload: UnsafePointer[NoneType],
+) -> UnsafePointer[NoneType]:
     var data = UnsafePointer[Bool].alloc(1)
     data[0] = False
     return data.bitcast[NoneType]()

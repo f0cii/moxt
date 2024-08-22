@@ -1,5 +1,6 @@
 import time
 import sys
+from sys import external_call
 import os
 from .c import *
 

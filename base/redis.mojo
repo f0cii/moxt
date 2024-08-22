@@ -1,3 +1,4 @@
+from sys import external_call
 from os import getenv
 from .c import *
 

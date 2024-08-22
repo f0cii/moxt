@@ -1,3 +1,4 @@
+from sys import external_call
 from .c import *
 from .mo import *
 

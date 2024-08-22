@@ -1,4 +1,5 @@
 import sys.ffi
+from sys import external_call
 from memory import memcpy, memset_zero
 from time import time_function
 from builtin._location import __call_location
@@ -146,10 +147,21 @@ fn seq_loge(s: UnsafePointer[c_schar], length: c_int):
     )
 
 
+# 规整文件名: /home/yl/mojo/moxt-pro/strategies/runner.mojo -> strategies/runner.mojo
+@always_inline
+fn fix_src_file_name(file_name: String) -> String:
+    var file_name_ = file_name
+    if file_name_.startswith("/home/yl/mojo/moxt-pro/"):
+        file_name_ = file_name_.replace("/home/yl/mojo/moxt-pro/", "")
+    return file_name_
+
+
 @always_inline
 fn logd(s: String):
     var call_loc = __call_location()
-    var s_ = str(call_loc.file_name) + ":" + str(call_loc.line) + ": " + s
+    var s_ = fix_src_file_name(call_loc.file_name) + ":" + str(
+        call_loc.line
+    ) + ": " + s
     seq_logd(str_as_scalar_pointer(s_), len(s_))
     s_._strref_keepalive()
 
@@ -157,7 +169,7 @@ fn logd(s: String):
 @always_inline
 fn logi(s: String):
     var call_loc = __call_location()
-    var s_ = String("") + str(call_loc.file_name) + ":" + str(
+    var s_ = fix_src_file_name(call_loc.file_name) + ":" + str(
         call_loc.line
     ) + ": " + s
     seq_logi(str_as_scalar_pointer(s_), len(s_))
@@ -167,7 +179,9 @@ fn logi(s: String):
 @always_inline
 fn logw(s: String):
     var call_loc = __call_location()
-    var s_ = str(call_loc.file_name) + ":" + str(call_loc.line) + ": " + s
+    var s_ = fix_src_file_name(call_loc.file_name) + ":" + str(
+        call_loc.line
+    ) + ": " + s
     seq_logw(str_as_scalar_pointer(s_), len(s_))
     s_._strref_keepalive()
 
@@ -175,7 +189,9 @@ fn logw(s: String):
 @always_inline
 fn loge(s: String):
     var call_loc = __call_location()
-    var s_ = str(call_loc.file_name) + ":" + str(call_loc.line) + ": " + s
+    var s_ = fix_src_file_name(call_loc.file_name) + ":" + str(
+        call_loc.line
+    ) + ": " + s
     seq_loge(str_as_scalar_pointer(s_), len(s_))
     s_._strref_keepalive()
 

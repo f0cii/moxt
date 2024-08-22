@@ -1,4 +1,5 @@
 from sys.info import sizeof
+from sys import external_call
 from sys.ffi import C_char
 
 # from sys.intrinsics import external_call, _mlirtype_is_eq
@@ -31,11 +32,6 @@ alias uintptr_t = UInt64
 alias c_char_pointer = UnsafePointer[c_schar]
 
 alias c_void_pointer = UnsafePointer[c_void]
-
-
-alias any_pointer_simd_int8_to_pointer_simd_int8 = rebind[
-    UnsafePointer[SIMD[DType.int8, 1]], UnsafePointer[SIMD[DType.int8, 1]]
-]
 
 
 fn strlen(s: UnsafePointer[c_char]) -> c_size_t:

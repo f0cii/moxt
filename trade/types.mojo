@@ -113,6 +113,7 @@ struct Account(Stringable):
     var total_position_margin: Fixed  # 持仓维持保证金
     var unrealised_pnl: Fixed  # 未实现盈亏
     var cum_realised_pnl: Fixed  # 累计已实现盈亏
+    var borrow_amount: Fixed # 借币数量
     var extra: Dict[String, String]
 
     fn __init__(inout self):
@@ -124,6 +125,7 @@ struct Account(Stringable):
         self.total_position_margin = Fixed.zero
         self.unrealised_pnl = Fixed.zero
         self.cum_realised_pnl = Fixed.zero
+        self.borrow_amount = Fixed.zero
         self.extra = Dict[String, String]()
 
     fn __init__(
@@ -136,6 +138,7 @@ struct Account(Stringable):
         total_position_margin: Fixed,
         unrealised_pnl: Fixed,
         cum_realised_pnl: Fixed,
+        borrow_amount: Fixed = Fixed.zero,
     ):
         self.coin = coin
         self.equity = equity
@@ -145,6 +148,7 @@ struct Account(Stringable):
         self.total_position_margin = total_position_margin
         self.unrealised_pnl = unrealised_pnl
         self.cum_realised_pnl = cum_realised_pnl
+        self.borrow_amount = borrow_amount
         self.extra = Dict[String, String]()
 
     fn available_margin(self) -> Fixed:
@@ -169,6 +173,11 @@ struct Account(Stringable):
             + str(self.total_position_margin)
             + ", unrealised_pnl="
             + str(self.unrealised_pnl)
+            + ", cum_realised_pnl="
+            + str(self.cum_realised_pnl)
+            + ", borrow_amount="
+            + str(self.borrow_amount)
+            + " >"
         )
 
 
@@ -212,9 +221,6 @@ struct Order(CollectionElement, Stringable):
         self.quantity = quantity
         self.filled_qty = filled_qty
         self.status = status
-
-    fn is_closed(self):
-        pass
 
     fn __str__(self: Self) -> String:
         return (

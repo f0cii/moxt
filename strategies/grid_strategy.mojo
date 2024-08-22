@@ -49,8 +49,8 @@ struct IContext:
 
 # 交易策略
 struct GridStrategy(BaseStrategy):
-    var platform: Platform
-    var grid: GridInfo
+    var platform: UnsafePointer[Platform]
+    var grid: UnsafePointer[GridInfo]
     var category: String
     var symbols: List[String]
     var symbol: String
@@ -70,8 +70,10 @@ struct GridStrategy(BaseStrategy):
 
     fn __init__(inout self, config: AppConfig) raises:
         logi("GridStrategy.__init__")
-        self.platform = Platform(config)
-        self.grid = GridInfo()
+        self.platform = UnsafePointer[Platform].alloc(1)
+        self.platform.init_pointee_move(Platform(config))
+        self.grid = UnsafePointer[GridInfo].alloc(1)
+        self.grid.init_pointee_move(GridInfo())
         self.category = config.category
         var symbols = config.symbols.split(",")
         if len(symbols) == 0:
@@ -108,8 +110,8 @@ struct GridStrategy(BaseStrategy):
 
     fn __moveinit__(inout self, owned existing: Self):
         logi("GridStrategy.__moveinit__")
-        self.platform = existing.platform^
-        self.grid = existing.grid^
+        self.platform = existing.platform
+        self.grid = existing.grid
         self.category = existing.category
         self.symbols = existing.symbols
         self.symbol = existing.symbol
@@ -128,9 +130,10 @@ struct GridStrategy(BaseStrategy):
     fn setup(inout self, platform: UnsafePointer[Platform]) raises:
         # var algo_id = _GLOBAL()[].algo_id
         # log.log_itf["MAIN"]()[].set_alog_id(algo_id)
-        self.platform.setup()
+        self.platform = platform
+        self.platform[].setup()
         var callback = self.get_order_update_callback()
-        self.platform.register_order_update_callback(callback^)
+        self.platform[].register_order_update_callback(callback^)
 
     fn get_order_update_callback(self) -> OrderUpdateCallback:
         var self_ptr = UnsafePointer.address_of(self)
@@ -144,20 +147,22 @@ struct GridStrategy(BaseStrategy):
         return wrapper
 
     fn get_platform_pointer(inout self) -> UnsafePointer[Platform]:
-        return UnsafePointer.address_of(self.platform)
+        return self.platform
 
     fn on_init(inout self) raises:
         logi("GridStrategy.on_init")
 
         if self.allow_trade:
             # 撤销订单
-            _ = self.platform.cancel_orders_enhanced(self.category, self.symbol)
+            _ = self.platform[].cancel_orders_enhanced(
+                self.category, self.symbol
+            )
             # 全部平仓
-            _ = self.platform.close_positions_enhanced(
+            _ = self.platform[].close_positions_enhanced(
                 self.category, self.symbol
             )
 
-        var exchange_info = self.platform.fetch_exchange_info(
+        var exchange_info = self.platform[].fetch_exchange_info(
             self.category, self.symbol
         )
         logi(str(exchange_info))
@@ -173,7 +178,7 @@ struct GridStrategy(BaseStrategy):
         var dp = decimal_places(tick_size.to_float())
 
         # 获取盘口价格
-        var ob = self.platform.fetch_orderbook(self.category, self.symbol, 5)
+        var ob = self.platform[].fetch_orderbook(self.category, self.symbol, 5)
         if len(ob.asks) == 0 or len(ob.bids) == 0:
             raise Error("获取盘口数据失败")
 
@@ -192,11 +197,11 @@ struct GridStrategy(BaseStrategy):
         logi("base_price=" + str(base_price))
         logi("dp=" + str(dp))
 
-        self.grid.setup(grid_interval, price_range, tick_size, base_price, dp)
+        self.grid[].setup(grid_interval, price_range, tick_size, base_price, dp)
         # logi(str(self.grid))
 
         # 输出网格
-        for i in self.grid.cells:
+        for i in self.grid[].cells:
             logi(str(i[]))
 
         # TODO: 等待网格生成
@@ -208,16 +213,18 @@ struct GridStrategy(BaseStrategy):
         logi("GridStrategy.on_exit")
         if self.allow_trade:
             # 撤销订单
-            _ = self.platform.cancel_orders_enhanced(self.category, self.symbol)
+            _ = self.platform[].cancel_orders_enhanced(
+                self.category, self.symbol
+            )
             # 全部平仓
-            _ = self.platform.close_positions_enhanced(
+            _ = self.platform[].close_positions_enhanced(
                 self.category, self.symbol
             )
         logi("GridStrategy.on_exit done")
 
     fn on_tick(inout self) raises:
         # logd("GridStrategy.on_tick")
-        var ob = self.platform.get_orderbook(self.symbol, 5)
+        var ob = self.platform[].get_orderbook(self.symbol, 5)
         if len(ob.asks) == 0 or len(ob.bids) == 0:
             # logw("订单薄缺少买卖单")
             return
@@ -230,19 +237,19 @@ struct GridStrategy(BaseStrategy):
         ctx.ask = ob.asks[0].price
         ctx.bid = ob.bids[0].price
         ctx.mid = (ctx.ask / Fixed(2)) + (ctx.bid / Fixed(2))
-        ctx.current_cell_level = self.grid.get_cell_level_by_price(ctx.mid)
+        ctx.current_cell_level = self.grid[].get_cell_level_by_price(ctx.mid)
         ctx.cell_sl_percent = Fixed.zero - self.cell_sl_percent
 
-        for i in range(len(self.grid.cells)):
+        for i in range(len(self.grid[].cells)):
             ctx.cell_index = i
-            var cell_ref = Reference(self.grid.cells[i])
+            var cell_ref = Reference(self.grid[].cells[i])
             self.on_tick_one(ctx, cell_ref)
 
-        self.grid.update(ctx.mid)
+        self.grid[].update(ctx.mid)
 
     fn on_tick_one[
         L: MutableLifetime
-    ](inout self, inout ctx: IContext, cell: Reference[GridCellInfo, L]) raises:
+    ](inout self, ctx: IContext, cell: Reference[GridCellInfo, L]) raises:
         if not self.allow_trade:
             return
 
@@ -261,7 +268,7 @@ struct GridStrategy(BaseStrategy):
     ) raises -> Float64:
         # 计算总体浮亏
         var total_profit: Float64 = 0
-        for i in self.grid.cells:
+        for i in self.grid[].cells:
             # 计算每个格子的浮亏并累加
             total_profit += i[].calculate_profit_amount(ask, bid, position_idx)
         return total_profit
@@ -318,7 +325,7 @@ struct GridStrategy(BaseStrategy):
         logi("执行单个格子止损的停止策略，停止格子 " + str(cell[].level) + " 的交易")
         # 撤销止盈单
         if cell[].long_tp_cid != "":
-            var order = self.platform.cancel_order(
+            var order = self.platform[].cancel_order(
                 self.category,
                 self.symbol,
                 order_client_id=cell[].long_tp_cid,
@@ -368,7 +375,7 @@ struct GridStrategy(BaseStrategy):
         logi("下单价格: " + str(cell[].price))
         var price = str(cell[].price)
         var position_idx: Int = int(PositionIdx.both_side_buy)
-        var order_client_id = self.platform.generate_order_id()
+        var order_client_id = self.platform[].generate_order_id()
         logi(
             "下单 "
             + side
@@ -382,7 +389,7 @@ struct GridStrategy(BaseStrategy):
             + " position_idx="
             + str(position_idx)
         )
-        var res = self.platform.place_order(
+        var res = self.platform[].place_order(
             self.category,
             self.symbol,
             side=side,
@@ -417,10 +424,10 @@ struct GridStrategy(BaseStrategy):
         var side = String("Sell")
         var order_type = String("Limit")
         var qty = str(cell[].long_open_quantity)
-        var price = str(self.grid.get_price_by_level(cell[].level + 1))
+        var price = str(self.grid[].get_price_by_level(cell[].level + 1))
         logi("下止盈单: " + str(cell[].price) + ">" + price)
         var position_idx: Int = int(PositionIdx.both_side_buy)
-        var order_client_id = self.platform.generate_order_id()
+        var order_client_id = self.platform[].generate_order_id()
         logi(
             "下止盈单 "
             + side
@@ -434,7 +441,7 @@ struct GridStrategy(BaseStrategy):
             + " position_idx="
             + str(position_idx)
         )
-        var res = self.platform.place_order(
+        var res = self.platform[].place_order(
             self.category,
             self.symbol,
             side=side,
@@ -460,10 +467,10 @@ struct GridStrategy(BaseStrategy):
     ) raises:
         if position_idx == PositionIdx.both_side_buy:
             var cids = cell[].reset_long_side()
-            self.platform.delete_orders_from_cache(cids)
+            self.platform[].delete_orders_from_cache(cids)
         elif position_idx == PositionIdx.both_side_sell:
             var cids = cell[].reset_short_side()
-            self.platform.delete_orders_from_cache(cids)
+            self.platform[].delete_orders_from_cache(cids)
 
     fn on_orderbook(inout self, ob: OrderBookLite) raises:
         if len(ob.asks) > 0 and len(ob.bids) > 0:
@@ -499,8 +506,8 @@ struct GridStrategy(BaseStrategy):
             var order_opt = self.order_q.dequeue()
             if not order_opt:
                 break
-            for i in range(len(self.grid.cells)):
-                var cell_ref = Reference(self.grid.cells[i])
+            for i in range(len(self.grid[].cells)):
+                var cell_ref = Reference(self.grid[].cells[i])
                 if self.on_order_cell(cell_ref, order_opt.value()):
                     break
         self.rwlock.unlock()

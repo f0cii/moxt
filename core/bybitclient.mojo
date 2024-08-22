@@ -113,6 +113,7 @@ struct BybitClient:
             )
 
         var result = doc.get_object("result")
+        var category_ = result.get_str("category")
         var result_list = result.get_array("list")
         if result_list.__len__() == 0:
             raise Error("error list length is 0")
@@ -129,12 +130,47 @@ struct BybitClient:
                 list_iter.step()
                 continue
 
-            var priceFilter = obj.get_object("priceFilter")
-            tick_size = Fixed(priceFilter.get_str("tickSize"))
-            var lotSizeFilter = obj.get_object("lotSizeFilter")
-            step_size = Fixed(lotSizeFilter.get_str("qtyStep"))
-            min_order_qty = Fixed(lotSizeFilter.get_str("minOrderQty"))
-            min_notional_value = Fixed(lotSizeFilter.get_str("minNotionalValue"))
+            if category_ == "linear":
+                var priceFilter = obj.get_object("priceFilter")
+                tick_size = Fixed(priceFilter.get_str("tickSize"))
+                var lotSizeFilter = obj.get_object("lotSizeFilter")
+                step_size = Fixed(lotSizeFilter.get_str("qtyStep"))
+                min_order_qty = Fixed(lotSizeFilter.get_str("minOrderQty"))
+                min_notional_value = Fixed(
+                    lotSizeFilter.get_str("minNotionalValue")
+                )
+            elif category_ == "spot":
+                """
+                    {
+                    "symbol": "USDCUSDT",
+                    "baseCoin": "USDC",
+                    "quoteCoin": "USDT",
+                    "innovation": "0",
+                    "status": "Trading",
+                    "marginTrading": "both",
+                    "lotSizeFilter": {
+                        "basePrecision": "0.01",
+                        "quotePrecision": "0.000001",
+                        "minOrderQty": "1",
+                        "maxOrderQty": "2496045.89",
+                        "minOrderAmt": "1",
+                        "maxOrderAmt": "2000000"
+                    },
+                    "priceFilter": {
+                        "tickSize": "0.0001"
+                    },
+                    "riskParameters": {
+                        "limitParameter": "0.01",
+                        "marketParameter": "0.01"
+                    }
+                }
+                """
+                var lotSizeFilter = obj.get_object("lotSizeFilter")
+                step_size = Fixed(lotSizeFilter.get_str("basePrecision"))
+                min_order_qty = Fixed(lotSizeFilter.get_str("minOrderQty"))
+                min_notional_value = Fixed(lotSizeFilter.get_str("minOrderAmt"))
+                var priceFilter = obj.get_object("priceFilter")
+                tick_size = Fixed(priceFilter.get_str("tickSize"))
 
             # logi("tick_size: " + str(tick_size))
             # logi("stepSize: " + str(stepSize))
@@ -148,7 +184,9 @@ struct BybitClient:
         _ = doc^
         _ = parser^
 
-        return ExchangeInfo(symbol, tick_size, min_order_qty, step_size, min_notional_value)
+        return ExchangeInfo(
+            symbol, tick_size, min_order_qty, step_size, min_notional_value
+        )
 
     fn fetch_kline(
         self,
@@ -410,9 +448,11 @@ struct BybitClient:
         position_idx: Int = 0,
         order_link_id: String = "",
         reduce_only: Bool = False,
+        is_leverage: Int = -1,
     ) raises -> OrderResponse:
         """
-        Place an order
+        Place an order.
+        is_leverage:	false	integer	是否借貸. 僅統一帳戶的現貨交易有效. 0(default): 否，則是幣幣訂單, 1: 是，則是槓桿訂單.
         """
         var yy_doc = yyjson_mut_doc()
         yy_doc.add_str("category", category)
@@ -430,6 +470,8 @@ struct BybitClient:
             yy_doc.add_str("orderLinkId", order_link_id)
         if reduce_only:
             yy_doc.add_str("reduceOnly", "true")
+        if is_leverage != -1:
+            yy_doc.add_int("isLeverage", is_leverage)
         var body_str = yy_doc.mut_write()
 
         # print(body_str)
@@ -585,7 +627,7 @@ struct BybitClient:
         self, account_type: String, coin: String
     ) raises -> List[BalanceInfo]:
         """
-        Fetch walvar balance
+        Fetch wallet balance.
         """
         var query_values = QueryParams()
         query_values["accountType"] = account_type
@@ -595,7 +637,7 @@ struct BybitClient:
         if ret.status_code != 200:
             raise Error("error status_code=" + str(ret.status_code))
 
-        # print(ret.body)
+        logi(ret.text)
 
         # {"retCode":0,"retMsg":"OK","result":{"list":[{"accountType":"CONTRACT","accountIMRate":"","accountMMRate":"","totalEquity":"","totalWalletBalance":"","totalMarginBalance":"","totalAvailableBalance":"","totalPerpUPL":"","totalInitialMargin":"","totalMaintenanceMargin":"","accountLTV":"","coin":[{"coin":"USDT","equity":"20.21","usdValue":"","walletBalance":"20.21","borrowAmount":"","availableToBorrow":"","availableToWithdraw":"20.21","accruedInterest":"","totalOrderIM":"0","totalPositionIM":"0","totalPositionMM":"","unrealisedPnl":"0","cumRealisedPnl":"0"}]}]},"retExtInfo":{},"time":1687608906096}
         var res = List[BalanceInfo]()
@@ -610,6 +652,8 @@ struct BybitClient:
                 "error retCode=" + str(ret_code) + ", retMsg=" + ret_msg
             )
 
+        var coins = coin.split(",")
+
         var result_list = doc.get_object("result").get_array("list")
         var list_iter = result_list.iter()
 
@@ -623,7 +667,8 @@ struct BybitClient:
                 while coin_iter.has_value():
                     var coin_obj = coin_iter.get()
                     var coin_name = coin_obj.get_str("coin")
-                    if coin_name == coin:
+                    # logi("coin_name: " + coin_name + " coins: " + ",".join(coins))
+                    if coin_name in coins:
                         # logi("coin_name: " + coin_name)
                         var equity = strtod(coin_obj.get_str("equity"))
                         var available_to_withdraw = strtod(
@@ -659,8 +704,75 @@ struct BybitClient:
                     coin_iter.step()
 
                 _ = coin_list^
-            elif account_type == "SPOT":
-                pass
+            elif account_type == "UNIFIED":
+                var coin_list = obj.get_array("coin")
+                var coin_iter = coin_list.iter()
+                while coin_iter.has_value():
+                    var coin_obj = coin_iter.get()
+                    var coin_name = coin_obj.get_str("coin")
+                    # logi("coin_name: " + coin_name + " coins: " + ",".join(coins))
+                    if coin_name in coins:
+                        """
+                            {
+                            "availableToBorrow": "",
+                            "bonus": "0",
+                            "accruedInterest": "0",
+                            "availableToWithdraw": "24.99164765",
+                            "totalOrderIM": "0",
+                            "equity": "24.99164765",
+                            "totalPositionMM": "0",
+                            "usdValue": "24.97517815",
+                            "unrealisedPnl": "0",
+                            "collateralSwitch": true,
+                            "spotHedgingQty": "0",
+                            "borrowAmount": "0.000000000000000000",
+                            "totalPositionIM": "0",
+                            "walletBalance": "24.99164765",
+                            "cumRealisedPnl": "0",
+                            "locked": "0",
+                            "marginCollateral": true,
+                            "coin": "USDT"
+                        }
+                        """
+                        # logi("coin_name: " + coin_name)
+                        var equity = strtod(coin_obj.get_str("equity"))
+                        var available_to_withdraw = strtod(
+                            coin_obj.get_str("availableToWithdraw")
+                        )
+                        var wallet_balance = strtod(
+                            coin_obj.get_str("walletBalance")
+                        )
+                        var total_order_im = strtod(
+                            coin_obj.get_str("totalOrderIM")
+                        )
+                        var total_position_im = strtod(
+                            coin_obj.get_str("totalPositionIM")
+                        )
+                        var unrealised_pnl = strtod(
+                            coin_obj.get_str("unrealisedPnl")
+                        )
+                        var cum_realised_pnl = strtod(
+                            coin_obj.get_str("cumRealisedPnl")
+                        )
+                        var borrow_amount = strtod(
+                            coin_obj.get_str("borrowAmount")
+                        )
+                        res.append(
+                            BalanceInfo(
+                                coin_name=coin_name,
+                                equity=equity,
+                                available_to_withdraw=available_to_withdraw,
+                                wallet_balance=wallet_balance,
+                                total_order_im=total_order_im,
+                                total_position_im=total_position_im,
+                                unrealised_pnl=unrealised_pnl,
+                                cum_realised_pnl=cum_realised_pnl,
+                                borrow_amount=borrow_amount,
+                            )
+                        )
+                    coin_iter.step()
+
+                _ = coin_list^
 
             _ = obj^
             list_iter.step()

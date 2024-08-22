@@ -1,3 +1,4 @@
+import math
 from ylstdlib import *
 from collections.list import List
 from base.fixed import Fixed
@@ -25,6 +26,7 @@ struct GridCellInfo(CollectionElement):
     var long_tp_status: OrderStatus  # Take-profit order status
     var long_sl_cid: String  # Stop-loss order Client ID
     var long_sl_status: OrderStatus  # Stop-loss order status
+    var long_open_time_ms: Int64
 
     var short_open_cid: String
     var short_open_status: OrderStatus
@@ -35,6 +37,7 @@ struct GridCellInfo(CollectionElement):
     var short_tp_status: OrderStatus
     var short_sl_cid: String
     var short_sl_status: OrderStatus
+    var short_open_time_ms: Int64
 
     fn __init__(inout self, level: Int, price: Fixed):
         self.level = level
@@ -49,6 +52,7 @@ struct GridCellInfo(CollectionElement):
         self.long_tp_status = OrderStatus.empty
         self.long_sl_cid = ""
         self.long_sl_status = OrderStatus.empty
+        self.long_open_time_ms = 0
 
         self.short_open_cid = ""
         self.short_open_status = OrderStatus.empty
@@ -59,6 +63,7 @@ struct GridCellInfo(CollectionElement):
         self.short_tp_status = OrderStatus.empty
         self.short_sl_cid = ""
         self.short_sl_status = OrderStatus.empty
+        self.short_open_time_ms = 0
 
     fn reset_long_side(inout self) -> List[String]:
         var cid_list = List[String]()
@@ -76,6 +81,7 @@ struct GridCellInfo(CollectionElement):
         self.long_tp_status = OrderStatus.empty
         self.long_sl_cid = ""
         self.long_sl_status = OrderStatus.empty
+        self.long_open_time_ms = 0
 
         return cid_list
 
@@ -95,6 +101,7 @@ struct GridCellInfo(CollectionElement):
         self.short_tp_status = OrderStatus.empty
         self.short_sl_cid = ""
         self.short_sl_status = OrderStatus.empty
+        self.short_open_time_ms = 0
 
         return cid_list
 
@@ -269,31 +276,6 @@ struct GridInfo(Stringable):
         self.cells.clear()
         self.cells.append(self.new_grid_cell(0, self.base_price))
         self.update(self.base_price)
-
-    # fn cell_mut_ref[
-    #     L: MutableLifetime
-    # ](inout self, i: Int) -> Reference[GridCellInfo, i1, L]:
-    #     """Gets a reference to the list element at the given index.
-
-    #     Args:
-    #         i: The index of the element.
-
-    #     Returns:
-    #         An mutability reference to the element at the given index.
-    #     """
-    #     var normalized_idx = i
-    #     if i < 0:
-    #         normalized_idx += Reference(self.cells)[].size
-
-    #     # Mutability gets set to the local mutability of this
-    #     # pointer value, ie. because we defined it with `let` it's now an
-    #     # "immutable" reference regardless of the mutability of `self`.
-    #     # This means we can't just use `UnsafePointer.__refitem__` here
-    #     # because the mutability won't match.
-    #     var base_ptr = Reference(self.cells)[].data
-    #     return __mlir_op.`lit.ref.from_pointer`[
-    #         _type = Reference[GridCellInfo, i1, L]._mlir_type
-    #     ]((base_ptr + normalized_idx).value)
 
     fn __str__(self) -> String:
         var result: String = "["

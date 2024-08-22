@@ -431,41 +431,68 @@ struct Executor[T: BaseStrategy](Movable, Runable, IExecutor):
         var iter = data.iter()
         while iter.has_value():
             var item = iter.get_object()
+            var account_type = item.get_str("accountType")
             var coin_arr = item.get_array("coin")
             var iter1 = coin_arr.iter()
             while iter1.has_value():
                 var coin_obj = iter1.get_object()
                 var coin = coin_obj.get_str("coin")  # USDT
-                var equity = Fixed(coin_obj.get_str("equity"))
-                var wallet_balance = Fixed(coin_obj.get_str("walletBalance"))
-                var available_to_withdraw = Fixed(
-                    coin_obj.get_str("availableToWithdraw")
-                )
-                var total_order_im = Fixed(coin_obj.get_str("totalOrderIM"))
-                var total_position_im = Fixed(
-                    coin_obj.get_str("totalPositionIM")
-                )
-                var unrealised_pnl = Fixed(coin_obj.get_str("unrealisedPnl"))
-                var cum_realised_pnl = Fixed(coin_obj.get_str("cumRealisedPnl"))
-                # logi("coin: " + coin)
-                # logi("equity: " + equity)
-                # logi("wallet_balance: " + wallet_balance)
-                # logi("available_to_withdraw: " + available_to_withdraw)
-                # logi("total_order_im: " + total_order_im)
-                # logi("total_position_im: " + total_position_im)
-                # logi("unrealised_pnl: " + unrealised_pnl)
-                # logi("cum_realised_pnl: " + cum_realised_pnl)
-                var account = Account(
-                    coin=coin,
-                    equity=equity,
-                    wallet_balance=wallet_balance,
-                    available_to_withdraw=available_to_withdraw,
-                    total_order_margin=total_order_im,
-                    total_position_margin=total_position_im,
-                    unrealised_pnl=unrealised_pnl,
-                    cum_realised_pnl=cum_realised_pnl,
-                )
-                accounts.append(account)
+                if account_type == "CONTRACT":
+                    var equity = Fixed(coin_obj.get_str("equity"))
+                    var wallet_balance = Fixed(coin_obj.get_str("walletBalance"))
+                    var available_to_withdraw = Fixed(
+                        coin_obj.get_str("availableToWithdraw")
+                    )
+                    var total_order_im = Fixed(coin_obj.get_str("totalOrderIM"))
+                    var total_position_im = Fixed(
+                        coin_obj.get_str("totalPositionIM")
+                    )
+                    var unrealised_pnl = Fixed(coin_obj.get_str("unrealisedPnl"))
+                    var cum_realised_pnl = Fixed(coin_obj.get_str("cumRealisedPnl"))
+                    # logi("coin: " + coin)
+                    # logi("equity: " + equity)
+                    # logi("wallet_balance: " + wallet_balance)
+                    # logi("available_to_withdraw: " + available_to_withdraw)
+                    # logi("total_order_im: " + total_order_im)
+                    # logi("total_position_im: " + total_position_im)
+                    # logi("unrealised_pnl: " + unrealised_pnl)
+                    # logi("cum_realised_pnl: " + cum_realised_pnl)
+                    var account = Account(
+                        coin=coin,
+                        equity=equity,
+                        wallet_balance=wallet_balance,
+                        available_to_withdraw=available_to_withdraw,
+                        total_order_margin=total_order_im,
+                        total_position_margin=total_position_im,
+                        unrealised_pnl=unrealised_pnl,
+                        cum_realised_pnl=cum_realised_pnl,
+                    )
+                    accounts.append(account)
+                elif account_type == "UNIFIED":
+                    var equity = Fixed(coin_obj.get_str("equity"))
+                    var wallet_balance = Fixed(coin_obj.get_str("walletBalance"))
+                    var available_to_withdraw = Fixed(
+                        coin_obj.get_str("availableToWithdraw")
+                    )
+                    var total_order_im = Fixed(coin_obj.get_str("totalOrderIM"))
+                    var total_position_im = Fixed(
+                        coin_obj.get_str("totalPositionIM")
+                    )
+                    var unrealised_pnl = Fixed(coin_obj.get_str("unrealisedPnl"))
+                    var cum_realised_pnl = Fixed(coin_obj.get_str("cumRealisedPnl"))
+                    var borrow_amount = Fixed(coin_obj.get_str("borrowAmount"))
+                    var account = Account(
+                        coin=coin,
+                        equity=equity,
+                        wallet_balance=wallet_balance,
+                        available_to_withdraw=available_to_withdraw,
+                        total_order_margin=total_order_im,
+                        total_position_margin=total_position_im,
+                        unrealised_pnl=unrealised_pnl,
+                        cum_realised_pnl=cum_realised_pnl,
+                        borrow_amount=borrow_amount,
+                    )
+                    accounts.append(account)
                 iter1.step()
             _ = coin_arr^
             _ = item^

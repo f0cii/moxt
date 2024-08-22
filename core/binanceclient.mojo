@@ -39,7 +39,7 @@ struct BinanceClient:
         self.testnet = existing.testnet
         self.access_key = existing.access_key
         self.secret_key = existing.secret_key
-        var base_url = "https://api-testnet.bybit.com" if self.testnet else "https://api.bybit.com"
+        # var base_url = "https://api-testnet.bybit.com" if self.testnet else "https://api.bybit.com"
         self.client = existing.client^
         logd("BybitClient.__moveinit__ done")
 

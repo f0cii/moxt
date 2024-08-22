@@ -3,18 +3,19 @@ from base.httpclient import HttpClient, VERB_GET, Headers, QueryParams
 
 struct BackendInteractor:
     var backend_url: String
+    var client: HttpClient
 
     fn __init__(inout self, backend_url: String):
         self.backend_url = backend_url
+        self.client = HttpClient(self.backend_url)
 
     fn login(self, username: String, password: String) -> String:
-        var client = HttpClient(self.backend_url)
         var headers = Headers()
         self.set_default_headers(headers)
         headers["Content-Type"] = "application/json;charset=UTF-8"
         headers["X-Requested-With"] = "XMLHttpRequest"
         var data = '{"username": "' + username + '", "password": "' + password + '"}'
-        var res = client.post("/api/auth/login", data, headers)
+        var res = self.client.post("/api/auth/login", data, headers)
         # print(res.status_code)
         # print(res.text)
         return res.text
@@ -34,12 +35,11 @@ struct BackendInteractor:
         # }
 
         var path = "/api/algos/" + sid + "/options"
-        var client = HttpClient(self.backend_url)
         var headers = Headers()
         self.set_default_headers(headers)
         headers["Authorization"] = authorization
         # headers["X-Requested-With"] = "XMLHttpRequest"
-        var res = client.get(path, headers)
+        var res = self.client.get(path, headers)
         # print(res.status_code)
         # print(res.text)
         return res.text

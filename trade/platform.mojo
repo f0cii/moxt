@@ -4,13 +4,16 @@ from base.c import *
 from base.mo import *
 from base.thread import *
 from base.fixed import Fixed
+from base.rate_limiter import RateLimiter
 from core.models import OrderBookLevel, OrderBookLite
 from core.bybitclient import *
+from ylstdlib.dict import dict_pop
 from .config import AppConfig
 from .types import *
 from .helpers import *
 
 
+alias TooManyPendingRequestsError = Error("Too many pending requests")
 alias OrderUpdateCallback = fn (order: Order) escaping -> None
 
 
@@ -40,6 +43,7 @@ struct Platform:
     var _accounts_lock: RWLock
     var _order_update_callbacks: List[OrderUpdateCallback]
     var _accounts: Dict[String, Account]
+    var _rl: RateLimiter
 
     fn __init__(inout self, config: AppConfig) raises:
         logd("Platform.__init__")
@@ -57,6 +61,7 @@ struct Platform:
         self._accounts_lock = RWLock()
         self._order_update_callbacks = List[OrderUpdateCallback](capacity=16)
         self._accounts = Dict[String, Account]()
+        self._rl = RateLimiter(8, 1_000_000_000)
         logd("Platform.__init__ done")
 
     fn __moveinit__(inout self, owned existing: Self):
@@ -76,6 +81,7 @@ struct Platform:
         self._accounts_lock = existing._accounts_lock
         self._order_update_callbacks = existing._order_update_callbacks
         self._accounts = existing._accounts
+        self._rl = existing._rl^
         logd("Platform.__moveinit__ done")
 
     fn __del__(owned self):
@@ -120,7 +126,10 @@ struct Platform:
         self._order_cache_lock.lock()
         for cid in cids:
             logi("Remove order: " + cid[])
-            _ = self._order_cache.pop(cid[])
+            # free(): double free detected in tcache 2
+            # var o = self._order_cache.pop(cid[])
+            var o = dict_pop(self._order_cache, cid[])
+            logi("Remove order done order=" + str(o))
         self._order_cache_lock.unlock()
 
     fn on_update_orderbook(
@@ -165,6 +174,9 @@ struct Platform:
 
     fn on_update_order(inout self, order: Order) -> Bool:
         # logi("on_update_order: " + str(order))
+        if order.order_client_id.startswith("SL_"):
+            return True
+
         var key = order.order_client_id
         self._order_cache_lock.lock()
         # TODO: Order versions need to be compared, returning false if the version is older
@@ -209,9 +221,35 @@ struct Platform:
             else:
                 raise e
 
+    fn set_leverage(
+        self, category: String, symbol: String, leverage: Fixed
+    ) raises -> Bool:
+        """
+        设置杠杆倍数
+        leverage: 10/8.5.
+        """
+        try:
+            var buy_leverage = str(leverage)
+            var sell_leverage = str(leverage)
+            var set_leverage_res = self._client.set_leverage(
+                category, symbol, buy_leverage, sell_leverage
+            )
+            logi("set_leverage: " + str(set_leverage_res))
+            return True
+        except e:
+            if "Set leverage not modified" in str(e):
+                logi("set_leverage: " + str(e))
+                return True
+            elif "leverage not modified" in str(e):
+                logi("set_leverage: " + str(e))
+                return True
+            else:
+                logw("set_leverage: " + str(e))
+                return False
+
     fn get_account(self, coin: String) -> Optional[Account]:
         """
-        coin: USDT
+        Args: coin-USDT.
         """
         var result: Optional[Account] = None
         self._accounts_lock.lock()
@@ -228,15 +266,16 @@ struct Platform:
             var callback_ref = Reference(self._order_update_callbacks[i])
             callback_ref[](order)
 
-    fn get_order(self, cid: String) raises -> Order:
+    fn get_order(self, cid: String) -> Optional[Order]:
+        var result :Optional[Order] = None
         self._order_cache_lock.lock()
         try:
             var order = self._order_cache[cid]
-            self._order_cache_lock.unlock()
-            return order
+            result = order
         except e:
-            self._order_cache_lock.unlock()
-            raise e
+            result = None
+        self._order_cache_lock.unlock()
+        return result
 
     fn get_orderbook(self, symbol: String, n: Int) raises -> OrderBookLite:
         var index: Int = self._symbol_index_dict[symbol]
@@ -307,10 +346,15 @@ struct Platform:
         return self._client.fetch_orderbook(category, symbol, limit)
 
     @always_inline
-    fn fetch_account(inout self, coin: String) raises -> Optional[Account]:
-        var result = self._client.fetch_balance("CONTRACT", coin)
+    fn fetch_accounts(
+        inout self, coin: String, account_type: String = "CONTRACT"
+    ) raises -> List[Account]:
+        var coins = coin.split(",")
+        var result = self._client.fetch_balance(account_type, coin)
+        var res = List[Account]()
         for i in result:
-            if i[].coin_name == coin:
+            if i[].coin_name in coins:
+                logi("Fetch account: " + str(i[]))
                 var a = Account()
                 a.coin = i[].coin_name
                 a.equity = Fixed(i[].equity)
@@ -320,10 +364,9 @@ struct Platform:
                 a.total_position_margin = Fixed(i[].total_position_im)
                 a.unrealised_pnl = i[].unrealised_pnl
                 a.cum_realised_pnl = i[].cum_realised_pnl
-                logi("Fetch account: " + str(a))
                 self._on_update_account(a)
-                return a
-        return None
+                res.append(a)
+        return res
 
     @always_inline
     fn fetch_order(
@@ -421,7 +464,10 @@ struct Platform:
         position_idx: Int = 0,
         order_client_id: String = "",
         reduce_only: Bool = False,
+        is_leverage: Int = -1,
     ) raises -> OrderResponse:
+        if not self._rl.allow_and_record_request():
+            raise TooManyPendingRequestsError
         var new_order = Order(
             symbol=symbol,
             order_type=order_type,
@@ -444,13 +490,14 @@ struct Platform:
             position_idx,
             order_client_id,
             reduce_only,
+            is_leverage,
         )
 
     fn cancel_orders_enhanced(
         inout self, category: String, symbol: String
     ) raises -> Bool:
         """
-        Cancel all active orders
+        Cancel all active orders.
         """
         var orders = self.fetch_orders(category, symbol)
         if len(orders) == 0:
@@ -469,7 +516,7 @@ struct Platform:
         inout self, category: String, symbol: String
     ) raises -> Bool:
         """
-        Close positions
+        Close positions.
         """
         logi("Close positions")
         var positions = self.fetch_positions(category, symbol)

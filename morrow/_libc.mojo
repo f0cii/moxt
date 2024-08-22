@@ -37,19 +37,17 @@ struct CTm:
     var tm_isdst: Int32  # Daylight savings flag
     var tm_gmtoff: Int64  # localtime zone offset seconds
 
-    fn __init__() -> Self:
-        return Self {
-            tm_sec: 0,
-            tm_min: 0,
-            tm_hour: 0,
-            tm_mday: 0,
-            tm_mon: 0,
-            tm_year: 0,
-            tm_wday: 0,
-            tm_yday: 0,
-            tm_isdst: 0,
-            tm_gmtoff: 0,
-        }
+    fn __init__(inout self):
+        self.tm_sec = 0
+        self.tm_min = 0
+        self.tm_hour = 0
+        self.tm_mday = 0
+        self.tm_mon = 0
+        self.tm_year = 0
+        self.tm_wday = 0
+        self.tm_yday = 0
+        self.tm_isdst = 0
+        self.tm_gmtoff = 0
 
 
 @always_inline

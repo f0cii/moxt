@@ -108,13 +108,13 @@ fn test_far():
     var f = Far()
     f.set_int("a", 100)
     var a = f.get_int("a")
-    logi("a: " + String(a))
+    logi("a: " + str(a))
     f.set_float("b", 100.10)
     var b = f.get_float("b")
-    logi("b: " + String(b))
+    logi("b: " + str(b))
     f.set_bool("c", True)
     var c = f.get_bool("c")
-    logi("c: " + String(c))
+    logi("c: " + str(c))
     f.set_str("d", "hello")
     var d = f.get_str("d")
     logi("d: " + d)
@@ -183,7 +183,7 @@ fn func1(arg: c_void_pointer) raises -> c_void_pointer:
     logi("func1 1000")
     while True:
         var ncpu = seq_photon_workpool_get_vcpu_num(seq_photon_work_pool())
-        logi("func1 tick ncpu: " + String(ncpu))
+        logi("func1 tick ncpu: " + str(ncpu))
         # a.incr()
         # logi(a.a)
 
@@ -358,7 +358,7 @@ struct G:
         self.i = i
 
     fn debug(self):
-        logi("debug: " + String(self.i))
+        logi("debug: " + str(self.i))
 
 
 fn test_global_value():

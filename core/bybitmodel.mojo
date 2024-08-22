@@ -89,7 +89,7 @@ struct KlineItem(Stringable, CollectionElement):
             + ", low="
             + str(self.low)
             + ", close="
-            + String(self.close)
+            + str(self.close)
             + ", volume="
             + str(self.volume)
             + ", turnover="
@@ -296,6 +296,7 @@ struct BalanceInfo(Stringable, CollectionElement):
     var total_position_im: Float64
     var unrealised_pnl: Fixed
     var cum_realised_pnl: Fixed
+    var borrow_amount: Float64  # 当前币种的已用借贷额度
 
     fn __init__(
         inout self,
@@ -307,6 +308,7 @@ struct BalanceInfo(Stringable, CollectionElement):
         total_position_im: Float64,
         unrealised_pnl: Fixed,
         cum_realised_pnl: Fixed,
+        borrow_amount: Float64 = 0.0,
     ):
         self.coin_name = coin_name
         self.equity = equity
@@ -316,6 +318,7 @@ struct BalanceInfo(Stringable, CollectionElement):
         self.total_position_im = total_position_im
         self.unrealised_pnl = unrealised_pnl
         self.cum_realised_pnl = cum_realised_pnl
+        self.borrow_amount = borrow_amount
 
     fn __str__(self) -> String:
         return (
@@ -335,6 +338,8 @@ struct BalanceInfo(Stringable, CollectionElement):
             + str(self.unrealised_pnl)
             + ", cum_realised_pnl="
             + str(self.cum_realised_pnl)
+            + ", borrow_amount="
+            + str(self.borrow_amount)
             + ">"
         )
 

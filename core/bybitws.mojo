@@ -36,6 +36,8 @@ struct BybitWS:
     var _subscription_topics: List[String]
     var _subscription_topics_str: String
     var _heartbeat_time: UnsafePointer[Int64]
+    var _is_subscribed: Bool
+    var _verbose: Bool
 
     fn __init__(
         inout self,
@@ -97,6 +99,8 @@ struct BybitWS:
         self._id = seq_voidptr_to_int(ptr)
         self._heartbeat_time = UnsafePointer[Int64].alloc(1)
         self._heartbeat_time[0] = 0
+        self._is_subscribed = False
+        self._verbose = False
 
     fn __moveinit__(inout self, owned existing: Self):
         print("BybitWS.__moveinit__")
@@ -109,6 +113,8 @@ struct BybitWS:
         self._subscription_topics = existing._subscription_topics
         self._subscription_topics_str = existing._subscription_topics_str
         self._heartbeat_time = existing._heartbeat_time
+        self._is_subscribed = existing._is_subscribed
+        self._verbose = existing._verbose
 
     fn __del__(owned self):
         logd("BybitWS.__del__")
@@ -150,6 +156,12 @@ struct BybitWS:
     #         "BybitWS.__moveinit__ self._subscription_topics_str: "
     #         + self._subscription_topics_str
     #     )
+
+    fn set_verbose(inout self, verbose: Bool):
+        self._verbose = verbose
+
+    fn is_subscribed(self) -> Bool:
+        return self._is_subscribed
 
     fn get_id(self) -> Int:
         return self._id
@@ -275,8 +287,10 @@ struct BybitWS:
         # logd("send: " + body_str)
         self.send(body_str)
 
-    fn on_message(self, s: String) -> None:
+    fn on_message(inout self, s: String) -> None:
         # logd("BybitWS::on_message: " + s)
+        if self._verbose:
+            logd("BybitWS::on_message: " + s)
 
         # {"req_id":"LzIP5BH2aBVLUkmsOzg-q","success":true,"ret_msg":"","op":"auth","conn_id":"cldfn01dcjmj8l28s6sg-ngkux"}
         # {"req_id":"74z-iUiWshWGFAyIWQBxk","success":true,"ret_msg":"","op":"subscribe","conn_id":"cl9i0rtdaugsu2kfn8ng-3084a"}
@@ -292,6 +306,14 @@ struct BybitWS:
                 self.subscribe()
             else:
                 logw("WebSocket authentication failed")
+        elif op == "subscribe":
+            var success = doc.get_bool("success")
+            if success:
+                # 设置状态
+                self._is_subscribed = True
+                logi("WebSocket subscription successful")
+            else:
+                logw("WebSocket subscription failed")
         elif op == "pong":
             pass
 

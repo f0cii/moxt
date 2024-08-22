@@ -1,5 +1,6 @@
 from sys.ffi import _get_global
 from collections.optional import Optional
+from collections.dict import Dict
 from utils.variant import Variant
 from .mo import seq_snowflake_id
 from .sonic import SonicDocument, SonicNode

@@ -20,6 +20,7 @@ fn seq_delete_crate_limiter(ptr: c_void_pointer) -> None:
     external_call["seq_delete_crate_limiter", NoneType, c_void_pointer](ptr)
 
 
+@value
 struct RateLimiter:
     var _ptr: c_void_pointer
 
@@ -27,7 +28,10 @@ struct RateLimiter:
         self._ptr = seq_new_crate_limiter(max_count, window_size)
 
     fn __del__(owned self: Self):
+        if self._ptr == c_void_pointer():
+            return
         seq_delete_crate_limiter(self._ptr)
+        self._ptr = c_void_pointer()
 
     fn allow_and_record_request(self) -> Bool:
         return seq_crate_limiter_allow_and_record_request(self._ptr)

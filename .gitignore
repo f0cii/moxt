@@ -166,6 +166,12 @@ cython_debug/
 # Do not ignore directories
 !*/
 
+# pixi environments
+.pixi
+*.egg-info
+# magic environments
+.magic
+
 # Ignore special files
 libmoxt.so
 .env

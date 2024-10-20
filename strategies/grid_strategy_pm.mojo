@@ -95,6 +95,11 @@ struct GridStrategyPM(BaseStrategy):
     var time_sl_ms: Int64
     # 单个格子止损百分比
     var cell_sl_pct: Fixed
+    # 交易模式:
+    # 1：只允许做多，即只能买入。
+    # 2：只允许做空，即只能卖出。
+    # 3：允许同时进行多头和空头操作。
+    var trade_mode: Int
     # var allow_trade: Bool
     var order_q: Queue[Order]
     var rwlock: RWLock
@@ -138,6 +143,8 @@ struct GridStrategyPM(BaseStrategy):
             raise "time_sl is empty"
         if "cell_sl_pct" not in config.params:
             raise "cell_sl_pct is empty"
+        if "trade_mode" not in config.params:
+            raise "trade_mode is empty"
         for i in config.params:
             logi("param: " + i[] + "=" + config.params[i[]])
         self.grid_interval = config.params["grid_interval"]
@@ -145,6 +152,7 @@ struct GridStrategyPM(BaseStrategy):
         self.order_qty_pct = Fixed(config.params["order_qty_pct"])
         self.time_sl_ms = int(config.params["time_sl"]) * 1000
         self.cell_sl_pct = Fixed(config.params["cell_sl_pct"])
+        self.trade_mode = int(config.params["trade_mode"])
         self.order_q = Queue[Order](100)
         self.rwlock = RWLock()
         self.stop_flag = False
@@ -172,6 +180,7 @@ struct GridStrategyPM(BaseStrategy):
         self.order_qty_pct = existing.order_qty_pct
         self.time_sl_ms = existing.time_sl_ms
         self.cell_sl_pct = existing.cell_sl_pct
+        self.trade_mode = existing.trade_mode
         self.order_q = existing.order_q
         self.rwlock = existing.rwlock
         self.stop_flag = False
@@ -306,12 +315,12 @@ struct GridStrategyPM(BaseStrategy):
 
         for i in range(len(self.grid[].cells)):
             ctx.cell_index = i
-            var cell_ref = Reference(self.grid[].cells[i])
+            var cell_ref = self.grid[].cells.unsafe_ptr() + i
             self.on_tick_one(ctx, cell_ref)
 
         self.grid[].update(ctx.mid)
     
-    fn on_tick_one[L: MutableLifetime](inout self, inout ctx: IContext, cell: Reference[GridCellInfo, L]) raises:
+    fn on_tick_one(inout self, inout ctx: IContext, cell: UnsafePointer[GridCellInfo]) raises:
         self.place_buy_order(ctx, cell)
         self.place_sell_order(ctx, cell)
         self.order_monitor(ctx, cell)
@@ -390,12 +399,13 @@ struct GridStrategyPM(BaseStrategy):
             and current_cell_level - cell.level <= 0
         )
 
-    fn place_buy_order[
-        L: MutableLifetime
-    ](inout self, ctx: IContext, cell: Reference[GridCellInfo, L]) raises:
+    fn place_buy_order(inout self, ctx: IContext, cell: UnsafePointer[GridCellInfo]) raises:
         """
         下开仓单.
         """
+        if self.trade_mode != 1 and self.trade_mode != 3:
+            return
+
         if (
             cell[].long_open_status != OrderStatus.empty
             or cell[].long_open_cid != ""
@@ -484,12 +494,13 @@ struct GridStrategyPM(BaseStrategy):
             + str(cell[].long_open_status)
         )
 
-    fn place_sell_order[
-        L: MutableLifetime
-    ](inout self, ctx: IContext, cell: Reference[GridCellInfo, L]) raises:
+    fn place_sell_order(inout self, ctx: IContext, cell: UnsafePointer[GridCellInfo]) raises:
         """
         下开仓单.
         """
+        if self.trade_mode != 2 and self.trade_mode != 3:
+            return
+
         if (
             cell[].short_open_status != OrderStatus.empty
             or cell[].short_open_cid != ""
@@ -582,9 +593,7 @@ struct GridStrategyPM(BaseStrategy):
     fn log_cell_info(self, cell: GridCellInfo) raises:
         logi("GridCellInfo: " + str(cell))
 
-    fn order_monitor[
-        L: MutableLifetime
-    ](inout self, ctx: IContext, cell: Reference[GridCellInfo, L]) raises:
+    fn order_monitor(inout self, ctx: IContext, cell: UnsafePointer[GridCellInfo]) raises:
         """
         监控订单状态, 止盈/止损.
         """
@@ -706,9 +715,7 @@ struct GridStrategyPM(BaseStrategy):
                     )
                     cell[].short_open_time_ms = 0
 
-    fn place_tp_order_real_buy[
-        L: MutableLifetime
-    ](inout self, cell: Reference[GridCellInfo, L]) raises:
+    fn place_tp_order_real_buy(inout self, cell: UnsafePointer[GridCellInfo]) raises:
         var side = String("Sell")
         var order_type = String("Limit")
         var qty = str(cell[].long_open_quantity)
@@ -756,9 +763,7 @@ struct GridStrategyPM(BaseStrategy):
         assert_equal(cell[].long_tp_cid, order_client_id)
         assert_equal(str(cell[].long_tp_status), str(OrderStatus.new))
 
-    fn place_tp_order_real_sell[
-        L: MutableLifetime
-    ](inout self, cell: Reference[GridCellInfo, L]) raises:
+    fn place_tp_order_real_sell(inout self, cell: UnsafePointer[GridCellInfo]) raises:
         var side = String("Buy")
         var order_type = String("Limit")
         var qty = str(cell[].short_open_quantity)
@@ -806,9 +811,7 @@ struct GridStrategyPM(BaseStrategy):
         assert_equal(cell[].short_tp_cid, order_client_id)
         assert_equal(str(cell[].short_tp_status), str(OrderStatus.new))
 
-    fn place_tp_order_market[
-        L: MutableLifetime
-    ](inout self, cell: Reference[GridCellInfo, L], qty: Fixed, position_idx: PositionIdx) raises:
+    fn place_tp_order_market(inout self, cell: UnsafePointer[GridCellInfo], qty: Fixed, position_idx: PositionIdx) raises:
         var side = String(
             "Sell"
         ) if position_idx == PositionIdx.both_side_buy else String("Buy")
@@ -842,11 +845,9 @@ struct GridStrategyPM(BaseStrategy):
         )
         logi("level=" + str(cell[].level) + " 下平仓单返回: " + str(res))
 
-    fn reset_cell[
-        L: MutableLifetime
-    ](
+    fn reset_cell(
         inout self,
-        cell: Reference[GridCellInfo, L],
+        cell: UnsafePointer[GridCellInfo],
         position_idx: PositionIdx,
     ) raises:
         if position_idx == PositionIdx.both_side_buy:
@@ -894,14 +895,12 @@ struct GridStrategyPM(BaseStrategy):
             var order = order_opt.value()
             logi("process_order_event ok: " + " order=" + str(order))
             for i in range(len(self.grid[].cells)):
-                var cell_ref = Reference(self.grid[].cells[i])
+                var cell_ref = self.grid[].cells.unsafe_ptr() + i
                 if self.on_order_cell(cell_ref, order):
                     break
 
     @staticmethod
-    fn on_order_cell[
-        L: MutableLifetime
-    ](cell: Reference[GridCellInfo, L], order: Order) -> Bool:
+    fn on_order_cell(cell: UnsafePointer[GridCellInfo], order: Order) -> Bool:
         # logi("GridStrategyPM.on_order_cell: " + str(cell[]) + " " + str(order))
         var order_client_id = order.order_client_id
         if cell[].long_open_cid == order_client_id:

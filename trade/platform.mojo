@@ -127,8 +127,8 @@ struct Platform:
         for cid in cids:
             logi("Remove order: " + cid[])
             # free(): double free detected in tcache 2
-            # var o = self._order_cache.pop(cid[])
-            var o = dict_pop(self._order_cache, cid[])
+            var o = self._order_cache.pop(cid[])
+            # var o = dict_pop(self._order_cache, cid[])
             logi("Remove order done order=" + str(o))
         self._order_cache_lock.unlock()
 
@@ -263,7 +263,7 @@ struct Platform:
     @always_inline
     fn notify_order_update(inout self, order: Order):
         for i in range(len(self._order_update_callbacks)):
-            var callback_ref = Reference(self._order_update_callbacks[i])
+            var callback_ref = self._order_update_callbacks.unsafe_ptr() + i
             callback_ref[](order)
 
     fn get_order(self, cid: String) -> Optional[Order]:

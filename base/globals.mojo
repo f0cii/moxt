@@ -1,5 +1,6 @@
 from sys.ffi import _get_global
 from sys import external_call
+from memory import UnsafePointer
 from collections.dict import Dict
 from .mo import seq_set_global_int, seq_get_global_int
 

@@ -66,7 +66,7 @@ fn load_config(filename: String) raises -> AppConfig:
     var s = tmp_file.read_text()
     var dict = tomli.loads(s)
     var config = AppConfig()
-    var config_ref = Reference(config)
+    var config_ref = UnsafePointer[AppConfig].address_of(config)
     config_ref[].testnet = str_to_bool(str(dict["testnet"]))
     config_ref[].access_key = str(dict["access_key"])
     config_ref[].secret_key = str(dict["secret_key"])

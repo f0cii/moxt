@@ -102,6 +102,7 @@ chmod +x ./scripts/mojoc
 chmod +x ./build.sh
 
 # Compile
+magic shell
 ./build.sh main.mojo -o moxt
 # Set environment variables
 source setup.sh

@@ -1,4 +1,5 @@
 import sys
+from memory import UnsafePointer
 from .c import (
     c_str_to_string,
     c_size_t,

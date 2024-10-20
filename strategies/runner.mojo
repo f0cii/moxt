@@ -1,3 +1,4 @@
+from sys import external_call
 from sys import argv
 import sys
 from sys.param_env import is_defined, env_get_int, env_get_string
@@ -215,13 +216,13 @@ fn parse_strategy_param_to_app_config(
         raise "symbols is empty"
 
     var app_config = AppConfig()
-    var app_config_ref = Reference(app_config)
+    var app_config_ref = UnsafePointer[AppConfig].address_of(app_config)
 
     app_config_ref[].access_key = apikey.access_key
     app_config_ref[].secret_key = apikey.secret_key
     app_config_ref[].testnet = apikey.testnet
-    app_config_ref[].category = "linear"
     app_config_ref[].depth = 1
+    app_config_ref[].category = params["category"].value  # "linear"
 
     var symbols = params["symbols"].value
 
@@ -297,8 +298,12 @@ fn __run_strategy[T: BaseStrategy](inout executor: Executor[T]) raises:
                 executor.run_once()
                 err_count = 0
             except e:
-                loge("run_once error: " + str(e))
-                err_count += 1
+                if str(e) == str(TooManyPendingRequestsError):
+                    err_count = 0
+                else:
+                    loge("run_once error: " + str(e))
+                    err_count += 1
+
             if err_count >= 5:
                 loge("run_once error too many times, stop")
                 break

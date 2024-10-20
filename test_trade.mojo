@@ -180,9 +180,9 @@ fn test_order_info() raises:
     var orders = List[OrderInfo]()
 
     var order_info =
-        OrderInfo(1, StringRef("cf7a63a5-4c78-40f5-be9e-393645bb7339"), StringRef("BTCUSDT"), StringRef("Buy"), StringRef("Limit"), 10000.0, 0.01,
-                0, StringRef("New"), StringRef("1702776926299"), StringRef("1702776926303"),
-                0, 0, StringRef("GTC"), False, "")
+        OrderInfo(1, String("cf7a63a5-4c78-40f5-be9e-393645bb7339"), String("BTCUSDT"), String("Buy"), String("Limit"), 10000.0, 0.01,
+                0, String("New"), String("1702776926299"), String("1702776926303"),
+                0, 0, String("GTC"), False, "")
     orders.append(order_info)
 
     assert_equal(len(orders), 1)
@@ -572,7 +572,7 @@ fn test_ti() raises:
 
 
 fn test_ti_call() raises:
-    var s = StringRef("sma")
+    var s = String("sma")
     var info = seq_ti_find_indicator(str_as_scalar_pointer(s))
     assert_equal(seq_ti_is_valid_indicator(info), True)
 

@@ -1,4 +1,5 @@
 from sys.ffi import _get_global
+from memory import UnsafePointer
 from .c import *
 from .mo import *
 from .moutil import *
@@ -234,6 +235,6 @@ fn websocket_message_callback(
 
 
 fn register_websocket(ws: c_void_pointer) -> None:
-    seq_websocket_set_on_connect(ws, websocket_connect_callback)
+    seq_websocket_set_on_connected(ws, websocket_connect_callback)
     seq_websocket_set_on_heartbeat(ws, websocket_heartbeat_callback)
     seq_websocket_set_on_message(ws, websocket_message_callback)

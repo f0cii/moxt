@@ -1,6 +1,6 @@
 from sys.info import sizeof
 from sys import external_call
-from sys.ffi import C_char
+from memory import UnsafePointer
 
 # from sys.intrinsics import external_call, _mlirtype_is_eq
 from sys.intrinsics import _mlirtype_is_eq
@@ -105,11 +105,6 @@ fn c_str_to_string(s: UnsafePointer[c_char], n: Int) -> String:
 @always_inline
 fn str_as_scalar_pointer(s: StringLiteral) -> UnsafePointer[Scalar[DType.int8]]:
     return s.unsafe_cstr_ptr()
-
-
-@always_inline
-fn str_as_scalar_pointer(s: StringRef) -> UnsafePointer[Scalar[DType.int8]]:
-    return s.unsafe_ptr().bitcast[C_char]()
 
 
 @always_inline

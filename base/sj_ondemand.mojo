@@ -449,24 +449,6 @@ struct OndemandParser:
         seq_simdjson_ondemand_parser_free(self.parser)
         # logd("OndemandParser.__del__ done")
 
-    # @always_inline
-    # fn parse(self, s: StringLiteral) -> OndemandDocument:
-    #     var s_ = String(s)
-    #     var padded_string = seq_simdjson_padded_string_new(
-    #         unsafe_ptr_as_scalar_pointer(s_.unsafe_ptr()), len(s_)
-    #     )
-    #     var doc = seq_simdjson_ondemand_parser_parse(self.parser, padded_string)
-    #     s_._strref_keepalive()
-    #     return OndemandDocument(padded_string, doc)
-
-    @always_inline
-    fn parse(self, s: StringRef) -> OndemandDocument:
-        var padded_string = seq_simdjson_padded_string_new(
-            str_as_scalar_pointer(s), len(s)
-        )
-        var doc = seq_simdjson_ondemand_parser_parse(self.parser, padded_string)
-        return OndemandDocument(padded_string, doc)
-
     @always_inline
     fn parse(self, s: String) -> OndemandDocument:
         var padded_string = seq_simdjson_padded_string_new(

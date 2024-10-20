@@ -1,6 +1,7 @@
 import sys.ffi
 from sys import external_call
 from memory import memcpy, memset_zero
+from memory import UnsafePointer
 from time import time_function
 from builtin._location import __call_location
 from .c import *
@@ -147,7 +148,7 @@ fn seq_loge(s: UnsafePointer[c_schar], length: c_int):
     )
 
 
-# ¹æÕûÎÄ¼þÃû: /home/yl/mojo/moxt-pro/strategies/runner.mojo -> strategies/runner.mojo
+# è§„æ•´æ–‡ä»¶å: /home/yl/mojo/moxt-pro/strategies/runner.mojo -> strategies/runner.mojo
 @always_inline
 fn fix_src_file_name(file_name: String) -> String:
     var file_name_ = file_name
@@ -1369,11 +1370,11 @@ alias OnMessageCallback = fn (
 ) raises -> None
 
 
-fn seq_websocket_set_on_connect(
+fn seq_websocket_set_on_connected(
     p: c_void_pointer, cb: OnConnectCallback
 ) -> None:
     external_call[
-        "seq_websocket_set_on_connect",
+        "seq_websocket_set_on_connected",
         NoneType,
         c_void_pointer,
         OnConnectCallback,

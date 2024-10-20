@@ -30,7 +30,8 @@ alias ti_indicator_function = fn (
     outputs: UnsafePointer[UnsafePointer[Float64]],
 ) raises -> c_int
 alias ti_indicator_stream_new = fn (
-    options: UnsafePointer[Float64], stream: UnsafePointer[UnsafePointer[ti_stream]]
+    options: UnsafePointer[Float64],
+    stream: UnsafePointer[UnsafePointer[ti_stream]],
 ) raises -> c_int
 alias ti_indicator_stream_run = fn (
     stream: UnsafePointer[ti_stream],
@@ -87,21 +88,21 @@ struct ti_indicator_info(Movable):
     fn input_names(self) -> List[String]:
         var result = List[String]()
         for i in range(self._inputs):
-            var s = self._input_names[i]
+            var s = self._input_names[int(i)]
             result.append(c_str_to_string(s, strlen(s)))
         return result
 
     fn option_names(self) -> List[String]:
         var result = List[String]()
         for i in range(self._options):
-            var s = self._option_names[i]
+            var s = self._option_names[int(i)]
             result.append(c_str_to_string(s, strlen(s)))
         return result
 
     fn output_names(self) -> List[String]:
         var result = List[String]()
         for i in range(self._outputs):
-            var s = self._output_names[i]
+            var s = self._output_names[int(i)]
             result.append(c_str_to_string(s, strlen(s)))
         return result
 

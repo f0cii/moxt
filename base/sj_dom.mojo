@@ -813,14 +813,6 @@ struct DomParser:
         pass
 
     @always_inline
-    fn parse(self, s: StringRef) -> DomElement:
-        return DomElement(
-            seq_simdjson_dom_parser_parse(
-                self.p, str_as_scalar_pointer(s), len(s)
-            )
-        )
-
-    @always_inline
     fn parse(self, s: String) raises -> DomElement:
         var p = seq_simdjson_dom_parser_parse(
             self.p, str_as_scalar_pointer(s), len(s)

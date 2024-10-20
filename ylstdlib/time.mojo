@@ -1,5 +1,6 @@
 from sys import external_call
 from sys.info import os_is_linux, os_is_windows
+from memory import UnsafePointer
 
 # Enums used in time.h 's glibc
 alias _CLOCK_REALTIME = 0

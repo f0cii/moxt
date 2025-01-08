@@ -1,3 +1,7 @@
+# 已废弃项目
+
+**注意：** 此项目已被废弃，并被新项目替代，新的项目可在 [furnace-examples](https://github.com/furnace-dev/furnace-examples) 找到，该项目基于 Mojo 和 Rust。
+
 # MOXT
 
 一个高性能的交易库，用Mojo和C++编写，旨在简化量化交易。

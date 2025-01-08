@@ -5,6 +5,10 @@
     </p>
 </h4>
 
+# Deprecated Project
+
+**Note:** This project is deprecated and has been replaced by the new project available at [furnace-examples](https://github.com/furnace-dev/furnace-examples), which is based on Mojo and Rust.
+
 # MOXT
 
 A high-performance trading library, written in Mojo and C++, designed to simplify quantitative trading.
